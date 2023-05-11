@@ -4,6 +4,21 @@
 ### Bug Fixes
 
 * Remove dist ([61c163e](https://github.com/bcanfield/prisnext/commit/61c163eeae51eccfed0f60d0db4544c72656e26c))
+* Workflow ([986e448](https://github.com/bcanfield/prisnext/commit/986e44832e947137902ed9c40d553caffd2b07e1))
+* Workflow ([79156d8](https://github.com/bcanfield/prisnext/commit/79156d8182cd027391498456a3b42a4cdff215b5))
+* Workflow ([fbdb50e](https://github.com/bcanfield/prisnext/commit/fbdb50eb0a34ef5de33e5d43f080718e1229a718))
+
+
+### Features
+
+* Initial CLI Setup ([#1](https://github.com/bcanfield/prisnext/issues/1)) ([aeb32ba](https://github.com/bcanfield/prisnext/commit/aeb32ba027944e78d756cec35fdb69cdc2e2ea17))
+
+# 1.0.0 (2023-05-11)
+
+
+### Bug Fixes
+
+* Remove dist ([61c163e](https://github.com/bcanfield/prisnext/commit/61c163eeae51eccfed0f60d0db4544c72656e26c))
 * Workflow ([79156d8](https://github.com/bcanfield/prisnext/commit/79156d8182cd027391498456a3b42a4cdff215b5))
 * Workflow ([fbdb50e](https://github.com/bcanfield/prisnext/commit/fbdb50eb0a34ef5de33e5d43f080718e1229a718))
 
