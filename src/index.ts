@@ -19,10 +19,13 @@ export type PrismaSchemaSectionType = {
   value: Block;
 };
 
-export const sortPrismaSchema = async (path: string) => {
+export const generateNextComponents = async (
+  schemaFilePath: string,
+  outputDirectory: string
+) => {
   try {
     const outPath = "./test.json";
-    const schema = fs.readFileSync(path, { encoding: "utf-8" });
+    const schema = fs.readFileSync(schemaFilePath, { encoding: "utf-8" });
     const jsonSchema = getSchema(schema);
     const models: Model[] = [];
     const enums: Enum[] = [];
@@ -37,6 +40,22 @@ export const sortPrismaSchema = async (path: string) => {
     fs.writeFileSync("./enums.json", JSON.stringify(enums));
     fs.writeFileSync("./models.json", JSON.stringify(models));
 
+    if (!fs.existsSync(outputDirectory)) {
+      fs.mkdirSync(outputDirectory);
+    }
+    // For model in models
+    // Create a nextjs app directory tree node in outDir
+    // In that file create crud
+    for (const model of models) {
+      const componentDirectory = `${outputDirectory}/${model.name}`;
+      if (!fs.existsSync(componentDirectory)) {
+        fs.mkdirSync(componentDirectory);
+      }
+      fs.writeFileSync(
+        `${componentDirectory}/page.tsx`,
+        JSON.stringify(`Testing for: ${model.name}`)
+      );
+    }
     console.log("Success.");
   } catch (error) {
     console.log("Failed.");
@@ -46,18 +65,29 @@ export const sortPrismaSchema = async (path: string) => {
 
 const program = new Command();
 const defaultPrismaSchemaPath = "./prisma/schema.prisma";
+const defaultOutputDirectory = "./prisnextApp";
+
 console.log(figlet.textSync("Prisnext"));
+
 program
   .version(require("../package.json").version)
   .description("An example CLI for managing a directory")
-  .option("-schema <value>", "Path to prisma schema", defaultPrismaSchemaPath)
+  .option(
+    "-schema <value>",
+    "Path to prisma schema file",
+    defaultPrismaSchemaPath
+  )
+  .option("-out <value>", "Path to output directory", defaultOutputDirectory)
   .parse(process.argv);
 
 const options = program.opts();
-console.log({ options });
-if (options.Schema) {
+if (options.Schema && options.Out) {
   console.log(
-    chalk.green.bold(`Looking for Prisma Schema at: ${options.Schema}`)
+    `${chalk.green.bold(
+      `Looking for Prisma Schema at: ${options.Schema}`
+    )}\n${chalk.cyanBright.bold(
+      `Outputting generated files to: ${options.Out}`
+    )}`
   );
-  sortPrismaSchema(options.Schema);
+  generateNextComponents(options.Schema, options.Out);
 }
