@@ -1,0 +1,29 @@
+{
+  "name": "prisnext",
+  "version": "1.0.0",
+  "description": "Generate Next.js components from your Prisma Schema",
+  "main": "dist/index.js",
+  "bin": {
+    "prisnext": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "npx tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Brandin Canfield",
+  "license": "MIT",
+  "keywords": [
+    "Prisma",
+    "TypeScript",
+    "Next.js",
+    "React"
+  ],
+  "dependencies": {
+    "commander": "^10.0.1",
+    "figlet": "^1.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.1.2",
+    "typescript": "^5.0.4"
+  }
+}
