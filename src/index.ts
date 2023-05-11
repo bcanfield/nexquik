@@ -22,7 +22,7 @@ const program = new Command();
 
 console.log(figlet.textSync("Prisnext"));
 program
-  .version("1.0.0")
+  .version(require("../package.json").version)
   .description("An example CLI for managing a directory")
   .option("-l, --ls  [value]", "List directory contents")
   .option("-m, --mkdir <value>", "Create a directory")
