@@ -1,11 +1,7 @@
 {
   "tagFormat": "${version}",
   "branches": [
-    "main",
-    {
-      "name": "alpha",
-      "prerelease": true
-    },
+    "initial-cli-setup",
     {
       "name": "beta",
       "prerelease": true
