@@ -18,20 +18,12 @@ jobs:
         fetch-depth: 0
     - name: Setup Node.js
       uses: actions/setup-node@v2
-      # with:
-      #   node-version: 'lts/*'
       with:
         node-version: 18.x
     - name: Install dependencies
       run: npx ci
-      # run: npm ci
     - name: Install semantic-release extra plugins
       run: npm install --save-dev @semantic-release/changelog @semantic-release/git      
-    # - name: Lint
-    #   run: npm run lint-fix
-    # Redundant cos tests workflow has already been run
-    # - name: Test
-    #   run: npm run test:unit --if-present
     - name: Build
       run: npm run build 
     - name: Create .npmrc file

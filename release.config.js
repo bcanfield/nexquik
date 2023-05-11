@@ -1,6 +1,6 @@
 module.exports = {
   branches: [
-    'initial-cli-setup',
+    'main',
     {
       name: 'beta',
       prerelease: true
@@ -15,7 +15,7 @@ module.exports = {
         changelogFile: 'CHANGELOG.md'
       }
     ],
-    // '@semantic-release/npm',
+    '@semantic-release/npm',
     '@semantic-release/github',
     [
       '@semantic-release/git',
