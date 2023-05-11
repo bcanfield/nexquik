@@ -1,3 +1,15 @@
+# 1.0.0 (2023-05-11)
+
+
+### Bug Fixes
+
+* Remove dist ([61c163e](https://github.com/bcanfield/prisnext/commit/61c163eeae51eccfed0f60d0db4544c72656e26c))
+
+
+### Features
+
+* Initial CLI Setup ([#1](https://github.com/bcanfield/prisnext/issues/1)) ([aeb32ba](https://github.com/bcanfield/prisnext/commit/aeb32ba027944e78d756cec35fdb69cdc2e2ea17))
+
 ## [1.0.1](https://github.com/bcanfield/prisnext/compare/v1.0.0...v1.0.1) (2023-05-11)
 
 
