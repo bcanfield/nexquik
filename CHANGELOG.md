@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/bcanfield/prisnext/compare/v1.0.0...v1.0.1) (2023-05-11)
+
+
+### Bug Fixes
+
+* Troubleshoot workflow ([0ba8ccb](https://github.com/bcanfield/prisnext/commit/0ba8ccbd5e2ad5973dc555a9674af00255571400))
+
 # 1.0.0 (2023-05-11)
 
 
