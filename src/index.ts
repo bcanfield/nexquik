@@ -1,37 +1,63 @@
 #! /usr/bin/env node
-const { Command } = require("commander");
-const figlet = require("figlet");
-const fs = require("fs");
-const path = require("path");
+import { Command } from "commander";
+import figlet from "figlet";
+import fs from "fs";
+import path from "path";
+import chalk from "chalk";
+import {
+  getSchema,
+  printSchema,
+  Schema,
+  Enum,
+  Model,
+} from "@mrleebo/prisma-ast";
 
-async function listDirContents(filepath: string) {
+import { Block } from "@mrleebo/prisma-ast";
+
+export type PrismaSchemaSectionType = {
+  name: string;
+  value: Block;
+};
+
+export const sortPrismaSchema = async (path: string) => {
   try {
-    const files = await fs.promises.readdir(filepath);
-    const detailedFilesPromises = files.map(async (file: string) => {
-      let fileDetails = await fs.promises.lstat(path.resolve(filepath, file));
-      const { size, birthtime } = fileDetails;
-      return { filename: file, "size(KB)": size, created_at: birthtime };
+    const outPath = "./test.json";
+    const schema = fs.readFileSync(path, { encoding: "utf-8" });
+    const jsonSchema = getSchema(schema);
+    const models: Model[] = [];
+    const enums: Enum[] = [];
+    jsonSchema.list.forEach((section) => {
+      if (section.type === "model") {
+        models.push(section);
+      } else if (section.type === "enum") {
+        enums.push(section);
+      }
     });
-    const detailedFiles = await Promise.all(detailedFilesPromises);
-    console.table(detailedFiles);
-  } catch (error) {
-    console.error("Error occurred while reading the directory!", error);
-  }
-}
-const program = new Command();
 
+    fs.writeFileSync("./enums.json", JSON.stringify(enums));
+    fs.writeFileSync("./models.json", JSON.stringify(models));
+
+    console.log("Success.");
+  } catch (error) {
+    console.log("Failed.");
+    console.log(error);
+  }
+};
+
+const program = new Command();
+const defaultPrismaSchemaPath = "./prisma/schema.prisma";
 console.log(figlet.textSync("Prisnext"));
 program
   .version(require("../package.json").version)
   .description("An example CLI for managing a directory")
-  .option("-l, --ls  [value]", "List directory contents")
-  .option("-m, --mkdir <value>", "Create a directory")
-  .option("-t, --touch <value>", "Create a file")
+  .option("-schema <value>", "Path to prisma schema", defaultPrismaSchemaPath)
   .parse(process.argv);
 
 const options = program.opts();
-
-if (options.ls) {
-  const filepath = typeof options.ls === "string" ? options.ls : __dirname;
-  listDirContents(filepath);
+console.log({ options });
+if (options.Schema) {
+  console.log(
+    chalk.green.bold(`Looking for Prisma Schema at: ${options.Schema}`)
+  );
+  sortPrismaSchema(options.Schema);
 }

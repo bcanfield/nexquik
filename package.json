@@ -9,7 +9,25 @@
   },
   "scripts": {
     "build": "npx tsc",
+    "dev": "npm-watch",
+    "start": "node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "watch": {
+    "build": {
+      "patterns": [
+        "src/**"
+      ],
+      "ignore": [
+        "extension",
+        "node_modules"
+      ],
+      "extensions": [
+        "js",
+        "json",
+        "tsx"
+      ]
+    }
   },
   "author": "Brandin Canfield",
   "license": "MIT",
@@ -20,11 +38,17 @@
     "React"
   ],
   "dependencies": {
+    "@mrleebo/prisma-ast": "^0.5.2",
+    "chalk": "^4.1.2",
     "commander": "^10.0.1",
     "figlet": "^1.6.0"
   },
   "devDependencies": {
+    "@types/chalk": "^2.2.0",
+    "@types/commander": "^2.12.2",
+    "@types/figlet": "^1.5.6",
     "@types/node": "^20.1.2",
+    "npm-watch": "^0.11.0",
     "typescript": "^5.0.4"
   }
 }
