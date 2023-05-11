@@ -1,22 +1,39 @@
 name: "publish package to npm"
 
-on:
-  push:
-    branches:
-      - main
+on: push
 
 jobs:
-  publish:
+  release:
+    name: Release
     runs-on: ubuntu-latest
     steps:
-      - name: checkout
+      - name: Checkout
         uses: actions/checkout@v2
-      - name: node
+      - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: 16
+          node-version: 'lts/*'
           registry-url: https://registry.npmjs.org
-      - name: publish
-        run: npm publish --access public
+      - name: Install dependencies
+        run: npx ci
+      - name: Install semantic-release extra plugins
+        run: npm install --save-dev @semantic-release/changelog @semantic-release/git       
+      - name: Release
         env:
-          NODE_AUTH_TOKEN: ${{secrets.NPMAUTHTOKEN}}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx semantic-release
+  # publish:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: checkout
+  #       uses: actions/checkout@v2
+  #     - name: node
+  #       uses: actions/setup-node@v2
+  #       with:
+  #         node-version: 16
+  #         registry-url: https://registry.npmjs.org
+  #     - name: publish
+  #       run: npm publish --access public
+  #       env:
+  #         NODE_AUTH_TOKEN: ${{secrets.NPMAUTHTOKEN}}
