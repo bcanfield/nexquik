@@ -1,16 +1,11 @@
 #! /usr/bin/env node
+import { Enum, getSchema, Model } from "@mrleebo/prisma-ast";
+import chalk from "chalk";
 import { Command } from "commander";
 import figlet from "figlet";
 import fs from "fs";
+import { render } from "nunjucks";
 import path from "path";
-import chalk from "chalk";
-import {
-  getSchema,
-  printSchema,
-  Schema,
-  Enum,
-  Model,
-} from "@mrleebo/prisma-ast";
 
 import { Block } from "@mrleebo/prisma-ast";
 
@@ -56,6 +51,14 @@ export const generateNextComponents = async (
         JSON.stringify(`Testing for: ${model.name}`)
       );
     }
+    // Read one of our templates
+    render(
+      path.join(__dirname, "templates", "testTemplate.njk"),
+      { username: "Brandin" },
+      (err, output) => {
+        console.log({ err, output });
+      }
+    );
     console.log("Success.");
   } catch (error) {
     console.log("Failed.");
