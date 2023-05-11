@@ -46,19 +46,23 @@ export const generateNextComponents = async (
       if (!fs.existsSync(componentDirectory)) {
         fs.mkdirSync(componentDirectory);
       }
-      fs.writeFileSync(
-        `${componentDirectory}/page.tsx`,
-        JSON.stringify(`Testing for: ${model.name}`)
+      // fs.writeFileSync(
+      //   `${componentDirectory}/page.tsx`,
+      //   JSON.stringify(`Testing for: ${model.name}`)
+      // );
+      // Read one of our templates
+      render(
+        path.join(__dirname, "templates", "page", "page_base.njk"),
+        { functionName: `${model.name}Home`, pageName: `${model.name} - List` },
+        (err, output) => {
+          console.log({ err, output });
+          if (output) {
+            fs.writeFileSync(`${componentDirectory}/page.tsx`, output);
+          }
+        }
       );
     }
-    // Read one of our templates
-    render(
-      path.join(__dirname, "templates", "testTemplate.njk"),
-      { username: "Brandin" },
-      (err, output) => {
-        console.log({ err, output });
-      }
-    );
+
     console.log("Success.");
   } catch (error) {
     console.log("Failed.");
