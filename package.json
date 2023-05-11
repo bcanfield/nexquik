@@ -1,6 +1,6 @@
 {
   "name": "prisnext",
-  "version": "0.0.0-semantic-release",
+  "version": "1.0.3",
   "description": "Generate Next.js components from your Prisma Schema",
   "main": "dist/index.js",
   "repository": "https://github.com/bcanfield/prisnext",
@@ -24,6 +24,8 @@
     "figlet": "^1.6.0"
   },
   "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
     "@types/node": "^20.1.2",
     "typescript": "^5.0.4"
   }
