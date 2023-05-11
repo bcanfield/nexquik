@@ -17,10 +17,10 @@ jobs:
       - name: Install dependencies
         run: npx ci
       - name: Install semantic-release extra plugins
-        run: npm install --save-dev @semantic-release/changelog @semantic-release/git       
+        run: npm install --save-dev @semantic-release/changelog @semantic-release/git @semantic-release/npm      
       - name: Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPMAUTHTOKEN }}
         run: npx semantic-release
   # publish:
