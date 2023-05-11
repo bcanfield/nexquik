@@ -1,6 +1,9 @@
 name: "publish package to npm"
 
-on: push
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   publish:
