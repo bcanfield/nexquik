@@ -1,6 +1,6 @@
 {
   "name": "nexquik",
-  "version": "0.0.0-semantic-release",
+  "version": "1.0.3",
   "description": "Generate Next.js components from your Prisma Schema",
   "main": "dist/index.js",
   "repository": "https://github.com/bcanfield/nexquik",
@@ -35,9 +35,8 @@
     "nunjucks": "^3.2.4"
   },
   "devDependencies": {
-    "@types/chalk": "^2.2.0",
-    "@types/commander": "^2.12.2",
-    "@types/figlet": "^1.5.6",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
     "@types/node": "^20.1.2",
     "copyfiles": "^2.4.1",
     "npm-run-all": "^4.1.5",
