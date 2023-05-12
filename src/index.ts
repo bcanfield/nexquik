@@ -38,31 +38,93 @@ export const generateNextComponents = async (
     if (!fs.existsSync(outputDirectory)) {
       fs.mkdirSync(outputDirectory);
     }
-    // For model in models
-    // Create a nextjs app directory tree node in outDir
-    // In that file create crud
+
+    // Main app dir page
+    render(
+      path.join(__dirname, "templates", "page", "page_base.njk"),
+      {
+        functionName: `Home`,
+        pageName: `Home`,
+      },
+      (err, output) => {
+        if (output) {
+          fs.writeFileSync(`${outputDirectory}/page.tsx`, output);
+        }
+      }
+    );
+
     for (const model of models) {
+      // Main entity directory
       const componentDirectory = `${outputDirectory}/${model.name}`;
       if (!fs.existsSync(componentDirectory)) {
         fs.mkdirSync(componentDirectory);
       }
-      // fs.writeFileSync(
-      //   `${componentDirectory}/page.tsx`,
-      //   JSON.stringify(`Testing for: ${model.name}`)
-      // );
-      // Read one of our templates
+
+      //// List Page
       render(
         path.join(__dirname, "templates", "page", "page_base.njk"),
         { functionName: `${model.name}Home`, pageName: `${model.name} - List` },
         (err, output) => {
-          console.log({ err, output });
           if (output) {
             fs.writeFileSync(`${componentDirectory}/page.tsx`, output);
           }
         }
       );
-    }
 
+      //// Dynamic Directory
+      const dynamicDirectory = `${componentDirectory}/[id]`;
+      if (!fs.existsSync(dynamicDirectory)) {
+        fs.mkdirSync(dynamicDirectory);
+      }
+
+      ////// Show Page
+      render(
+        path.join(__dirname, "templates", "page", "page_base.njk"),
+        { functionName: `Show${model.name}`, pageName: `${model.name} - Show` },
+        (err, output) => {
+          if (output) {
+            fs.writeFileSync(`${dynamicDirectory}/page.tsx`, output);
+          }
+        }
+      );
+
+      ////// Edit Directory
+      const editDirectory = `${dynamicDirectory}/edit`;
+      if (!fs.existsSync(editDirectory)) {
+        fs.mkdirSync(editDirectory);
+      }
+
+      //////// Edit Page
+      render(
+        path.join(__dirname, "templates", "page", "page_base.njk"),
+        { functionName: `Edit${model.name}`, pageName: `${model.name} - Edit` },
+        (err, output) => {
+          if (output) {
+            fs.writeFileSync(`${editDirectory}/page.tsx`, output);
+          }
+        }
+      );
+
+      //// Create Directory
+      const createDirectory = `${componentDirectory}/create`;
+      if (!fs.existsSync(createDirectory)) {
+        fs.mkdirSync(createDirectory);
+      }
+
+      ////// Create Page
+      render(
+        path.join(__dirname, "templates", "page", "page_base.njk"),
+        {
+          functionName: `Create${model.name}`,
+          pageName: `${model.name} - Create`,
+        },
+        (err, output) => {
+          if (output) {
+            fs.writeFileSync(`${createDirectory}/page.tsx`, output);
+          }
+        }
+      );
+    }
     console.log("Success.");
   } catch (error) {
     console.log("Failed.");
@@ -74,7 +136,7 @@ const program = new Command();
 const defaultPrismaSchemaPath = "./prisma/schema.prisma";
 const defaultOutputDirectory = "./prisnextApp";
 
-console.log(figlet.textSync("Prisnext"));
+console.log(figlet.textSync("Nexquik"));
 
 program
   .version(require("../package.json").version)
