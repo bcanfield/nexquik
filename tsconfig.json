@@ -7,6 +7,8 @@
       "module": "commonjs",
       "sourceMap": true,
       "esModuleInterop": true,
-      "moduleResolution": "node"
+      "moduleResolution": "node",
+      "watch": false,
     }
+    , "exclude": ["prisnextApp/*", "lib/app/*", "dist/*"]
   }
