@@ -1,11 +1,11 @@
 {
-  "name": "prisnext",
+  "name": "nexquik",
   "version": "0.0.0-semantic-release",
   "description": "Generate Next.js components from your Prisma Schema",
   "main": "dist/index.js",
-  "repository": "https://github.com/bcanfield/prisnext",
+  "repository": "https://github.com/bcanfield/nexquik",
   "bin": {
-    "prisnext": "./dist/index.js"
+    "nexquik": "./dist/index.js"
   },
   "scripts": {
     "build": "npm-run-all build:*",
