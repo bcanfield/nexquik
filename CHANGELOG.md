@@ -1,3 +1,16 @@
+# [1.1.0](https://github.com/bcanfield/nexquik/compare/v1.0.3...v1.1.0) (2023-05-12)
+
+
+### Bug Fixes
+
+* Dependencies ([7898227](https://github.com/bcanfield/nexquik/commit/789822797645099304457d4daf44e71a8ea97bc1))
+* Dependencies ([b793e95](https://github.com/bcanfield/nexquik/commit/b793e954fe4554735bb587a8810c7ae348f81b98))
+
+
+### Features
+
+* Prisma schema inspection and initial directory and file generation ([#2](https://github.com/bcanfield/nexquik/issues/2)) ([4218db9](https://github.com/bcanfield/nexquik/commit/4218db9a1fcae3b2f20cb9f7cccc628ab56572c0))
+
 ## [1.0.3](https://github.com/bcanfield/prisnext/compare/v1.0.2...v1.0.3) (2023-05-11)
 
 
