@@ -1,0 +1,42 @@
+import { revalidatePath } from 'next/cache';
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { prisma } from '{{prismaImport}}';
+
+export default async function Create{{ entityName }}() {
+    async function add{{entityName}}(data: FormData) {
+        'use server';
+        const created = await prisma.{{entityName | lower}}.create({
+            {% for item in formElements %}
+    {{item.fieldName}}:
+    {% if item.inputType === "number" %}
+  Number(data.get('{{item.fieldName}}')),
+{% elif item.inputType === "text" %}
+  String(data.get('{{item.fieldName}}')),
+{% elif item.inputType === "checkbox" %}
+  Boolean(data.get('{{item.fieldName}}')),
+{% else %}
+data.get('{{item.fieldName}}'),
+{% endif %}
+{% else %}
+{% endfor %}
+        });
+        revalidatePath("/{{entityName | lower}}");
+        redirect(`/{{entityName | lower}}/${created.id}`);
+    }
+
+    return (
+        <div>
+    <h1>{{ entityName }} - Create</h1>
+    <form action={add{{entityName}}}>
+        {% for item in formElements %}
+            <label>{{item.fieldName}}</label>
+            <input type="{{item.inputType}}" name="{{item.fieldName}}" {{"required" if item.required}}/>
+        {% else %}
+        {% endfor %}
+        <Link href={"/{{entityName | lower}}"}>Cancel</Link>
+        <button type="submit">Create {{ entityName }}</button>
+</form>
+</div>
+);
+}

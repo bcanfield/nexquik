@@ -29,10 +29,12 @@
   "dependencies": {
     "@mrleebo/prisma-ast": "^0.5.2",
     "@types/nunjucks": "^3.2.2",
+    "@types/prettier": "^2.7.2",
     "chalk": "^4.1.2",
     "commander": "^10.0.1",
     "figlet": "^1.6.0",
-    "nunjucks": "^3.2.4"
+    "nunjucks": "^3.2.4",
+    "prettier": "^2.8.8"
   },
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.3",

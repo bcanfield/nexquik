@@ -1,13 +1,15 @@
 #! /usr/bin/env node
-import { Enum, getSchema, Model } from "@mrleebo/prisma-ast";
+import { Enum, Field, getSchema, Model, Property } from "@mrleebo/prisma-ast";
 import chalk from "chalk";
 import { Command } from "commander";
 import figlet from "figlet";
 import fs from "fs";
 import { render } from "nunjucks";
 import path from "path";
+import { format } from "prettier";
 
 import { Block } from "@mrleebo/prisma-ast";
+import { prismaToHtmlMap } from "./types";
 
 export type PrismaSchemaSectionType = {
   name: string;
@@ -16,7 +18,8 @@ export type PrismaSchemaSectionType = {
 
 export const generateNextComponents = async (
   schemaFilePath: string,
-  outputDirectory: string
+  outputDirectory: string,
+  prismaImport: string
 ) => {
   try {
     const outPath = "./test.json";
@@ -54,8 +57,9 @@ export const generateNextComponents = async (
     );
 
     for (const model of models) {
+      const lowerCaseModelName = model.name.toLowerCase();
       // Main entity directory
-      const componentDirectory = `${outputDirectory}/${model.name}`;
+      const componentDirectory = `${outputDirectory}/${lowerCaseModelName}`;
       if (!fs.existsSync(componentDirectory)) {
         fs.mkdirSync(componentDirectory);
       }
@@ -63,7 +67,10 @@ export const generateNextComponents = async (
       //// List Page
       render(
         path.join(__dirname, "templates", "page", "page_base.njk"),
-        { functionName: `${model.name}Home`, pageName: `${model.name} - List` },
+        {
+          functionName: `${model.name}Home`,
+          pageName: `${lowerCaseModelName} - List`,
+        },
         (err, output) => {
           if (output) {
             fs.writeFileSync(`${componentDirectory}/page.tsx`, output);
@@ -80,7 +87,10 @@ export const generateNextComponents = async (
       ////// Show Page
       render(
         path.join(__dirname, "templates", "page", "page_base.njk"),
-        { functionName: `Show${model.name}`, pageName: `${model.name} - Show` },
+        {
+          functionName: `Show${model.name}`,
+          pageName: `${lowerCaseModelName} - Show`,
+        },
         (err, output) => {
           if (output) {
             fs.writeFileSync(`${dynamicDirectory}/page.tsx`, output);
@@ -97,7 +107,10 @@ export const generateNextComponents = async (
       //////// Edit Page
       render(
         path.join(__dirname, "templates", "page", "page_base.njk"),
-        { functionName: `Edit${model.name}`, pageName: `${model.name} - Edit` },
+        {
+          functionName: `Edit${model.name}`,
+          pageName: `${lowerCaseModelName} - Edit`,
+        },
         (err, output) => {
           if (output) {
             fs.writeFileSync(`${editDirectory}/page.tsx`, output);
@@ -112,15 +125,55 @@ export const generateNextComponents = async (
       }
 
       ////// Create Page
+      interface FormElement {
+        fieldName: string;
+        inputType: string;
+        required: boolean;
+        options?: string[];
+      }
+
+      const formElements: FormElement[] = [];
+      for (const {
+        fieldType,
+        name,
+        attributes,
+        type,
+        comment,
+        optional,
+        array,
+      } of model.properties as Field[]) {
+        // If exists in our map, use that
+        // Else, check other elements
+        // console.log({ property });
+        const htmlInputType = prismaToHtmlMap[fieldType as string];
+        if (htmlInputType) {
+          // console.log("Field Type Found", { fieldType });
+          formElements.push({
+            fieldName: name,
+            inputType: htmlInputType,
+            required: !optional,
+          });
+        } else {
+          console.log("Field Type Not Found", { fieldType });
+        }
+      }
+      console.log({ formElements });
       render(
-        path.join(__dirname, "templates", "page", "page_base.njk"),
+        path.join(__dirname, "templates", "page", "page_create.njk"),
         {
           functionName: `Create${model.name}`,
           pageName: `${model.name} - Create`,
+          entityName: `${model.name}`,
+          formElements: formElements,
+          prismaImport: prismaImport,
         },
         (err, output) => {
+          console.log({ err });
           if (output) {
-            fs.writeFileSync(`${createDirectory}/page.tsx`, output);
+            fs.writeFileSync(
+              `${createDirectory}/page.tsx`,
+              format(output, { parser: "babel-ts" })
+            );
           }
         }
       );
@@ -134,6 +187,7 @@ export const generateNextComponents = async (
 
 const program = new Command();
 const defaultPrismaSchemaPath = "./prisma/schema.prisma";
+const defaultPrismaClientImportPath = "~/server/db";
 const defaultOutputDirectory = "./prisnextApp";
 
 console.log(figlet.textSync("Nexquik"));
@@ -147,6 +201,11 @@ program
     defaultPrismaSchemaPath
   )
   .option("-out <value>", "Path to output directory", defaultOutputDirectory)
+  .option(
+    "-prismaImport <value>",
+    "String to use for Prisma Import",
+    defaultPrismaClientImportPath
+  )
   .parse(process.argv);
 
 const options = program.opts();
@@ -156,7 +215,7 @@ if (options.Schema && options.Out) {
       `Looking for Prisma Schema at: ${options.Schema}`
     )}\n${chalk.cyanBright.bold(
       `Outputting generated files to: ${options.Out}`
-    )}`
+    )}\n${chalk.blue.bold(`Prisma Import Value: ${options.PrismaImport}`)}`
   );
-  generateNextComponents(options.Schema, options.Out);
+  generateNextComponents(options.Schema, options.Out, options.PrismaImport);
 }
