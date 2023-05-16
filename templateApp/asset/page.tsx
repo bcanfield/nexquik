@@ -6,11 +6,12 @@ export default async function ListAssets() {
   const asset = await prisma.asset.findMany();
   async function deleteAsset(formData: FormData) {
     "use server";
-    await prisma.asset.delete(
-      //@nexquik prismaDeleteInput
-      { where: { id: formData.get("id") } }
-      //@nexquik
-    );
+    await prisma.asset.delete({
+      where:
+        //@nexquik prismaWhereInput start
+        { id: formData.get("id") },
+      //@nexquik prismaWhereInput stop
+    });
     revalidatePath("/asset");
   }
   return (

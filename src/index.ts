@@ -16,21 +16,39 @@ export type PrismaSchemaSectionType = {
 };
 
 function generateConvertToPrismaInputCode(tableFields: TableField[]): string {
-  const convertToPrismaInputLines = tableFields.map(({ name, type }) => {
-    let typecastValue = `formData['${name}']`;
-    if (type === "Int" || type === "Float") {
-      typecastValue = `Number(${typecastValue})`;
-    } else if (type === "Boolean") {
-      typecastValue = `Boolean(${typecastValue})`;
-    }
+  const convertToPrismaInputLines = tableFields
+    .filter(({ isId }) => !isId)
+    .map(({ name, type }) => {
+      let typecastValue = `formData['${name}']`;
+      if (type === "Int" || type === "Float") {
+        typecastValue = `Number(${typecastValue})`;
+      } else if (type === "Boolean") {
+        typecastValue = `Boolean(${typecastValue})`;
+      }
 
-    return `    ${name}: ${typecastValue},`;
-  });
+      return `    ${name}: ${typecastValue},`;
+    });
 
   return `{
 ${convertToPrismaInputLines.join("\n")}
   }`;
 }
+
+function generateWhereClause(
+  tableName: string,
+  identifierFieldName: string,
+  identifierFieldType: string
+): string {
+  let typecastValue = `params.${identifierFieldName}`;
+  if (identifierFieldType === "Int" || identifierFieldType === "Float") {
+    typecastValue = `Number(${typecastValue})`;
+  } else if (identifierFieldType === "Boolean") {
+    typecastValue = `Boolean(${typecastValue})`;
+  }
+
+  return `{ ${identifierFieldName}: ${typecastValue} },`;
+}
+
 const formatNextJsFilesRecursively = async (directory) => {
   try {
     // Get a list of all files and directories in the current directory
@@ -241,6 +259,7 @@ const prismaFieldToInputType: Record<string, string> = {
 interface TableField {
   name: string;
   type: string;
+  isId: boolean;
 }
 
 async function generateReactForms(
@@ -331,14 +350,6 @@ async function generateReactForms(
         "{/* //@nexquik */}"
       );
 
-      await findAndReplaceInFiles(tableDirectory, "asset", tableName)
-        .then(() => {
-          console.log("Find and replace completed!");
-        })
-        .catch((err) => {
-          console.error(`Error during find and replace: ${err}`);
-        });
-
       const tableFields = await extractTableFields(tableName, prismaSchema);
       const prismaInput = generateConvertToPrismaInputCode(tableFields);
       addStringBetweenComments(
@@ -347,6 +358,25 @@ async function generateReactForms(
         "//@nexquik prismaDataInput start",
         "//@nexquik prismaDataInput stop"
       );
+      const identifierField = tableFields.find((field) => field.isId);
+      const whereClause = generateWhereClause(
+        tableName,
+        identifierField.name,
+        identifierField.type
+      );
+      addStringBetweenComments(
+        tableDirectory,
+        whereClause,
+        "//@nexquik prismaWhereInput start",
+        "//@nexquik prismaWhereInput stop"
+      );
+      await findAndReplaceInFiles(tableDirectory, "asset", tableName)
+        .then(() => {
+          console.log("Find and replace completed!");
+        })
+        .catch((err) => {
+          console.error(`Error during find and replace: ${err}`);
+        });
     }
   } catch (error) {
     console.error("Error occurred:", error);
@@ -437,14 +467,14 @@ async function extractTableFields(
   prismaSchema: string
 ): Promise<TableField[]> {
   const modelRegex = new RegExp(`model\\s+${tableName}\\s+{([\\s\\S]+?)}`, "g");
-  const fieldRegex = /\s+(\w+)\s+(\w+)(\?|\s+)?/g;
+  const fieldRegex = /\s+(\w+)\s+(\w+)(\?|\s+)?(\@\id)?/g; // Updated regex to capture `@id` attribute
   const match = modelRegex.exec(prismaSchema);
 
   const tableFields: TableField[] = [];
   let fieldMatch;
   while ((fieldMatch = fieldRegex.exec(match![1]))) {
-    const [, fieldName, fieldType] = fieldMatch;
-    tableFields.push({ name: fieldName, type: fieldType });
+    const [, fieldName, fieldType, , isId] = fieldMatch;
+    tableFields.push({ name: fieldName, type: fieldType, isId: !!isId });
   }
 
   return tableFields;
