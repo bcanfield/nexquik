@@ -8,9 +8,9 @@ export default async function ShowAsset({ params }) {
   async function deleteAsset(formData: FormData) {
     "use server";
     await prisma.asset.delete(
-      //@nexquik prismaDeleteInput
+      //@nexquik prismaDeleteClause start
       { where: { id: formData.get("id") } }
-      //@nexquik
+      //@nexquik prismaDeleteClause stop
     );
     revalidatePath(`/asset`);
     redirect(`/asset`);
@@ -18,6 +18,7 @@ export default async function ShowAsset({ params }) {
   return (
     <div>
       <h1> Assets - Show</h1>
+      {/* //@nexquik showForm start*/}
       <form>
         <input hidden type="text" name="id" defaultValue={asset?.id} />
         <Link href={`/asset`}>Back to All Assets</Link>
@@ -35,6 +36,7 @@ export default async function ShowAsset({ params }) {
           </li>
         </ul>
       </form>
+      {/* //@nexquik showForm stop*/}
     </div>
   );
 }

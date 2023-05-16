@@ -35,11 +35,11 @@ ${convertToPrismaInputLines.join("\n")}
 }
 
 function generateWhereClause(
-  tableName: string,
+  inputObject: string,
   identifierFieldName: string,
   identifierFieldType: string
 ): string {
-  let typecastValue = `params.${identifierFieldName}`;
+  let typecastValue = `${inputObject}.${identifierFieldName}`;
   if (identifierFieldType === "Int" || identifierFieldType === "Float") {
     typecastValue = `Number(${typecastValue})`;
   } else if (identifierFieldType === "Boolean") {
@@ -260,8 +260,31 @@ interface TableField {
   name: string;
   type: string;
   isId: boolean;
+  isRequired: boolean;
+  mapType: string;
 }
 
+function extractReferencedModels(
+  model: string,
+  prismaSchema: string
+): { fieldName: string; referencedModel: string }[] {
+  const referencedFields: { fieldName: string; referencedModel: string }[] = [];
+  const modelRegex = new RegExp(`model\\s+${model}\\s+{([\\s\\S]+?)}`, "g");
+  const fieldRegex = /(\w+)\s+(\w+)(\?|\s+)?(\@\id)?(\@\map\((.+)\))?/g;
+
+  const match = modelRegex.exec(prismaSchema);
+  if (match) {
+    let fieldMatch;
+    while ((fieldMatch = fieldRegex.exec(match[1]))) {
+      const [, fieldName, fieldType] = fieldMatch;
+      if (fieldType && prismaSchema.includes(`model ${fieldType}`)) {
+        referencedFields.push({ fieldName, referencedModel: fieldType });
+      }
+    }
+  }
+
+  return referencedFields;
+}
 async function generateReactForms(
   prismaSchemaPath: string,
   outputDirectory: string
@@ -289,6 +312,9 @@ async function generateReactForms(
 
     // Generate React forms for each table
     for (const tableName of tableNames) {
+      const referencedModels = extractReferencedModels(tableName, prismaSchema);
+      console.log({ referencedModels });
+
       // Let's just do a flat directory for now
       const tableDirectory = path.join(
         outputDirectory,
@@ -315,7 +341,11 @@ async function generateReactForms(
       );
 
       // EditForm
-      const editFormCode = await generateEditForm(tableName, prismaSchema);
+      const editFormCode = await generateEditForm(
+        tableName,
+        prismaSchema,
+        referencedModels
+      );
       console.log(`Edit form for table '${tableName}':`);
       console.log(editFormCode);
       console.log("---");
@@ -346,8 +376,8 @@ async function generateReactForms(
       addStringBetweenComments(
         tableDirectory,
         showFormCode,
-        "{/* //@nexquik showForm */}",
-        "{/* //@nexquik */}"
+        "{/* //@nexquik showForm start*/}",
+        "{/* //@nexquik showForm stop*/}"
       );
 
       const tableFields = await extractTableFields(tableName, prismaSchema);
@@ -360,7 +390,7 @@ async function generateReactForms(
       );
       const identifierField = tableFields.find((field) => field.isId);
       const whereClause = generateWhereClause(
-        tableName,
+        "params",
         identifierField.name,
         identifierField.type
       );
@@ -369,6 +399,19 @@ async function generateReactForms(
         whereClause,
         "//@nexquik prismaWhereInput start",
         "//@nexquik prismaWhereInput stop"
+      );
+
+      const deleteWhereClause = generateWhereClause(
+        "formData",
+        identifierField.name,
+        identifierField.type
+      );
+
+      addStringBetweenComments(
+        tableDirectory,
+        deleteWhereClause,
+        "//@nexquik prismaDeleteClause start",
+        "//@nexquik prismaDeleteClause stop"
       );
       await findAndReplaceInFiles(tableDirectory, "asset", tableName)
         .then(() => {
@@ -403,14 +446,17 @@ async function generateCreateForm(
 
 async function generateEditForm(
   tableName: string,
-  prismaSchema: string
+  prismaSchema: string,
+  referencedModels: { fieldName: string; referencedModel: string }[]
 ): Promise<string> {
   const tableFields = await extractTableFields(tableName, prismaSchema);
-  const formFields = generateFormFields(tableFields);
-
+  const formFields = generateFormFieldsWithDefaults(
+    tableFields,
+    referencedModels
+  );
   // Define the React component template as a string
   const reactComponentTemplate = `
-    <form onSubmit={editAsset}>
+  <form onSubmit={editAsset}>
       ${formFields}
       <button type="submit">Update Asset</button>
     </form>
@@ -467,14 +513,21 @@ async function extractTableFields(
   prismaSchema: string
 ): Promise<TableField[]> {
   const modelRegex = new RegExp(`model\\s+${tableName}\\s+{([\\s\\S]+?)}`, "g");
-  const fieldRegex = /\s+(\w+)\s+(\w+)(\?|\s+)?(\@\id)?/g; // Updated regex to capture `@id` attribute
+  const fieldRegex = /\s+(\w+)\s+(\w+)(\?|\s+)?(\@\id)?(\@\map\((.+)\))?/g; // Updated regex to capture `@id` and `@map` attributes
   const match = modelRegex.exec(prismaSchema);
 
   const tableFields: TableField[] = [];
   let fieldMatch;
   while ((fieldMatch = fieldRegex.exec(match![1]))) {
-    const [, fieldName, fieldType, , isId] = fieldMatch;
-    tableFields.push({ name: fieldName, type: fieldType, isId: !!isId });
+    const [, fieldName, fieldType, isOptional, isId, , mapType] = fieldMatch;
+    const isRequired = !isOptional || isOptional === "!";
+    tableFields.push({
+      name: fieldName,
+      type: fieldType,
+      isId: !!isId,
+      isRequired,
+      mapType,
+    });
   }
 
   return tableFields;
@@ -482,45 +535,77 @@ async function extractTableFields(
 
 function generateFormFields(tableFields: TableField[]): string {
   return tableFields
-    .map(({ name, type }) => {
+    .map(({ name, type, isRequired }) => {
       const inputType = prismaFieldToInputType[type] || "text";
-      return `<input type="${inputType}" name="${name}"/>`;
+      const required = isRequired ? "required" : "";
+
+      return `<input type="${inputType}" name="${name}" ${required}/>`;
     })
     .join("\n");
 }
 
-const program = new Command();
-const defaultPrismaSchemaPath = "./prisma/schema.prisma";
-const defaultPrismaClientImportPath = "~/server/db";
-const defaultOutputDirectory = "nexquikApp";
+function generateFormFieldsWithDefaults(
+  tableFields: TableField[],
+  referencedModels: { fieldName: string; referencedModel: string }[]
+): string {
+  return tableFields
+    .map(({ name, type, isId, isRequired, mapType }) => {
+      if (
+        mapType &&
+        referencedModels.some((model) => model.fieldName === name)
+      ) {
+        return "";
+      }
+      const inputType = prismaFieldToInputType[type] || "text";
+      const defaultValue = isId
+        ? `{asset.${name} || 'N/A'}`
+        : `{asset.${name}}`;
+      const disabled = isId ? "disabled" : "";
+      const required = isRequired ? "required" : "";
 
-console.log(figlet.textSync("Nexquik"));
-
-program
-  .version(require("../package.json").version)
-  .description("An example CLI for managing a directory")
-  .option(
-    "-schema <value>",
-    "Path to prisma schema file",
-    defaultPrismaSchemaPath
-  )
-  .option("-out <value>", "Path to output directory", defaultOutputDirectory)
-  .option(
-    "-prismaImport <value>",
-    "String to use for Prisma Import",
-    defaultPrismaClientImportPath
-  )
-  .parse(process.argv);
-
-const options = program.opts();
-if (options.Schema && options.Out) {
-  console.log(
-    `${chalk.green.bold(
-      `Looking for Prisma Schema at: ${options.Schema}`
-    )}\n${chalk.cyanBright.bold(
-      `Outputting generated files to: ${options.Out}`
-    )}\n${chalk.blue.bold(`Prisma Import Value: ${options.PrismaImport}`)}`
-  );
-  generateReactForms(options.Schema, options.Out);
-  formatNextJsFilesRecursively(options.Out);
+      return `<input type="${inputType}" name="${name}" value=${defaultValue}  ${disabled} ${required}/>`;
+    })
+    .join("\n");
 }
+
+async function main() {
+  const program = new Command();
+  const defaultPrismaSchemaPath = "./prisma/schema.prisma";
+  const defaultPrismaClientImportPath = "~/server/db";
+  const defaultOutputDirectory = "nexquikApp";
+
+  console.log(figlet.textSync("Nexquik"));
+
+  program
+    .version(require("../package.json").version)
+    .description("An example CLI for managing a directory")
+    .option(
+      "-schema <value>",
+      "Path to prisma schema file",
+      defaultPrismaSchemaPath
+    )
+    .option("-out <value>", "Path to output directory", defaultOutputDirectory)
+    .option(
+      "-prismaImport <value>",
+      "String to use for Prisma Import",
+      defaultPrismaClientImportPath
+    )
+    .parse(process.argv);
+
+  const options = program.opts();
+  if (options.Schema && options.Out) {
+    console.log(
+      `${chalk.green.bold(
+        `Looking for Prisma Schema at: ${options.Schema}`
+      )}\n${chalk.cyanBright.bold(
+        `Outputting generated files to: ${options.Out}`
+      )}\n${chalk.blue.bold(`Prisma Import Value: ${options.PrismaImport}`)}`
+    );
+    await generateReactForms(options.Schema, options.Out);
+    await formatNextJsFilesRecursively(options.Out);
+  }
+}
+
+main().then(() => {
+  console.log("Done.");
+});

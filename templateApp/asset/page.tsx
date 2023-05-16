@@ -8,9 +8,9 @@ export default async function ListAssets() {
     "use server";
     await prisma.asset.delete({
       where:
-        //@nexquik prismaWhereInput start
+        //@nexquik prismaDeleteClause start
         { id: formData.get("id") },
-      //@nexquik prismaWhereInput stop
+      //@nexquik prismaDeleteClause stop
     });
     revalidatePath("/asset");
   }
