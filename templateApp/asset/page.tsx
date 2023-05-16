@@ -18,10 +18,10 @@ export default async function ListAssets() {
     <div>
       <h1> Assets - List</h1>
       <Link href={`/asset/create`}>Create New Asset</Link>
+      {/* @nexquik listForm start */}
       <ul>
         {asset?.map((asset, index) => (
           <li key={index}>
-            {/* //@nexquik listForm */}
             <form>
               <input hidden type="text" name="id" defaultValue={asset?.id} />
               <p>name: {asset.name}</p>
@@ -31,10 +31,10 @@ export default async function ListAssets() {
               <Link href={`/asset/${asset.id}/edit`}>Edit</Link>
               <button formAction={deleteAsset}>Delete</button>
             </form>
-            {/* //@nexquik */}
           </li>
         ))}
       </ul>
+      {/* @nexquik listForm stop */}
     </div>
   );
 }

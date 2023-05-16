@@ -24,7 +24,7 @@ export default async function CreateAsset() {
   return (
     <div>
       <h1> Assets - Create</h1>
-      {/* //@nexquik createForm */}
+      {/* @nexquik createForm start */}
       <form action={addAsset}>
         <label>name</label>
         <input type="text" name="name" />
@@ -35,7 +35,7 @@ export default async function CreateAsset() {
         <Link href={`/asset`}>Cancel</Link>
         <button type="submit">Create Asset</button>
       </form>
-      {/* //@nexquik */}
+      {/* @nexquik createForm stop */}
     </div>
   );
 }

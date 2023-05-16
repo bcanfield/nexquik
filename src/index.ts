@@ -78,10 +78,8 @@ const formatNextJsFilesRecursively = async (directory) => {
         await formatNextJsFilesRecursively(entryPath);
       }
     }
-
-    console.log("All Next.js files have been formatted successfully!");
   } catch (error) {
-    console.error("An error occurred:", error);
+    console.error("An error occurred while formatting files:", error);
   }
 };
 
@@ -223,26 +221,19 @@ function addStringBetweenComments(
     } else {
       // Read file contents
       let fileContent = fs.readFileSync(filePath, "utf8");
-
       // Check if both comments exist in the file
-      if (
+      while (
         fileContent.includes(startComment) &&
         fileContent.includes(endComment)
       ) {
-        // Replace the content between the comments with the insert string
-        const startIndex =
-          fileContent.indexOf(startComment) + startComment.length;
-        const endIndex = fileContent.indexOf(endComment);
+        // Replace the content between the comments and the comments themselves with the insert string
+        const startIndex = fileContent.indexOf(startComment);
+        const endIndex = fileContent.indexOf(endComment) + endComment.length;
         const contentToRemove = fileContent.slice(startIndex, endIndex);
         fileContent = fileContent.replace(contentToRemove, insertString);
-
-        // Remove the comments
-        fileContent = fileContent.replace(startComment, "");
-        fileContent = fileContent.replace(endComment, "");
-
-        // Write the modified content back to the file
-        fs.writeFileSync(filePath, fileContent);
       }
+      // Write the modified content back to the file
+      fs.writeFileSync(filePath, fileContent);
     }
   });
 } // Part 2 End
@@ -330,14 +321,11 @@ async function generateReactForms(
 
       // CreateForm
       const createFormCode = await generateCreateForm(tableName, prismaSchema);
-      console.log(`Create form for table '${tableName}':`);
-      console.log(createFormCode);
-      console.log("---");
       addStringBetweenComments(
         tableDirectory,
         createFormCode,
-        "{/* //@nexquik createForm */}",
-        "{/* //@nexquik */}"
+        "{/* @nexquik createForm start */}",
+        "{/* @nexquik createForm stop */}"
       );
 
       // EditForm
@@ -346,38 +334,29 @@ async function generateReactForms(
         prismaSchema,
         referencedModels
       );
-      console.log(`Edit form for table '${tableName}':`);
-      console.log(editFormCode);
-      console.log("---");
       addStringBetweenComments(
         tableDirectory,
         editFormCode,
-        "{/* //@nexquik editForm */}",
-        "{/* //@nexquik */}"
+        "{/* @nexquik editForm start */}",
+        "{/* @nexquik editForm stop */}"
       );
 
       // HomeForm
       const listFormCode = await generateListForm(tableName, prismaSchema);
-      console.log(`Edit form for table '${tableName}':`);
-      console.log(listFormCode);
-      console.log("---");
       addStringBetweenComments(
         tableDirectory,
         listFormCode,
-        "{/* //@nexquik listForm */}",
-        "{/* //@nexquik */}"
+        "{/* @nexquik listForm start */}",
+        "{/* @nexquik listForm stop */}"
       );
 
       // ShowForm
       const showFormCode = await generateShowForm(tableName, prismaSchema);
-      console.log(`Edit form for table '${tableName}':`);
-      console.log(showFormCode);
-      console.log("---");
       addStringBetweenComments(
         tableDirectory,
         showFormCode,
-        "{/* //@nexquik showForm start*/}",
-        "{/* //@nexquik showForm stop*/}"
+        "{/* @nexquik showForm start */}",
+        "{/* @nexquik showForm stop */}"
       );
 
       const tableFields = await extractTableFields(tableName, prismaSchema);
@@ -473,14 +452,21 @@ async function generateListForm(
 
   // Define the React component template as a string
   const reactComponentTemplate = `
-    <form onSubmit={editAsset}>
-      ${tableFields.map(({ name }) => {
-        return `<p> ${name} {asset.${name}} </p>`;
-      })}
-      <Link href={\`/asset/\${asset.id}\`}>View</Link>
-      <Link href={\`/asset/\${asset.id}/edit\`}>Edit</Link>
-      <button formAction={deleteAsset}>Delete</button>
+  <ul>
+  {asset?.map((asset, index) => (
+    <li key={index}>
+      <form>
+        <input hidden type="text" name="id" defaultValue={asset?.id} />
+        ${tableFields.map(({ name }) => {
+          return `<p> ${name} {asset.${name}} </p>`;
+        })}
+        <Link href={\`/asset/\${asset.id}\`}>View</Link>
+        <Link href={\`/asset/\${asset.id}/edit\`}>Edit</Link>
+        <button formAction={deleteAsset}>Delete</button>
       </form>
+    </li>
+  ))}
+</ul>
 `;
 
   return reactComponentTemplate;
@@ -493,11 +479,18 @@ async function generateShowForm(
   const tableFields = await extractTableFields(tableName, prismaSchema);
   const formFields = generateFormFields(tableFields);
 
+  const uniqueField = tableFields.find((tableField) => tableField.isId);
+  const uniqueFieldInputType =
+    prismaFieldToInputType[uniqueField.type] || "text";
+
   // Define the React component template as a string
   const reactComponentTemplate = `
+  <input hidden type="${uniqueFieldInputType}" name="${
+    uniqueField.name
+  }" defaultValue={asset?.${uniqueField.name}} />
   <form onSubmit={editAsset}>
   <Link href={\`/asset/\`}>Back to All Assets</Link>
-  <Link href={\`/asset/\${asset.id}/edit\`}>Edit</Link>
+  <Link href={\`/asset/\${asset.${uniqueField.name}}/edit\`}>Edit</Link>
   <button formAction={deleteAsset}>Delete</button>
   ${tableFields.map(({ name }) => {
     return `<p> ${name} {asset.${name}} </p>`;

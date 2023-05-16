@@ -3,7 +3,12 @@ import { redirect } from "next/navigation";
 import { prisma } from "utils/db";
 
 export default async function EditAsset({ params }) {
-  const asset = await prisma.asset.findUnique({ where: { id: params.id } });
+  const asset = await prisma.asset.findUnique({
+    where:
+      //@nexquik prismaWhereInput start
+      { id: params.id },
+    //@nexquik prismaWhereInput stop
+  });
 
   async function editAsset(formData: FormData) {
     "use server";
@@ -23,7 +28,7 @@ export default async function EditAsset({ params }) {
   return (
     <div>
       <h1> Assets - Edit</h1>
-      {/* //@nexquik editForm */}
+      {/* @nexquik editForm start */}
       <form action={editAsset}>
         <label>name</label>
         <input type="text" name="name" defaultValue={asset?.name} />
@@ -34,7 +39,7 @@ export default async function EditAsset({ params }) {
         <Link href={`/asset/${params.id}`}>Cancel</Link>
         <button type="submit">Update Asset</button>
       </form>
-      {/* //@nexquik */}
+      {/* @nexquik editForm stop */}
     </div>
   );
 }

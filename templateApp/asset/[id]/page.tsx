@@ -4,7 +4,12 @@ import { redirect } from "next/navigation";
 import { prisma } from "utils/db";
 
 export default async function ShowAsset({ params }) {
-  const asset = await prisma.asset.findUnique({ where: { id: params.id } });
+  const asset = await prisma.asset.findUnique({
+    where:
+      //@nexquik prismaWhereInput start
+      { id: params.id },
+    //@nexquik prismaWhereInput stop
+  });
   async function deleteAsset(formData: FormData) {
     "use server";
     await prisma.asset.delete(
@@ -18,7 +23,7 @@ export default async function ShowAsset({ params }) {
   return (
     <div>
       <h1> Assets - Show</h1>
-      {/* //@nexquik showForm start*/}
+      {/* @nexquik showForm start */}
       <form>
         <input hidden type="text" name="id" defaultValue={asset?.id} />
         <Link href={`/asset`}>Back to All Assets</Link>
@@ -36,7 +41,7 @@ export default async function ShowAsset({ params }) {
           </li>
         </ul>
       </form>
-      {/* //@nexquik showForm stop*/}
+      {/* @nexquik showForm stop */}
     </div>
   );
 }
