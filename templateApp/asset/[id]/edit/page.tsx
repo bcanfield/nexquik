@@ -12,12 +12,13 @@ export default async function EditAsset({ params }) {
       { where: { id: params.id }, data: { name: formData.get("name") } }
       //@nexquik
     );
-    redirect(`/assets/${params.id}`);
+    redirect(`/asset/${params.id}`);
   }
 
   return (
     <div>
       <h1> Assets - Edit</h1>
+      {/* //@nexquik editForm */}
       <form action={editAsset}>
         <label>name</label>
         <input type="text" name="name" defaultValue={asset?.name} />
@@ -25,9 +26,10 @@ export default async function EditAsset({ params }) {
         <input type="num" name="lat" defaultValue={asset?.lat} />
         <label>lng</label>
         <input type="number" name="lng" defaultValue={asset?.lng} />
-        <Link href={`/assets/${params.id}`}>Cancel</Link>
+        <Link href={`/asset/${params.id}`}>Cancel</Link>
         <button type="submit">Update Asset</button>
       </form>
+      {/* //@nexquik */}
     </div>
   );
 }

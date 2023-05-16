@@ -15,14 +15,14 @@ export default async function CreateAsset() {
       },
       //@nexquik
     });
-    revalidatePath(`/assets`);
-    redirect(`/assets/${created.id}`);
+    revalidatePath(`/asset`);
+    redirect(`/asset/${created.id}`);
   }
 
   return (
     <div>
       <h1> Assets - Create</h1>
-      {/* //@nexquik form */}
+      {/* //@nexquik createForm */}
       <form action={addAsset}>
         <label>name</label>
         <input type="text" name="name" />
@@ -30,7 +30,7 @@ export default async function CreateAsset() {
         <input type="number" name="lat" />
         <label>lng</label>
         <input type="number" name="lng" />
-        <Link href={`/assets`}>Cancel</Link>
+        <Link href={`/asset`}>Cancel</Link>
         <button type="submit">Create Asset</button>
       </form>
       {/* //@nexquik */}

@@ -12,16 +12,16 @@ export default async function ShowAsset({ params }) {
       { where: { id: data.get("id") } }
       //@nexquik
     );
-    revalidatePath(`/assets`);
-    redirect(`/assets`);
+    revalidatePath(`/asset`);
+    redirect(`/asset`);
   }
   return (
     <div>
       <h1> Assets - Show</h1>
       <form>
         <input hidden type="text" name="id" defaultValue={asset?.id} />
-        <Link href={`/assets`}>Back to All Assets</Link>
-        <Link href={`/assets/${asset?.id}/edit`}>Edit</Link>
+        <Link href={`/asset`}>Back to All Assets</Link>
+        <Link href={`/asset/${asset?.id}/edit`}>Edit</Link>
         <button formAction={deleteAsset}>Delete</button>
         <ul>
           <li>

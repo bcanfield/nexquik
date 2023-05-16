@@ -86,6 +86,31 @@ const findAndReplaceInFiles = async (
   }
 };
 
+function copyFileToDirectory(
+  sourcePath: string,
+  destinationDirectory: string
+): void {
+  const fileName = path.basename(sourcePath);
+  const destinationPath = path.join(destinationDirectory, fileName);
+
+  const readStream = fs.createReadStream(sourcePath);
+  const writeStream = fs.createWriteStream(destinationPath);
+
+  readStream.on("error", (error) => {
+    console.error(`Error reading file: ${error}`);
+  });
+
+  writeStream.on("error", (error) => {
+    console.error(`Error writing file: ${error}`);
+  });
+
+  writeStream.on("finish", () => {
+    console.log(`File "${fileName}" copied to "${destinationDirectory}"`);
+  });
+
+  readStream.pipe(writeStream);
+}
+
 const preserveCase = (
   originalString: string,
   searchString: string,
@@ -219,27 +244,74 @@ async function generateReactForms(
     if (!fs.existsSync(outputDirectory)) {
       fs.mkdirSync(outputDirectory);
     }
+    // Copy over the root page
+    const rootPageName = "page.tsx";
+
+    copyFileToDirectory(
+      path.join(__dirname, "templateApp", rootPageName),
+      outputDirectory
+    );
+
     // Generate React forms for each table
     for (const tableName of tableNames) {
-      const formCode = await generateCreateForm(tableName, prismaSchema);
-      console.log(`React form for table '${tableName}':`);
-      console.log(formCode);
-      console.log("---");
-
       // Let's just do a flat directory for now
       const tableDirectory = path.join(
         outputDirectory,
         tableName.toLowerCase()
       );
       copyDirectory(
-        path.join(__dirname, "templateApp", "assets"),
+        path.join(__dirname, "templateApp", "asset"),
         tableDirectory,
         true
       );
+
+      // Copy in our nexquik items
+
+      // CreateForm
+      const createFormCode = await generateCreateForm(tableName, prismaSchema);
+      console.log(`Create form for table '${tableName}':`);
+      console.log(createFormCode);
+      console.log("---");
       addStringBetweenComments(
         tableDirectory,
-        formCode,
-        "{/* //@nexquik form */}",
+        createFormCode,
+        "{/* //@nexquik createForm */}",
+        "{/* //@nexquik */}"
+      );
+
+      // EditForm
+      const editFormCode = await generateEditForm(tableName, prismaSchema);
+      console.log(`Edit form for table '${tableName}':`);
+      console.log(editFormCode);
+      console.log("---");
+      addStringBetweenComments(
+        tableDirectory,
+        editFormCode,
+        "{/* //@nexquik editForm */}",
+        "{/* //@nexquik */}"
+      );
+
+      // HomeForm
+      const listFormCode = await generateListForm(tableName, prismaSchema);
+      console.log(`Edit form for table '${tableName}':`);
+      console.log(listFormCode);
+      console.log("---");
+      addStringBetweenComments(
+        tableDirectory,
+        listFormCode,
+        "{/* //@nexquik listForm */}",
+        "{/* //@nexquik */}"
+      );
+
+      // ShowForm
+      const showFormCode = await generateShowForm(tableName, prismaSchema);
+      console.log(`Edit form for table '${tableName}':`);
+      console.log(showFormCode);
+      console.log("---");
+      addStringBetweenComments(
+        tableDirectory,
+        showFormCode,
+        "{/* //@nexquik showForm */}",
         "{/* //@nexquik */}"
       );
 
@@ -265,10 +337,71 @@ async function generateCreateForm(
 
   // Define the React component template as a string
   const reactComponentTemplate = `
-    <form onSubmit={add${tableName}}>
+    <form onSubmit={addAsset}>
       ${formFields}
-      <button type="submit">Create ${tableName}</button>
+      <button type="submit">Create Asset</button>
     </form>
+`;
+
+  return reactComponentTemplate;
+}
+
+async function generateEditForm(
+  tableName: string,
+  prismaSchema: string
+): Promise<string> {
+  const tableFields = await extractTableFields(tableName, prismaSchema);
+  const formFields = generateFormFields(tableFields);
+
+  // Define the React component template as a string
+  const reactComponentTemplate = `
+    <form onSubmit={editAsset}>
+      ${formFields}
+      <button type="submit">Update Asset</button>
+    </form>
+`;
+
+  return reactComponentTemplate;
+}
+
+async function generateListForm(
+  tableName: string,
+  prismaSchema: string
+): Promise<string> {
+  const tableFields = await extractTableFields(tableName, prismaSchema);
+
+  // Define the React component template as a string
+  const reactComponentTemplate = `
+    <form onSubmit={editAsset}>
+      ${tableFields.map(({ name }) => {
+        return `<p> ${name} {asset.${name}} </p>`;
+      })}
+      <Link href={\`/asset/\${asset.id}\`}>View</Link>
+      <Link href={\`/asset/\${asset.id}/edit\`}>Edit</Link>
+      <button formAction={deleteAsset}>Delete</button>
+      </form>
+`;
+
+  return reactComponentTemplate;
+}
+
+async function generateShowForm(
+  tableName: string,
+  prismaSchema: string
+): Promise<string> {
+  const tableFields = await extractTableFields(tableName, prismaSchema);
+  const formFields = generateFormFields(tableFields);
+
+  // Define the React component template as a string
+  const reactComponentTemplate = `
+  <form onSubmit={editAsset}>
+  <Link href={\`/asset/\`}>Back to All Assets</Link>
+  <Link href={\`/asset/\${asset.id}/edit\`}>Edit</Link>
+  <button formAction={deleteAsset}>Delete</button>
+  ${tableFields.map(({ name }) => {
+    return `<p> ${name} {asset.${name}} </p>`;
+  })}
+  </form>
 `;
 
   return reactComponentTemplate;
