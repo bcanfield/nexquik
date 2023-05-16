@@ -15,11 +15,19 @@ export type PrismaSchemaSectionType = {
   value: Block;
 };
 
-function generateConvertToPrismaInputCode(tableFields: TableField[]): string {
+function generateConvertToPrismaInputCode(
+  tableFields: TableField[],
+  referencedModels: { fieldName: string; referencedModel: string }[]
+): string {
+  console.log({ referencedModels });
   const convertToPrismaInputLines = tableFields
     .filter(({ isId }) => !isId)
+    .filter(
+      ({ name }) =>
+        !referencedModels.some(({ fieldName }) => name === fieldName)
+    )
     .map(({ name, type }) => {
-      let typecastValue = `formData['${name}']`;
+      let typecastValue = `formData.get('${name}')`;
       if (type === "Int" || type === "Float") {
         typecastValue = `Number(${typecastValue})`;
       } else if (type === "Boolean") {
@@ -40,6 +48,20 @@ function generateWhereClause(
   identifierFieldType: string
 ): string {
   let typecastValue = `${inputObject}.${identifierFieldName}`;
+  if (identifierFieldType === "Int" || identifierFieldType === "Float") {
+    typecastValue = `Number(${typecastValue})`;
+  } else if (identifierFieldType === "Boolean") {
+    typecastValue = `Boolean(${typecastValue})`;
+  }
+
+  return `{ ${identifierFieldName}: ${typecastValue} },`;
+}
+
+function generateDeleteClause(
+  identifierFieldName: string,
+  identifierFieldType: string
+): string {
+  let typecastValue = `formData.get('${identifierFieldName}')`;
   if (identifierFieldType === "Int" || identifierFieldType === "Float") {
     typecastValue = `Number(${typecastValue})`;
   } else if (identifierFieldType === "Boolean") {
@@ -318,7 +340,11 @@ async function generateReactForms(
       );
 
       // CreateForm
-      const createFormCode = await generateCreateForm(tableName, prismaSchema);
+      const createFormCode = await generateCreateForm(
+        tableName,
+        prismaSchema,
+        referencedModels
+      );
       addStringBetweenComments(
         tableDirectory,
         createFormCode,
@@ -366,7 +392,11 @@ async function generateReactForms(
       );
 
       // HomeForm
-      const listFormCode = await generateListForm(tableName, prismaSchema);
+      const listFormCode = await generateListForm(
+        tableName,
+        prismaSchema,
+        referencedModels
+      );
       addStringBetweenComments(
         tableDirectory,
         listFormCode,
@@ -375,7 +405,11 @@ async function generateReactForms(
       );
 
       // ShowForm
-      const showFormCode = await generateShowForm(tableName, prismaSchema);
+      const showFormCode = await generateShowForm(
+        tableName,
+        prismaSchema,
+        referencedModels
+      );
       addStringBetweenComments(
         tableDirectory,
         showFormCode,
@@ -386,7 +420,10 @@ async function generateReactForms(
       const tableFields = await extractTableFields(tableName, prismaSchema);
       const uniqueField = tableFields.find((tableField) => tableField.isId);
 
-      const prismaInput = generateConvertToPrismaInputCode(tableFields);
+      const prismaInput = generateConvertToPrismaInputCode(
+        tableFields,
+        referencedModels
+      );
       addStringBetweenComments(
         tableDirectory,
         prismaInput,
@@ -406,8 +443,7 @@ async function generateReactForms(
         "//@nexquik prismaWhereInput stop"
       );
 
-      const deleteWhereClause = generateWhereClause(
-        "formData",
+      const deleteWhereClause = generateDeleteClause(
         identifierField.name,
         identifierField.type
       );
@@ -439,10 +475,12 @@ async function generateReactForms(
 
 async function generateCreateForm(
   tableName: string,
-  prismaSchema: string
+  prismaSchema: string,
+  referencedModels: { fieldName: string; referencedModel: string }[]
 ): Promise<string> {
   const tableFields = await extractTableFields(tableName, prismaSchema);
-  const formFields = generateFormFields(tableFields);
+
+  const formFields = generateFormFields(tableFields, referencedModels);
 
   // Define the React component template as a string
   const reactComponentTemplate = `
@@ -492,9 +530,12 @@ async function generateEditForm(
 
 async function generateListForm(
   tableName: string,
-  prismaSchema: string
+  prismaSchema: string,
+  referencedModels: { fieldName: string; referencedModel: string }[]
 ): Promise<string> {
-  const tableFields = await extractTableFields(tableName, prismaSchema);
+  const tableFields = await (
+    await extractTableFields(tableName, prismaSchema)
+  ).filter((tf) => !referencedModels.some((rm) => rm.fieldName === tf.name));
   const uniqueField = tableFields.find((tableField) => tableField.isId);
   const uniqueFieldInputType =
     prismaFieldToInputType[uniqueField.type] || "text";
@@ -525,10 +566,11 @@ async function generateListForm(
 
 async function generateShowForm(
   tableName: string,
-  prismaSchema: string
+  prismaSchema: string,
+  referencedModels: { fieldName: string; referencedModel: string }[]
 ): Promise<string> {
   const tableFields = await extractTableFields(tableName, prismaSchema);
-  const formFields = generateFormFields(tableFields);
+  const formFields = generateFormFields(tableFields, referencedModels);
 
   const uniqueField = tableFields.find((tableField) => tableField.isId);
   const uniqueFieldInputType =
@@ -577,9 +619,18 @@ async function extractTableFields(
   return tableFields;
 }
 
-function generateFormFields(tableFields: TableField[]): string {
+function generateFormFields(
+  tableFields: TableField[],
+  referencedModels: { fieldName: string; referencedModel: string }[]
+): string {
   return tableFields
-    .map(({ name, type, isRequired }) => {
+    .map(({ name, type, isRequired, mapType }) => {
+      if (
+        mapType &&
+        referencedModels.some((model) => model.fieldName === name)
+      ) {
+        return "";
+      }
       const inputType = prismaFieldToInputType[type] || "text";
       const required = isRequired ? "required" : "";
 
