@@ -1,194 +1,310 @@
 #! /usr/bin/env node
-import { Enum, Field, getSchema, Model, Property } from "@mrleebo/prisma-ast";
 import chalk from "chalk";
 import { Command } from "commander";
 import figlet from "figlet";
-import fs from "fs";
-import { render } from "nunjucks";
-import path from "path";
-import { format } from "prettier";
-
+// import fs from "fs";
 import { Block } from "@mrleebo/prisma-ast";
-import { prismaToHtmlMap } from "./types";
+import path from "path";
+import prettier from "prettier";
+const fs = require("fs");
+const { promisify } = require("util");
+const readFileAsync = promisify(fs.readFile);
 
 export type PrismaSchemaSectionType = {
   name: string;
   value: Block;
 };
 
-export const generateNextComponents = async (
-  schemaFilePath: string,
-  outputDirectory: string,
-  prismaImport: string
-) => {
+const formatNextJsFilesRecursively = async (directory) => {
   try {
-    const outPath = "./test.json";
-    const schema = fs.readFileSync(schemaFilePath, { encoding: "utf-8" });
-    const jsonSchema = getSchema(schema);
-    const models: Model[] = [];
-    const enums: Enum[] = [];
-    jsonSchema.list.forEach((section) => {
-      if (section.type === "model") {
-        models.push(section);
-      } else if (section.type === "enum") {
-        enums.push(section);
+    // Get a list of all files and directories in the current directory
+    const entries = await fs.promises.readdir(directory);
+
+    for (const entry of entries) {
+      const entryPath = path.join(directory, entry);
+
+      // Check if the entry is a file
+      const isFile = (await fs.promises.stat(entryPath)).isFile();
+
+      if (isFile) {
+        // Filter the file to include only Next.js files (e.g., .js, .jsx, .ts, .tsx)
+        if (/\.(jsx?|tsx?)$/.test(path.extname(entry))) {
+          const fileContents = await fs.promises.readFile(entryPath, "utf8");
+
+          // Format the file contents using Prettier
+          const formattedContents = prettier.format(fileContents, {
+            parser: "babel-ts", // Specify the parser according to your project's configuration
+          });
+
+          // Write the formatted contents back to the file
+          await fs.promises.writeFile(entryPath, formattedContents);
+        }
+      } else {
+        // If the entry is a directory, recursively call the function for that directory
+        await formatNextJsFilesRecursively(entryPath);
       }
-    });
+    }
 
-    fs.writeFileSync("./enums.json", JSON.stringify(enums));
-    fs.writeFileSync("./models.json", JSON.stringify(models));
+    console.log("All Next.js files have been formatted successfully!");
+  } catch (error) {
+    console.error("An error occurred:", error);
+  }
+};
 
+const findAndReplaceInFiles = async (
+  directoryPath: string,
+  searchString: string,
+  replacementString: string
+): Promise<void> => {
+  try {
+    const files = await promisify(fs.readdir)(directoryPath);
+
+    for (const file of files) {
+      const filePath = path.join(directoryPath, file);
+      const stats = await promisify(fs.stat)(filePath);
+
+      if (stats.isFile()) {
+        let fileContents = await promisify(fs.readFile)(filePath, "utf8");
+        const regex = new RegExp(searchString, "gi");
+        fileContents = fileContents.replace(regex, (match) => {
+          const preservedCaseString = preserveCase(
+            match,
+            searchString,
+            replacementString
+          );
+          return preservedCaseString;
+        });
+
+        await promisify(fs.writeFile)(filePath, fileContents, "utf8");
+        console.log(`File '${filePath}' processed successfully.`);
+      } else if (stats.isDirectory()) {
+        await findAndReplaceInFiles(filePath, searchString, replacementString);
+      }
+    }
+  } catch (err) {
+    console.error(`Error processing files: ${err}`);
+  }
+};
+
+const preserveCase = (
+  originalString: string,
+  searchString: string,
+  replacementString: string
+): string => {
+  const isUpperCase = originalString === originalString.toUpperCase();
+  const isLowerCase = originalString === originalString.toLowerCase();
+
+  if (isUpperCase) {
+    return replacementString.toUpperCase();
+  } else if (isLowerCase) {
+    return replacementString.toLowerCase();
+  } else if (searchString.charAt(0).toUpperCase() === searchString.charAt(0)) {
+    return (
+      replacementString.charAt(0).toUpperCase() + replacementString.slice(1)
+    );
+  } else {
+    return replacementString;
+  }
+};
+// Part 2 Begin
+function copyDirectory(
+  sourceDir: string,
+  destinationDir: string,
+  toReplace: boolean = false
+): void {
+  if (toReplace && fs.existsSync(destinationDir)) {
+    fs.rmSync(destinationDir, { recursive: true });
+  }
+
+  // Create destination directory if it doesn't exist
+  if (!fs.existsSync(destinationDir)) {
+    fs.mkdirSync(destinationDir);
+  }
+
+  // Read the contents of the source directory
+  const files = fs.readdirSync(sourceDir);
+
+  files.forEach((file) => {
+    const sourceFile = path.join(sourceDir, file);
+    const destinationFile = path.join(destinationDir, file);
+
+    // Check if the file is a directory
+    if (fs.statSync(sourceFile).isDirectory()) {
+      // Recursively copy subdirectories
+      copyDirectory(sourceFile, destinationFile, toReplace);
+    } else {
+      // Copy file if it doesn't exist in the destination directory
+      if (!fs.existsSync(destinationFile)) {
+        fs.copyFileSync(sourceFile, destinationFile);
+      }
+    }
+  });
+}
+
+function addStringBetweenComments(
+  directory: string,
+  insertString: string,
+  startComment: string,
+  endComment: string
+): void {
+  const files = fs.readdirSync(directory);
+
+  files.forEach((file) => {
+    const filePath = path.join(directory, file);
+
+    // Check if the file is a directory
+    if (fs.statSync(filePath).isDirectory()) {
+      // Recursively process subdirectories
+      addStringBetweenComments(
+        filePath,
+        insertString,
+        startComment,
+        endComment
+      );
+    } else {
+      // Read file contents
+      let fileContent = fs.readFileSync(filePath, "utf8");
+
+      // Check if both comments exist in the file
+      if (
+        fileContent.includes(startComment) &&
+        fileContent.includes(endComment)
+      ) {
+        // Replace the content between the comments with the insert string
+        const startIndex =
+          fileContent.indexOf(startComment) + startComment.length;
+        const endIndex = fileContent.indexOf(endComment);
+        const contentToRemove = fileContent.slice(startIndex, endIndex);
+        fileContent = fileContent.replace(contentToRemove, insertString);
+
+        // Remove the comments
+        fileContent = fileContent.replace(startComment, "");
+        fileContent = fileContent.replace(endComment, "");
+
+        // Write the modified content back to the file
+        fs.writeFileSync(filePath, fileContent);
+      }
+    }
+  });
+} // Part 2 End
+
+const prismaFieldToInputType: Record<string, string> = {
+  Int: "number",
+  Float: "number",
+  String: "text",
+  Boolean: "checkbox",
+  DateTime: "datetime-local",
+  Json: "text",
+};
+
+interface TableField {
+  name: string;
+  type: string;
+}
+
+async function generateReactForms(
+  prismaSchemaPath: string,
+  outputDirectory: string
+) {
+  try {
+    // Read the Prisma schema file
+    const prismaSchema = await readFileAsync(prismaSchemaPath, "utf-8");
+
+    // Extract table names from the Prisma schema
+    const tableNames = prismaSchema
+      .match(/model\s+(\w+)\s+/g)!
+      .map((match) => match.split(" ")[1]);
+
+    // Create the output Directory
     if (!fs.existsSync(outputDirectory)) {
       fs.mkdirSync(outputDirectory);
     }
+    // Generate React forms for each table
+    for (const tableName of tableNames) {
+      const formCode = await generateCreateForm(tableName, prismaSchema);
+      console.log(`React form for table '${tableName}':`);
+      console.log(formCode);
+      console.log("---");
 
-    // Main app dir page
-    render(
-      path.join(__dirname, "templates", "page", "page_base.njk"),
-      {
-        functionName: `Home`,
-        pageName: `Home`,
-      },
-      (err, output) => {
-        if (output) {
-          fs.writeFileSync(`${outputDirectory}/page.tsx`, output);
-        }
-      }
-    );
-
-    for (const model of models) {
-      const lowerCaseModelName = model.name.toLowerCase();
-      // Main entity directory
-      const componentDirectory = `${outputDirectory}/${lowerCaseModelName}`;
-      if (!fs.existsSync(componentDirectory)) {
-        fs.mkdirSync(componentDirectory);
-      }
-
-      //// List Page
-      render(
-        path.join(__dirname, "templates", "page", "page_base.njk"),
-        {
-          functionName: `${model.name}Home`,
-          pageName: `${lowerCaseModelName} - List`,
-        },
-        (err, output) => {
-          if (output) {
-            fs.writeFileSync(`${componentDirectory}/page.tsx`, output);
-          }
-        }
+      // Let's just do a flat directory for now
+      const tableDirectory = path.join(
+        outputDirectory,
+        tableName.toLowerCase()
+      );
+      copyDirectory(
+        path.join(__dirname, "templateApp", "assets"),
+        tableDirectory,
+        true
+      );
+      addStringBetweenComments(
+        tableDirectory,
+        formCode,
+        "{/* //@nexquik form */}",
+        "{/* //@nexquik */}"
       );
 
-      //// Dynamic Directory
-      const dynamicDirectory = `${componentDirectory}/[id]`;
-      if (!fs.existsSync(dynamicDirectory)) {
-        fs.mkdirSync(dynamicDirectory);
-      }
-
-      ////// Show Page
-      render(
-        path.join(__dirname, "templates", "page", "page_base.njk"),
-        {
-          functionName: `Show${model.name}`,
-          pageName: `${lowerCaseModelName} - Show`,
-        },
-        (err, output) => {
-          if (output) {
-            fs.writeFileSync(`${dynamicDirectory}/page.tsx`, output);
-          }
-        }
-      );
-
-      ////// Edit Directory
-      const editDirectory = `${dynamicDirectory}/edit`;
-      if (!fs.existsSync(editDirectory)) {
-        fs.mkdirSync(editDirectory);
-      }
-
-      //////// Edit Page
-      render(
-        path.join(__dirname, "templates", "page", "page_base.njk"),
-        {
-          functionName: `Edit${model.name}`,
-          pageName: `${lowerCaseModelName} - Edit`,
-        },
-        (err, output) => {
-          if (output) {
-            fs.writeFileSync(`${editDirectory}/page.tsx`, output);
-          }
-        }
-      );
-
-      //// Create Directory
-      const createDirectory = `${componentDirectory}/create`;
-      if (!fs.existsSync(createDirectory)) {
-        fs.mkdirSync(createDirectory);
-      }
-
-      ////// Create Page
-      interface FormElement {
-        fieldName: string;
-        inputType: string;
-        required: boolean;
-        options?: string[];
-      }
-
-      const formElements: FormElement[] = [];
-      for (const {
-        fieldType,
-        name,
-        attributes,
-        type,
-        comment,
-        optional,
-        array,
-      } of model.properties as Field[]) {
-        // If exists in our map, use that
-        // Else, check other elements
-        // console.log({ property });
-        const htmlInputType = prismaToHtmlMap[fieldType as string];
-        if (htmlInputType) {
-          // console.log("Field Type Found", { fieldType });
-          formElements.push({
-            fieldName: name,
-            inputType: htmlInputType,
-            required: !optional,
-          });
-        } else {
-          console.log("Field Type Not Found", { fieldType });
-        }
-      }
-      console.log({ formElements });
-      render(
-        path.join(__dirname, "templates", "page", "page_create.njk"),
-        {
-          functionName: `Create${model.name}`,
-          pageName: `${model.name} - Create`,
-          entityName: `${model.name}`,
-          formElements: formElements,
-          prismaImport: prismaImport,
-        },
-        (err, output) => {
-          console.log({ err });
-          if (output) {
-            fs.writeFileSync(
-              `${createDirectory}/page.tsx`,
-              format(output, { parser: "babel-ts" })
-            );
-          }
-        }
-      );
+      findAndReplaceInFiles(tableDirectory, "asset", tableName)
+        .then(() => {
+          console.log("Find and replace completed!");
+        })
+        .catch((err) => {
+          console.error(`Error during find and replace: ${err}`);
+        });
     }
-    console.log("Success.");
   } catch (error) {
-    console.log("Failed.");
-    console.log(error);
+    console.error("Error occurred:", error);
   }
-};
+}
+
+async function generateCreateForm(
+  tableName: string,
+  prismaSchema: string
+): Promise<string> {
+  const tableFields = await extractTableFields(tableName, prismaSchema);
+  const formFields = generateFormFields(tableFields);
+
+  // Define the React component template as a string
+  const reactComponentTemplate = `
+    <form onSubmit={add${tableName}}>
+      ${formFields}
+      <button type="submit">Create ${tableName}</button>
+    </form>
+`;
+
+  return reactComponentTemplate;
+}
+
+async function extractTableFields(
+  tableName: string,
+  prismaSchema: string
+): Promise<TableField[]> {
+  const modelRegex = new RegExp(`model\\s+${tableName}\\s+{([\\s\\S]+?)}`, "g");
+  const fieldRegex = /\s+(\w+)\s+(\w+)(\?|\s+)?/g;
+  const match = modelRegex.exec(prismaSchema);
+
+  const tableFields: TableField[] = [];
+  let fieldMatch;
+  while ((fieldMatch = fieldRegex.exec(match![1]))) {
+    const [, fieldName, fieldType] = fieldMatch;
+    tableFields.push({ name: fieldName, type: fieldType });
+  }
+
+  return tableFields;
+}
+
+function generateFormFields(tableFields: TableField[]): string {
+  return tableFields
+    .map(({ name, type }) => {
+      const inputType = prismaFieldToInputType[type] || "text";
+      return `<input type="${inputType}" name="${name}"/>`;
+    })
+    .join("\n");
+}
 
 const program = new Command();
 const defaultPrismaSchemaPath = "./prisma/schema.prisma";
 const defaultPrismaClientImportPath = "~/server/db";
-const defaultOutputDirectory = "./prisnextApp";
+const defaultOutputDirectory = "nexquikApp";
 
 console.log(figlet.textSync("Nexquik"));
 
@@ -217,5 +333,6 @@ if (options.Schema && options.Out) {
       `Outputting generated files to: ${options.Out}`
     )}\n${chalk.blue.bold(`Prisma Import Value: ${options.PrismaImport}`)}`
   );
-  generateNextComponents(options.Schema, options.Out, options.PrismaImport);
+  generateReactForms(options.Schema, options.Out);
+  formatNextJsFilesRecursively(options.Out);
 }

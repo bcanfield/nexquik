@@ -2,7 +2,7 @@
     "compilerOptions": {
       "rootDir": "src",
       "outDir": "dist",
-      "strict": true,
+      // "strict": true,
       "target": "es6",
       "module": "commonjs",
       "sourceMap": true,
@@ -10,5 +10,5 @@
       "moduleResolution": "node",
       "watch": false,
     }
-    , "exclude": ["prisnextApp/*", "lib/app/*", "dist/*"]
+    , "exclude": ["prisnextApp/*", "lib/app/*", "dist/*", "templateApp/*", "nexquikApp/*"]
   }

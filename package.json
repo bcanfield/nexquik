@@ -15,7 +15,7 @@
     "start": "node dist/index.js",
     "clean": "rimraf dist/",
     "copy-files": "copyfiles -u 1 \"lib/**/*\" dist",
-    "copy-files2": "copyfiles -u 1 \"templates/**/*\" dist/templates",
+    "copy-files2": "copyfiles -u 1 \"templateApp/**/*\" dist/templateApp",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Brandin Canfield",
