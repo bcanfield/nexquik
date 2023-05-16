@@ -3,10 +3,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "utils/db";
 
-export default async function CreateAsset() {
-  async function addAsset(formData: FormData) {
+export default async function CreateNexquikTemplateModel() {
+  async function addNexquikTemplateModel(formData: FormData) {
     "use server";
-    const created = await prisma.asset.create(
+    const created = await prisma.nexquikTemplateModel.create(
       //@nexquik prismaDataInput start
       {
         data: {
@@ -17,25 +17,25 @@ export default async function CreateAsset() {
       }
       //@nexquik prismaDataInput stop
     );
-    revalidatePath(`/asset`);
+    revalidatePath(`/nexquikTemplateModel`);
     //@nexquik createRedirect start
-    redirect(`/asset/${created.id}`);
+    redirect(`/nexquikTemplateModel/${created.id}`);
     //@nexquik createRedirect stop
   }
 
   return (
     <div>
-      <h1> Assets - Create</h1>
+      <h1> NexquikTemplateModels - Create</h1>
       {/* @nexquik createForm start */}
-      <form action={addAsset}>
+      <form action={addNexquikTemplateModel}>
         <label>name</label>
         <input type="text" name="name" />
         <label>lat</label>
         <input type="number" name="lat" />
         <label>lng</label>
         <input type="number" name="lng" />
-        <Link href={`/asset`}>Cancel</Link>
-        <button type="submit">Create Asset</button>
+        <Link href={`/nexquikTemplateModel`}>Cancel</Link>
+        <button type="submit">Create NexquikTemplateModel</button>
       </form>
       {/* @nexquik createForm stop */}
     </div>

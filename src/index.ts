@@ -10,6 +10,7 @@ const fs = require("fs");
 const { promisify } = require("util");
 const readFileAsync = promisify(fs.readFile);
 
+const nexquikTemplateModel = "nexquikTemplateModel";
 export type PrismaSchemaSectionType = {
   name: string;
   value: Block;
@@ -334,7 +335,7 @@ async function generateReactForms(
         tableName.toLowerCase()
       );
       copyDirectory(
-        path.join(__dirname, "templateApp", "asset"),
+        path.join(__dirname, "templateApp", "nexquikTemplateModel"),
         tableDirectory,
         true
       );
@@ -454,7 +455,11 @@ async function generateReactForms(
         "//@nexquik prismaDeleteClause start",
         "//@nexquik prismaDeleteClause stop"
       );
-      await findAndReplaceInFiles(tableDirectory, "asset", tableName)
+      await findAndReplaceInFiles(
+        tableDirectory,
+        "nexquikTemplateModel",
+        tableName
+      )
         .then(() => {
           console.log("Find and replace completed!");
         })
@@ -484,9 +489,9 @@ async function generateCreateForm(
 
   // Define the React component template as a string
   const reactComponentTemplate = `
-    <form onSubmit={addAsset}>
+    <form onSubmit={addNexquikTemplateModel}>
       ${formFields}
-      <button type="submit">Create Asset</button>
+      <button type="submit">Create NexquikTemplateModel</button>
     </form>
 `;
 
@@ -502,7 +507,7 @@ async function generateRedirect(
   const uniqueField = tableFields.find((tableField) => tableField.isId);
   // Define the React component template as a string
   const reactComponentTemplate = `
-  redirect(\`/asset/\${${dataObjectName}.${uniqueField.name}}\`);
+  redirect(\`/nexquikTemplateModel/\${${dataObjectName}.${uniqueField.name}}\`);
 `;
   return reactComponentTemplate;
 }
@@ -519,9 +524,9 @@ async function generateEditForm(
   );
   // Define the React component template as a string
   const reactComponentTemplate = `
-  <form onSubmit={editAsset}>
+  <form onSubmit={editNexquikTemplateModel}>
       ${formFields}
-      <button type="submit">Update Asset</button>
+      <button type="submit">Update NexquikTemplateModel</button>
     </form>
 `;
 
@@ -542,19 +547,23 @@ async function generateListForm(
   // Define the React component template as a string
   const reactComponentTemplate = `
   <ul>
-  {asset?.map((asset, index) => (
+  {nexquikTemplateModel?.map((nexquikTemplateModel, index) => (
     <li key={index}>
       <form>
       <input hidden type="${uniqueFieldInputType}" name="${
     uniqueField.name
-  }" defaultValue={asset?.${uniqueField.name}} />        ${tableFields.map(
-    ({ name }) => {
-      return `<p> ${name} {asset.${name}} </p>`;
-    }
-  )}
-        <Link href={\`/asset/\${asset.${uniqueField.name}}\`}>View</Link>
-        <Link href={\`/asset/\${asset.${uniqueField.name}}/edit\`}>Edit</Link>
-        <button formAction={deleteAsset}>Delete</button>
+  }" defaultValue={nexquikTemplateModel?.${
+    uniqueField.name
+  }} />        ${tableFields.map(({ name }) => {
+    return `<p> ${name} {nexquikTemplateModel.${name}} </p>`;
+  })}
+        <Link href={\`/nexquikTemplateModel/\${nexquikTemplateModel.${
+          uniqueField.name
+        }}\`}>View</Link>
+        <Link href={\`/nexquikTemplateModel/\${nexquikTemplateModel.${
+          uniqueField.name
+        }}/edit\`}>Edit</Link>
+        <button formAction={deleteNexquikTemplateModel}>Delete</button>
       </form>
     </li>
   ))}
@@ -580,13 +589,15 @@ async function generateShowForm(
   const reactComponentTemplate = `
   <input hidden type="${uniqueFieldInputType}" name="${
     uniqueField.name
-  }" defaultValue={asset?.${uniqueField.name}} />
-  <form onSubmit={editAsset}>
-  <Link href={\`/asset/\`}>Back to All Assets</Link>
-  <Link href={\`/asset/\${asset.${uniqueField.name}}/edit\`}>Edit</Link>
-  <button formAction={deleteAsset}>Delete</button>
+  }" defaultValue={nexquikTemplateModel?.${uniqueField.name}} />
+  <form onSubmit={editNexquikTemplateModel}>
+  <Link href={\`/nexquikTemplateModel/\`}>Back to All NexquikTemplateModels</Link>
+  <Link href={\`/nexquikTemplateModel/\${nexquikTemplateModel.${
+    uniqueField.name
+  }}/edit\`}>Edit</Link>
+  <button formAction={deleteNexquikTemplateModel}>Delete</button>
   ${tableFields.map(({ name }) => {
-    return `<p> ${name} {asset.${name}} </p>`;
+    return `<p> ${name} {nexquikTemplateModel.${name}} </p>`;
   })}
   </form>
 `;
@@ -653,8 +664,8 @@ function generateFormFieldsWithDefaults(
       }
       const inputType = prismaFieldToInputType[type] || "text";
       const defaultValue = isId
-        ? `{asset.${name} || 'N/A'}`
-        : `{asset.${name}}`;
+        ? `{nexquikTemplateModel.${name} || 'N/A'}`
+        : `{nexquikTemplateModel.${name}}`;
       const disabled = isId ? "disabled" : "";
       const required = isRequired ? "required" : "";
 
