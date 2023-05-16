@@ -317,8 +317,6 @@ async function generateReactForms(
         true
       );
 
-      // Copy in our nexquik items
-
       // CreateForm
       const createFormCode = await generateCreateForm(tableName, prismaSchema);
       addStringBetweenComments(
@@ -386,6 +384,8 @@ async function generateReactForms(
       );
 
       const tableFields = await extractTableFields(tableName, prismaSchema);
+      const uniqueField = tableFields.find((tableField) => tableField.isId);
+
       const prismaInput = generateConvertToPrismaInputCode(tableFields);
       addStringBetweenComments(
         tableDirectory,
@@ -425,6 +425,12 @@ async function generateReactForms(
         .catch((err) => {
           console.error(`Error during find and replace: ${err}`);
         });
+
+      // Rename the [id] file to the new unique identifier
+      fs.renameSync(
+        path.join(tableDirectory, "[id]"),
+        path.join(tableDirectory, `[${uniqueField.name}]`)
+      );
     }
   } catch (error) {
     console.error("Error occurred:", error);
