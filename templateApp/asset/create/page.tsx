@@ -4,17 +4,19 @@ import { redirect } from "next/navigation";
 import { prisma } from "utils/db";
 
 export default async function CreateAsset() {
-  async function addAsset(data: FormData) {
+  async function addAsset(formData: FormData) {
     "use server";
-    const created = await prisma.asset.create({
-      //@nexquik prismaCreateInput
-      data: {
-        name: data.get("name"),
-        lat: Number(data.get("lat")),
-        lng: Number(data.get("lng")),
-      },
-      //@nexquik
-    });
+    const created = await prisma.asset.create(
+      //@nexquik prismaDataInput start
+      {
+        data: {
+          name: formData.get("name"),
+          lat: Number(formData.get("lat")),
+          lng: Number(formData.get("lng")),
+        },
+      }
+      //@nexquik prismaDataInput stop
+    );
     revalidatePath(`/asset`);
     redirect(`/asset/${created.id}`);
   }

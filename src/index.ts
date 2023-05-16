@@ -15,6 +15,22 @@ export type PrismaSchemaSectionType = {
   value: Block;
 };
 
+function generateConvertToPrismaInputCode(tableFields: TableField[]): string {
+  const convertToPrismaInputLines = tableFields.map(({ name, type }) => {
+    let typecastValue = `formData['${name}']`;
+    if (type === "Int" || type === "Float") {
+      typecastValue = `Number(${typecastValue})`;
+    } else if (type === "Boolean") {
+      typecastValue = `Boolean(${typecastValue})`;
+    }
+
+    return `    ${name}: ${typecastValue},`;
+  });
+
+  return `{
+${convertToPrismaInputLines.join("\n")}
+  }`;
+}
 const formatNextJsFilesRecursively = async (directory) => {
   try {
     // Get a list of all files and directories in the current directory
@@ -315,13 +331,22 @@ async function generateReactForms(
         "{/* //@nexquik */}"
       );
 
-      findAndReplaceInFiles(tableDirectory, "asset", tableName)
+      await findAndReplaceInFiles(tableDirectory, "asset", tableName)
         .then(() => {
           console.log("Find and replace completed!");
         })
         .catch((err) => {
           console.error(`Error during find and replace: ${err}`);
         });
+
+      const tableFields = await extractTableFields(tableName, prismaSchema);
+      const prismaInput = generateConvertToPrismaInputCode(tableFields);
+      addStringBetweenComments(
+        tableDirectory,
+        prismaInput,
+        "//@nexquik prismaDataInput start",
+        "//@nexquik prismaDataInput stop"
+      );
     }
   } catch (error) {
     console.error("Error occurred:", error);

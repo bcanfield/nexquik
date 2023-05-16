@@ -4,11 +4,11 @@ import { prisma } from "utils/db";
 
 export default async function ListAssets() {
   const asset = await prisma.asset.findMany();
-  async function deleteAsset(data: FormData) {
+  async function deleteAsset(formData: FormData) {
     "use server";
     await prisma.asset.delete(
       //@nexquik prismaDeleteInput
-      { where: { id: data.get("id") } }
+      { where: { id: formData.get("id") } }
       //@nexquik
     );
     revalidatePath("/asset");

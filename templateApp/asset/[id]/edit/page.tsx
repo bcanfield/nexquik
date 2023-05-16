@@ -7,11 +7,13 @@ export default async function EditAsset({ params }) {
 
   async function editAsset(formData: FormData) {
     "use server";
-    await prisma.asset.update(
-      //@nexquik prismaUpdateInput
-      { where: { id: params.id }, data: { name: formData.get("name") } }
-      //@nexquik
-    );
+    await prisma.asset.update({
+      where: { id: params.id },
+      data:
+        //@nexquik prismaDataInput start
+        { name: formData.get("name") },
+      //@nexquik prismaDataInput stop
+    });
     redirect(`/asset/${params.id}`);
   }
 
