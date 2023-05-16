@@ -46,10 +46,10 @@ export default async function EditNexquikTemplateModel({ params }) {
           name="lng"
           defaultValue={nexquikTemplateModel?.lng}
         />
-        <Link href={`/nexquikTemplateModel/${params.id}`}>Cancel</Link>
         <button type="submit">Update NexquikTemplateModel</button>
       </form>
       {/* @nexquik editForm stop */}
+      <Link href={`/nexquikTemplateModel/${params.id}`}>Cancel</Link>
     </div>
   );
 }

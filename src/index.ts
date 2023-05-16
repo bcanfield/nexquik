@@ -21,7 +21,7 @@ function generateConvertToPrismaInputCode(
   tableFields: TableField[],
   referencedModels: { fieldName: string; referencedModel: string }[]
 ): string {
-  console.log({ referencedModels });
+  // console.log({ referencedModels });
   const convertToPrismaInputLines = tableFields
     .filter(({ isId }) => !isId)
     .filter(
@@ -34,6 +34,10 @@ function generateConvertToPrismaInputCode(
         typecastValue = `Number(${typecastValue})`;
       } else if (type === "Boolean") {
         typecastValue = `Boolean(${typecastValue})`;
+      } else if (type === "DateTime") {
+        typecastValue = `new Date(String(${typecastValue}))`;
+      } else {
+        typecastValue = `String(${typecastValue})`;
       }
 
       return `    ${name}: ${typecastValue},`;
@@ -486,12 +490,12 @@ async function generateCreateForm(
   referencedModels: { fieldName: string; referencedModel: string }[]
 ): Promise<string> {
   const tableFields = await extractTableFields(tableName, prismaSchema);
-  console.log({ tableFields });
+  // console.log({ tableFields });
   const formFields = generateFormFields(tableFields, referencedModels);
-  console.log({ formFields });
+  // console.log({ formFields });
   // Define the React component template as a string
   const reactComponentTemplate = `
-    <form onSubmit={addNexquikTemplateModel}>
+    <form action={addNexquikTemplateModel}>
       ${formFields}
       <button type="submit">Create NexquikTemplateModel</button>
     </form>
@@ -506,7 +510,7 @@ async function generateRedirect(
   dataObjectName: string
 ): Promise<string> {
   const tableFields = await extractTableFields(tableName, prismaSchema);
-  console.log({ tableName });
+  // console.log({ tableName });
   const uniqueField = tableFields.find((tableField) => tableField.isId);
   // Define the React component template as a string
   const reactComponentTemplate = `
@@ -527,7 +531,7 @@ async function generateEditForm(
   );
   // Define the React component template as a string
   const reactComponentTemplate = `
-  <form onSubmit={editNexquikTemplateModel}>
+  <form action={editNexquikTemplateModel}>
       ${formFields}
       <button type="submit">Update NexquikTemplateModel</button>
     </form>
@@ -558,7 +562,7 @@ async function generateListForm(
   }" defaultValue={nexquikTemplateModel?.${
     uniqueField.name
   }} />        ${tableFields.map(({ name }) => {
-    return `<p> ${name} {nexquikTemplateModel.${name}} </p>`;
+    return `<p> ${name} {\`\${nexquikTemplateModel.${name}}\`} </p>`;
   })}
         <Link href={\`/nexquikTemplateModel/\${nexquikTemplateModel.${
           uniqueField.name
@@ -593,14 +597,18 @@ async function generateShowForm(
   <input hidden type="${uniqueFieldInputType}" name="${
     uniqueField.name
   }" defaultValue={nexquikTemplateModel?.${uniqueField.name}} />
-  <form onSubmit={editNexquikTemplateModel}>
+  <form>
   <Link href={\`/nexquikTemplateModel/\`}>Back to All NexquikTemplateModels</Link>
   <Link href={\`/nexquikTemplateModel/\${nexquikTemplateModel.${
     uniqueField.name
   }}/edit\`}>Edit</Link>
   <button formAction={deleteNexquikTemplateModel}>Delete</button>
-  ${tableFields.map(({ name }) => {
-    return `<p> ${name} {nexquikTemplateModel.${name}} </p>`;
+  ${tableFields.map(({ name, isId }) => {
+    if (isId || referencedModels.some((model) => model.fieldName === name)) {
+      return "";
+    }
+    // return `<p> ${name} {nexquikTemplateModel.${name}} </p>`;
+    return `<p> ${name} {\`\${nexquikTemplateModel.${name}}\`} </p>`;
   })}
   </form>
 `;
@@ -619,6 +627,7 @@ async function extractTableFields(
     throw new Error(`Table '${tableName}' not found in the Prisma schema.`);
   }
 
+  console.log("fields", model.fields);
   const tableFields: TableField[] = model.fields.map((field) => ({
     name: field.name,
     type: field.type,
@@ -626,7 +635,7 @@ async function extractTableFields(
     isRequired: field.isRequired,
   }));
 
-  console.log({ tableFields });
+  // console.log({ tableFields });
   return tableFields;
 }
 
@@ -635,14 +644,15 @@ function generateFormFields(
   referencedModels: { fieldName: string; referencedModel: string }[]
 ): string {
   return tableFields
-    .map(({ name, type, isRequired }) => {
-      if (referencedModels.some((model) => model.fieldName === name)) {
+    .map(({ name, type, isRequired, isId }) => {
+      if (isId || referencedModels.some((model) => model.fieldName === name)) {
         return "";
       }
       const inputType = prismaFieldToInputType[type] || "text";
       const required = isRequired ? "required" : "";
 
-      return `<input type="${inputType}" name="${name}" ${required}/>`;
+      return `<label>${name}</label>\n
+      <input type="${inputType}" name="${name}" ${required}/>`;
     })
     .join("\n");
 }
@@ -663,7 +673,7 @@ function generateFormFieldsWithDefaults(
       const disabled = isId ? "disabled" : "";
       const required = isRequired ? "required" : "";
 
-      return `<input type="${inputType}" name="${name}" value=${defaultValue}  ${disabled} ${required}/>`;
+      return `<label>${name}</label>\n<input type="${inputType}" name="${name}" value=${defaultValue}  ${disabled} ${required}/>`;
     })
     .join("\n");
 }

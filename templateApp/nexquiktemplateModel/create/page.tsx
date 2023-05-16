@@ -33,10 +33,10 @@ export default async function CreateNexquikTemplateModel() {
         <input type="number" name="lat" />
         <label>lng</label>
         <input type="number" name="lng" />
-        <Link href={`/nexquikTemplateModel`}>Cancel</Link>
         <button type="submit">Create NexquikTemplateModel</button>
       </form>
       {/* @nexquik createForm stop */}
+      <Link href={`/nexquikTemplateModel`}>Cancel</Link>
     </div>
   );
 }
