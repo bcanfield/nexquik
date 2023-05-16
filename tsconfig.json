@@ -1,14 +1,15 @@
 {
-    "compilerOptions": {
-      "rootDir": "src",
-      "outDir": "dist",
-      // "strict": true,
-      "target": "es6",
-      "module": "commonjs",
-      "sourceMap": true,
-      "esModuleInterop": true,
-      "moduleResolution": "node",
-      "watch": false,
-    }
-    , "exclude": ["prisnextApp/*", "lib/app/*", "dist/*", "templateApp/*", "nexquikApp/*"]
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    // "strict": true,
+    "target": "es6",
+    "module": "commonjs",
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "watch": false,
+    "types": ["node"]
   }
+  , "exclude": ["prisnextApp/*", "lib/app/*", "dist/*", "templateApp/*", "nexquikApp/*"]
+}

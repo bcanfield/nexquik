@@ -9,6 +9,7 @@ import prettier from "prettier";
 const fs = require("fs");
 const { promisify } = require("util");
 const readFileAsync = promisify(fs.readFile);
+import { getDMMF } from "@prisma/internals";
 
 const nexquikTemplateModel = "nexquikTemplateModel";
 export type PrismaSchemaSectionType = {
@@ -286,7 +287,7 @@ interface TableField {
   type: string;
   isId: boolean;
   isRequired: boolean;
-  mapType: string;
+  // mapType: string;
 }
 
 function extractReferencedModels(
@@ -485,9 +486,9 @@ async function generateCreateForm(
   referencedModels: { fieldName: string; referencedModel: string }[]
 ): Promise<string> {
   const tableFields = await extractTableFields(tableName, prismaSchema);
-
+  console.log({ tableFields });
   const formFields = generateFormFields(tableFields, referencedModels);
-
+  console.log({ formFields });
   // Define the React component template as a string
   const reactComponentTemplate = `
     <form onSubmit={addNexquikTemplateModel}>
@@ -505,6 +506,7 @@ async function generateRedirect(
   dataObjectName: string
 ): Promise<string> {
   const tableFields = await extractTableFields(tableName, prismaSchema);
+  console.log({ tableName });
   const uniqueField = tableFields.find((tableField) => tableField.isId);
   // Define the React component template as a string
   const reactComponentTemplate = `
@@ -610,24 +612,21 @@ async function extractTableFields(
   tableName: string,
   prismaSchema: string
 ): Promise<TableField[]> {
-  const modelRegex = new RegExp(`model\\s+${tableName}\\s+{([\\s\\S]+?)}`, "g");
-  const fieldRegex = /\s+(\w+)\s+(\w+)(\?|\s+)?(\@\id)?(\@\map\((.+)\))?/g; // Updated regex to capture `@id` and `@map` attributes
-  const match = modelRegex.exec(prismaSchema);
+  const dmmf = await getDMMF({ datamodel: prismaSchema });
 
-  const tableFields: TableField[] = [];
-  let fieldMatch;
-  while ((fieldMatch = fieldRegex.exec(match![1]))) {
-    const [, fieldName, fieldType, isOptional, isId, , mapType] = fieldMatch;
-    const isRequired = !isOptional || isOptional === "!";
-    tableFields.push({
-      name: fieldName,
-      type: fieldType,
-      isId: !!isId,
-      isRequired,
-      mapType,
-    });
+  const model = dmmf.datamodel.models.find((m) => m.name === tableName);
+  if (!model) {
+    throw new Error(`Table '${tableName}' not found in the Prisma schema.`);
   }
 
+  const tableFields: TableField[] = model.fields.map((field) => ({
+    name: field.name,
+    type: field.type,
+    isId: field.isId,
+    isRequired: field.isRequired,
+  }));
+
+  console.log({ tableFields });
   return tableFields;
 }
 
@@ -636,11 +635,8 @@ function generateFormFields(
   referencedModels: { fieldName: string; referencedModel: string }[]
 ): string {
   return tableFields
-    .map(({ name, type, isRequired, mapType }) => {
-      if (
-        mapType &&
-        referencedModels.some((model) => model.fieldName === name)
-      ) {
+    .map(({ name, type, isRequired }) => {
+      if (referencedModels.some((model) => model.fieldName === name)) {
         return "";
       }
       const inputType = prismaFieldToInputType[type] || "text";
@@ -656,11 +652,8 @@ function generateFormFieldsWithDefaults(
   referencedModels: { fieldName: string; referencedModel: string }[]
 ): string {
   return tableFields
-    .map(({ name, type, isId, isRequired, mapType }) => {
-      if (
-        mapType &&
-        referencedModels.some((model) => model.fieldName === name)
-      ) {
+    .map(({ name, type, isId, isRequired }) => {
+      if (referencedModels.some((model) => model.fieldName === name)) {
         return "";
       }
       const inputType = prismaFieldToInputType[type] || "text";

@@ -28,13 +28,16 @@
   ],
   "dependencies": {
     "@mrleebo/prisma-ast": "^0.5.2",
+    "@prisma/internals": "^4.14.0",
+    "@types/jest": "^29.5.1",
     "@types/nunjucks": "^3.2.2",
     "@types/prettier": "^2.7.2",
     "chalk": "^4.1.2",
     "commander": "^10.0.1",
     "figlet": "^1.6.0",
     "nunjucks": "^3.2.4",
-    "prettier": "^2.8.8"
+    "prettier": "^2.8.8",
+    "ts-toolbelt": "^9.6.0"
   },
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.3",

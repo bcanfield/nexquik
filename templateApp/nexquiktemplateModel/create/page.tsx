@@ -6,17 +6,16 @@ import { prisma } from "utils/db";
 export default async function CreateNexquikTemplateModel() {
   async function addNexquikTemplateModel(formData: FormData) {
     "use server";
-    const created = await prisma.nexquikTemplateModel.create(
-      //@nexquik prismaDataInput start
-      {
-        data: {
+    const created = await prisma.nexquikTemplateModel.create({
+      data:
+        //@nexquik prismaDataInput start
+        {
           name: formData.get("name"),
           lat: Number(formData.get("lat")),
           lng: Number(formData.get("lng")),
         },
-      }
       //@nexquik prismaDataInput stop
-    );
+    });
     revalidatePath(`/nexquikTemplateModel`);
     //@nexquik createRedirect start
     redirect(`/nexquikTemplateModel/${created.id}`);
