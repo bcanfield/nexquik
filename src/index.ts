@@ -10,6 +10,11 @@ const fs = require("fs");
 const { promisify } = require("util");
 const readFileAsync = promisify(fs.readFile);
 import { getDMMF } from "@prisma/internals";
+import {
+  DMMF,
+  generatorHandler,
+  GeneratorOptions,
+} from "@prisma/generator-helper";
 
 const nexquikTemplateModel = "nexquikTemplateModel";
 export type PrismaSchemaSectionType = {
@@ -18,16 +23,13 @@ export type PrismaSchemaSectionType = {
 };
 
 function generateConvertToPrismaInputCode(
-  tableFields: TableField[],
+  tableFields: DMMF.Field[],
   referencedModels: { fieldName: string; referencedModel: string }[]
 ): string {
   // console.log({ referencedModels });
   const convertToPrismaInputLines = tableFields
     .filter(({ isId }) => !isId)
-    .filter(
-      ({ name }) =>
-        !referencedModels.some(({ fieldName }) => name === fieldName)
-    )
+    .filter((field) => isFieldRenderable(field))
     .map(({ name, type }) => {
       let typecastValue = `formData.get('${name}')`;
       if (type === "Int" || type === "Float") {
@@ -286,14 +288,6 @@ const prismaFieldToInputType: Record<string, string> = {
   Json: "text",
 };
 
-interface TableField {
-  name: string;
-  type: string;
-  isId: boolean;
-  isRequired: boolean;
-  // mapType: string;
-}
-
 function extractReferencedModels(
   model: string,
   prismaSchema: string
@@ -547,7 +541,7 @@ async function generateListForm(
 ): Promise<string> {
   const tableFields = await (
     await extractTableFields(tableName, prismaSchema)
-  ).filter((tf) => !referencedModels.some((rm) => rm.fieldName === tf.name));
+  ).filter((tf) => isFieldRenderable(tf));
   const uniqueField = tableFields.find((tableField) => tableField.isId);
   const uniqueFieldInputType =
     prismaFieldToInputType[uniqueField.type] || "text";
@@ -562,6 +556,9 @@ async function generateListForm(
   }" defaultValue={nexquikTemplateModel?.${
     uniqueField.name
   }} />        ${tableFields.map(({ name }) => {
+    if (!isFieldRenderable) {
+      return "";
+    }
     return `<p> ${name} {\`\${nexquikTemplateModel.${name}}\`} </p>`;
   })}
         <Link href={\`/nexquikTemplateModel/\${nexquikTemplateModel.${
@@ -586,7 +583,7 @@ async function generateShowForm(
   referencedModels: { fieldName: string; referencedModel: string }[]
 ): Promise<string> {
   const tableFields = await extractTableFields(tableName, prismaSchema);
-  const formFields = generateFormFields(tableFields, referencedModels);
+  // const formFields = generateFormFields(tableFields, referencedModels);
 
   const uniqueField = tableFields.find((tableField) => tableField.isId);
   const uniqueFieldInputType =
@@ -603,12 +600,12 @@ async function generateShowForm(
     uniqueField.name
   }}/edit\`}>Edit</Link>
   <button formAction={deleteNexquikTemplateModel}>Delete</button>
-  ${tableFields.map(({ name, isId }) => {
-    if (isId || referencedModels.some((model) => model.fieldName === name)) {
+  ${tableFields.map((field) => {
+    if (!isFieldRenderable(field)) {
       return "";
     }
     // return `<p> ${name} {nexquikTemplateModel.${name}} </p>`;
-    return `<p> ${name} {\`\${nexquikTemplateModel.${name}}\`} </p>`;
+    return `<p> ${field.name} {\`\${nexquikTemplateModel.${field.name}}\`} </p>`;
   })}
   </form>
 `;
@@ -616,10 +613,14 @@ async function generateShowForm(
   return reactComponentTemplate;
 }
 
+// Custom function to check if field is renderable in a form
+function isFieldRenderable(field: DMMF.Field): boolean {
+  return !(field.isReadOnly || field.isList || !!field.relationName);
+}
 async function extractTableFields(
   tableName: string,
   prismaSchema: string
-): Promise<TableField[]> {
+): Promise<DMMF.Field[]> {
   const dmmf = await getDMMF({ datamodel: prismaSchema });
 
   const model = dmmf.datamodel.models.find((m) => m.name === tableName);
@@ -628,52 +629,52 @@ async function extractTableFields(
   }
 
   console.log("fields", model.fields);
-  const tableFields: TableField[] = model.fields.map((field) => ({
-    name: field.name,
-    type: field.type,
-    isId: field.isId,
-    isRequired: field.isRequired,
-  }));
+  // const tableFields: DMMF.Field[] = model.fields.map((field) => ({
+  //   name: field.name,
+  //   type: field.type,
+  //   isId: field.isId,
+  //   isRequired: field.isRequired,
+  // }));
 
   // console.log({ tableFields });
-  return tableFields;
+  return model.fields;
 }
 
 function generateFormFields(
-  tableFields: TableField[],
+  tableFields: DMMF.Field[],
   referencedModels: { fieldName: string; referencedModel: string }[]
 ): string {
   return tableFields
-    .map(({ name, type, isRequired, isId }) => {
-      if (isId || referencedModels.some((model) => model.fieldName === name)) {
+    .map((field) => {
+      if (!isFieldRenderable(field) || field.isId) {
         return "";
       }
-      const inputType = prismaFieldToInputType[type] || "text";
-      const required = isRequired ? "required" : "";
+      const inputType = prismaFieldToInputType[field.type] || "text";
+      const required = field.isRequired ? "required" : "";
 
-      return `<label>${name}</label>\n
-      <input type="${inputType}" name="${name}" ${required}/>`;
+      return `<label>${field.name}</label>\n
+      <input type="${inputType}" name="${field.name}" ${required}/>`;
     })
     .join("\n");
 }
 
 function generateFormFieldsWithDefaults(
-  tableFields: TableField[],
+  tableFields: DMMF.Field[],
   referencedModels: { fieldName: string; referencedModel: string }[]
 ): string {
   return tableFields
-    .map(({ name, type, isId, isRequired }) => {
-      if (referencedModels.some((model) => model.fieldName === name)) {
+    .map((field) => {
+      if (!isFieldRenderable(field)) {
         return "";
       }
-      const inputType = prismaFieldToInputType[type] || "text";
-      const defaultValue = isId
-        ? `{nexquikTemplateModel.${name} || 'N/A'}`
-        : `{nexquikTemplateModel.${name}}`;
-      const disabled = isId ? "disabled" : "";
-      const required = isRequired ? "required" : "";
+      const inputType = prismaFieldToInputType[field.type] || "text";
+      const defaultValue = field.isId
+        ? `{nexquikTemplateModel.${field.name} || 'N/A'}`
+        : `{nexquikTemplateModel.${field.name}}`;
+      const disabled = field.isId ? "disabled" : "";
+      const required = field.isRequired ? "required" : "";
 
-      return `<label>${name}</label>\n<input type="${inputType}" name="${name}" value=${defaultValue}  ${disabled} ${required}/>`;
+      return `<label>${field.name}</label>\n<input type="${inputType}" name="${field.name}" value=${defaultValue}  ${disabled} ${required}/>`;
     })
     .join("\n");
 }
