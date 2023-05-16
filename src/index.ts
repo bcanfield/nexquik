@@ -106,40 +106,51 @@ const formatNextJsFilesRecursively = async (directory) => {
   }
 };
 
-const findAndReplaceInFiles = async (
+function capitalizeFirstLetter(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function findAndReplaceInFiles(
   directoryPath: string,
   searchString: string,
   replacementString: string
-): Promise<void> => {
-  try {
-    const files = await promisify(fs.readdir)(directoryPath);
+): void {
+  // Read the directory contents
+  const files = fs.readdirSync(directoryPath);
 
-    for (const file of files) {
-      const filePath = path.join(directoryPath, file);
-      const stats = await promisify(fs.stat)(filePath);
+  // Iterate through all files and directories
+  // Iterate through all files and directories
+  for (const file of files) {
+    const filePath = path.join(directoryPath, file);
 
-      if (stats.isFile()) {
-        let fileContents = await promisify(fs.readFile)(filePath, "utf8");
-        const regex = new RegExp(searchString, "gi");
-        fileContents = fileContents.replace(regex, (match) => {
-          const preservedCaseString = preserveCase(
-            match,
-            searchString,
-            replacementString
-          );
-          return preservedCaseString;
-        });
+    // Check if the path is a directory
+    if (fs.statSync(filePath).isDirectory()) {
+      // Recursively search and replace in subdirectories
+      findAndReplaceInFiles(filePath, searchString, replacementString);
+    } else {
+      // Read the file content
+      let fileContent = fs.readFileSync(filePath, "utf-8");
 
-        await promisify(fs.writeFile)(filePath, fileContents, "utf8");
-        console.log(`File '${filePath}' processed successfully.`);
-      } else if (stats.isDirectory()) {
-        await findAndReplaceInFiles(filePath, searchString, replacementString);
-      }
+      // Perform case-insensitive find and replace
+      const pattern = new RegExp(searchString, "gi");
+      fileContent = fileContent.replace(pattern, (match) => {
+        // Preserve the casing of the first character
+        const firstChar = match.charAt(0);
+        const replacementFirstChar = replacementString.charAt(0);
+        const replacedFirstChar =
+          firstChar === firstChar.toLowerCase()
+            ? replacementFirstChar.toLowerCase()
+            : firstChar === firstChar.toUpperCase()
+            ? replacementFirstChar.toUpperCase()
+            : replacementFirstChar;
+        return replacedFirstChar + replacementString.slice(1);
+      });
+
+      // Write the modified content back to the file
+      fs.writeFileSync(filePath, fileContent, "utf-8");
     }
-  } catch (err) {
-    console.error(`Error processing files: ${err}`);
   }
-};
+}
 
 function copyFileToDirectory(
   sourcePath: string,
@@ -327,7 +338,7 @@ async function generateReactForms(
     // Generate React forms for each table
     for (const tableName of tableNames) {
       const referencedModels = extractReferencedModels(tableName, prismaSchema);
-      console.log({ referencedModels });
+      // console.log({ referencedModels });
 
       // Let's just do a flat directory for now
       const tableDirectory = path.join(
@@ -455,17 +466,7 @@ async function generateReactForms(
         "//@nexquik prismaDeleteClause start",
         "//@nexquik prismaDeleteClause stop"
       );
-      await findAndReplaceInFiles(
-        tableDirectory,
-        "nexquikTemplateModel",
-        tableName
-      )
-        .then(() => {
-          console.log("Find and replace completed!");
-        })
-        .catch((err) => {
-          console.error(`Error during find and replace: ${err}`);
-        });
+      findAndReplaceInFiles(tableDirectory, "nexquikTemplateModel", tableName);
 
       // Rename the [id] file to the new unique identifier
       fs.renameSync(
