@@ -328,6 +328,19 @@ async function generateReactForms(
         "{/* @nexquik createForm stop */}"
       );
 
+      // CreateRedirect
+      const createRedirect = await generateRedirect(
+        tableName,
+        prismaSchema,
+        "created"
+      );
+      addStringBetweenComments(
+        tableDirectory,
+        createRedirect,
+        "//@nexquik createRedirect start",
+        "//@nexquik createRedirect stop"
+      );
+
       // EditForm
       const editFormCode = await generateEditForm(
         tableName,
@@ -339,6 +352,19 @@ async function generateReactForms(
         editFormCode,
         "{/* @nexquik editForm start */}",
         "{/* @nexquik editForm stop */}"
+      );
+
+      // EditRedirect
+      const editRedirect = await generateRedirect(
+        tableName,
+        prismaSchema,
+        "params"
+      );
+      addStringBetweenComments(
+        tableDirectory,
+        editRedirect,
+        "//@nexquik editRedirect start",
+        "//@nexquik editRedirect stop"
       );
 
       // HomeForm
@@ -423,6 +449,20 @@ async function generateCreateForm(
   return reactComponentTemplate;
 }
 
+async function generateRedirect(
+  tableName: string,
+  prismaSchema: string,
+  dataObjectName: string
+): Promise<string> {
+  const tableFields = await extractTableFields(tableName, prismaSchema);
+  const uniqueField = tableFields.find((tableField) => tableField.isId);
+  // Define the React component template as a string
+  const reactComponentTemplate = `
+  redirect(\`/asset/\${${dataObjectName}.${uniqueField.name}}\`);
+`;
+  return reactComponentTemplate;
+}
+
 async function generateEditForm(
   tableName: string,
   prismaSchema: string,
@@ -449,19 +489,24 @@ async function generateListForm(
   prismaSchema: string
 ): Promise<string> {
   const tableFields = await extractTableFields(tableName, prismaSchema);
-
+  const uniqueField = tableFields.find((tableField) => tableField.isId);
+  const uniqueFieldInputType =
+    prismaFieldToInputType[uniqueField.type] || "text";
   // Define the React component template as a string
   const reactComponentTemplate = `
   <ul>
   {asset?.map((asset, index) => (
     <li key={index}>
       <form>
-        <input hidden type="text" name="id" defaultValue={asset?.id} />
-        ${tableFields.map(({ name }) => {
-          return `<p> ${name} {asset.${name}} </p>`;
-        })}
-        <Link href={\`/asset/\${asset.id}\`}>View</Link>
-        <Link href={\`/asset/\${asset.id}/edit\`}>Edit</Link>
+      <input hidden type="${uniqueFieldInputType}" name="${
+    uniqueField.name
+  }" defaultValue={asset?.${uniqueField.name}} />        ${tableFields.map(
+    ({ name }) => {
+      return `<p> ${name} {asset.${name}} </p>`;
+    }
+  )}
+        <Link href={\`/asset/\${asset.${uniqueField.name}}\`}>View</Link>
+        <Link href={\`/asset/\${asset.${uniqueField.name}}/edit\`}>Edit</Link>
         <button formAction={deleteAsset}>Delete</button>
       </form>
     </li>

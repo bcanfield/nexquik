@@ -18,7 +18,9 @@ export default async function CreateAsset() {
       //@nexquik prismaDataInput stop
     );
     revalidatePath(`/asset`);
+    //@nexquik createRedirect start
     redirect(`/asset/${created.id}`);
+    //@nexquik createRedirect stop
   }
 
   return (

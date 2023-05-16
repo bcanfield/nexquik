@@ -22,7 +22,9 @@ export default async function EditAsset({ params }) {
         { name: formData.get("name") },
       //@nexquik prismaDataInput stop
     });
+    //@nexquik editRedirect start
     redirect(`/asset/${params.id}`);
+    //@nexquik editRedirect stop
   }
 
   return (
