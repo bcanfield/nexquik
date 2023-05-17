@@ -309,93 +309,61 @@ function extractReferencedModels(
 
   return referencedFields;
 }
-
-// function createModelTree(dataModel) {
-//   const modelTree = {};
-
-//   function dfs(modelName) {
-//     const model = dataModel.models.find((m) => m.name === modelName);
-//     const fields = {};
-
-//     for (const field of model.fields) {
-//       const fieldName = field.name;
-//       const fieldType = field.type;
-//       fields[fieldName] = fieldType;
-
-//       if (field.kind === "object" && field.isRequired) {
-//         const relatedModel = field.type;
-//         fields[fieldName] = dfs(relatedModel);
-//       }
-//     }
-
-//     return fields;
-//   }
-
-//   const rootNodes = [];
-
-//   for (const model of dataModel.models) {
-//     const hasRequiredParent = model.fields.some((field) => {
-//       console.log({ modelName: model.name, field });
-//       return field.kind === "object" && field.isRequired && !field.isList;
-//     });
-
-//     if (!hasRequiredParent) {
-//       rootNodes.push(model.name);
-//     }
-//   }
-
-//   console.log({ rootNodes });
-//   for (const rootNode of rootNodes) {
-//     modelTree[rootNode] = dfs(rootNode);
-//   }
-
-//   return modelTree;
-// }
-
 interface ModelTree {
   modelName: string;
   children: ModelTree[];
 }
+function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
+  const models = dataModel.models;
 
-function createModelTree(models: DMMF.Model[]) {
-  // Find root nodes
-  const rootNodeNames = models
-    .filter((model) => {
-      return !model.fields.some(
-        (field) =>
-          field.kind === "object" &&
-          field.isRequired === true &&
-          field.isList === false
-      );
-    })
-    .map((model) => model.name);
+  // Create a map of models for efficient lookup
+  const modelMap: Record<string, DMMF.Model> = {};
+  for (const model of models) {
+    modelMap[model.name] = model;
+  }
 
-  // Create tree for each root node
+  const visitedModels: Set<string> = new Set();
   const modelTrees: ModelTree[] = [];
-  rootNodeNames.forEach((rootNodeName) => {
-    const rootNode: ModelTree = { modelName: rootNodeName, children: [] };
-    const stack: { modelName: string; parentNode: ModelTree }[] = [
-      { modelName: rootNodeName, parentNode: rootNode },
-    ];
 
-    while (stack.length > 0) {
-      const { modelName, parentNode } = stack.pop()!;
-      const model = models.find((m) => m.name === modelName)!;
-
-      model.fields
-        .filter((field) => field.kind === "object" && field.isList === true)
-        .forEach((field) => {
-          const childNode: ModelTree = {
-            modelName: field.type,
-            children: [],
-          };
-          parentNode.children.push(childNode);
-          stack.push({ modelName: field.type, parentNode: childNode });
-        });
+  // Function to recursively build the model tree
+  function buildModelTree(model: DMMF.Model): ModelTree {
+    if (visitedModels.has(model.name)) {
+      throw new Error(`Circular relationship detected in model: ${model.name}`);
     }
 
-    modelTrees.push(rootNode);
-  });
+    visitedModels.add(model.name);
+
+    const childRelationships = model.fields.filter(
+      (field) => field.kind === "object" && field.isList
+    );
+
+    const children: ModelTree[] = [];
+    for (const relationship of childRelationships) {
+      const childModel = modelMap[relationship.type];
+      if (childModel) {
+        const childNode = buildModelTree(childModel);
+        children.push(childNode);
+      }
+    }
+
+    visitedModels.delete(model.name);
+
+    return {
+      modelName: model.name,
+      children,
+    };
+  }
+
+  for (const model of models) {
+    if (
+      !model.fields.some(
+        (field) => field.kind === "object" && field.isRequired && !field.isList
+      )
+    ) {
+      const modelTree = buildModelTree(model);
+      modelTrees.push(modelTree);
+    }
+  }
 
   return modelTrees;
 }
@@ -527,7 +495,7 @@ async function generateReactForms(
       //     console.log("File created and content written successfully!");
       //   }
       // });
-      const modelTree = createModelTree(dmmf.datamodel.models);
+      const modelTree = createModelTree(dmmf.datamodel);
 
       // const modelTree = createModelTree(dmmf.datamodel);
       console.log(JSON.stringify(modelTree, null, 2));
