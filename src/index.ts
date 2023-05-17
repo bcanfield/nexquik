@@ -309,6 +309,96 @@ function extractReferencedModels(
 
   return referencedFields;
 }
+
+// function createModelTree(dataModel) {
+//   const modelTree = {};
+
+//   function dfs(modelName) {
+//     const model = dataModel.models.find((m) => m.name === modelName);
+//     const fields = {};
+
+//     for (const field of model.fields) {
+//       const fieldName = field.name;
+//       const fieldType = field.type;
+//       fields[fieldName] = fieldType;
+
+//       if (field.kind === "object" && field.isRequired) {
+//         const relatedModel = field.type;
+//         fields[fieldName] = dfs(relatedModel);
+//       }
+//     }
+
+//     return fields;
+//   }
+
+//   const rootNodes = [];
+
+//   for (const model of dataModel.models) {
+//     const hasRequiredParent = model.fields.some((field) => {
+//       console.log({ modelName: model.name, field });
+//       return field.kind === "object" && field.isRequired && !field.isList;
+//     });
+
+//     if (!hasRequiredParent) {
+//       rootNodes.push(model.name);
+//     }
+//   }
+
+//   console.log({ rootNodes });
+//   for (const rootNode of rootNodes) {
+//     modelTree[rootNode] = dfs(rootNode);
+//   }
+
+//   return modelTree;
+// }
+
+interface ModelTree {
+  modelName: string;
+  children: ModelTree[];
+}
+
+function createModelTree(models: DMMF.Model[]) {
+  // Find root nodes
+  const rootNodeNames = models
+    .filter((model) => {
+      return !model.fields.some(
+        (field) =>
+          field.kind === "object" &&
+          field.isRequired === true &&
+          field.isList === false
+      );
+    })
+    .map((model) => model.name);
+
+  // Create tree for each root node
+  const modelTrees: ModelTree[] = [];
+  rootNodeNames.forEach((rootNodeName) => {
+    const rootNode: ModelTree = { modelName: rootNodeName, children: [] };
+    const stack: { modelName: string; parentNode: ModelTree }[] = [
+      { modelName: rootNodeName, parentNode: rootNode },
+    ];
+
+    while (stack.length > 0) {
+      const { modelName, parentNode } = stack.pop()!;
+      const model = models.find((m) => m.name === modelName)!;
+
+      model.fields
+        .filter((field) => field.kind === "object" && field.isList === true)
+        .forEach((field) => {
+          const childNode: ModelTree = {
+            modelName: field.type,
+            children: [],
+          };
+          parentNode.children.push(childNode);
+          stack.push({ modelName: field.type, parentNode: childNode });
+        });
+    }
+
+    modelTrees.push(rootNode);
+  });
+
+  return modelTrees;
+}
 async function generateReactForms(
   prismaSchemaPath: string,
   outputDirectory: string
@@ -428,6 +518,19 @@ async function generateReactForms(
         "{/* @nexquik showForm stop */}"
       );
 
+      const dmmf = await getDMMF({ datamodel: prismaSchema });
+      // console.log("brandin", JSON.stringify(dmmf.datamodel));
+      // fs.writeFile("./pathhh", JSON.stringify(dmmf.datamodel), (err) => {
+      //   if (err) {
+      //     console.error("Error writing file:", err);
+      //   } else {
+      //     console.log("File created and content written successfully!");
+      //   }
+      // });
+      const modelTree = createModelTree(dmmf.datamodel.models);
+
+      // const modelTree = createModelTree(dmmf.datamodel);
+      console.log(JSON.stringify(modelTree, null, 2));
       const tableFields = await extractTableFields(tableName, prismaSchema);
       const uniqueField = tableFields.find((tableField) => tableField.isId);
 
@@ -622,13 +725,14 @@ async function extractTableFields(
   prismaSchema: string
 ): Promise<DMMF.Field[]> {
   const dmmf = await getDMMF({ datamodel: prismaSchema });
+  // console.log("brandin", dmmf.datamodel);
 
   const model = dmmf.datamodel.models.find((m) => m.name === tableName);
   if (!model) {
     throw new Error(`Table '${tableName}' not found in the Prisma schema.`);
   }
 
-  console.log("fields", model.fields);
+  // console.log("fields", model.fields);
   // const tableFields: DMMF.Field[] = model.fields.map((field) => ({
   //   name: field.name,
   //   type: field.type,
