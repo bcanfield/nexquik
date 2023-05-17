@@ -21,6 +21,107 @@ export type PrismaSchemaSectionType = {
   name: string;
   value: Block;
 };
+interface RouteObject {
+  segment: string;
+  model: string;
+  operation: string;
+  description: string;
+}
+
+function generateAPIRoutes(modelTreeArray: ModelTree[]): RouteObject[] {
+  const routes: RouteObject[] = [];
+
+  function generateRoutes(modelTree: ModelTree, parentRoute: string) {
+    const modelName = modelTree.modelName;
+    const route =
+      parentRoute + (parentRoute === "/" ? "" : "/") + modelName.toLowerCase();
+
+    routes.push({
+      segment: route,
+      model: modelName,
+      operation: "Create",
+      description: `Create a ${modelName}`,
+    });
+
+    routes.push({
+      segment: `${route}/:id/edit`,
+      model: modelName,
+      operation: "Edit",
+      description: `Edit a ${modelName} by ID`,
+    });
+
+    routes.push({
+      segment: `${route}/:id`,
+      model: modelName,
+      operation: "Show",
+      description: `Get details of a ${modelName} by ID`,
+    });
+
+    routes.push({
+      segment: route,
+      model: modelName,
+      operation: "List",
+      description: `Get a list of ${modelName}s`,
+    });
+
+    for (const child of modelTree.children) {
+      generateRoutes(child, route);
+    }
+  }
+
+  for (const modelTree of modelTreeArray) {
+    generateRoutes(modelTree, "/");
+  }
+
+  return routes;
+}
+
+function prettyPrintAPIRoutes(routes: RouteObject[]) {
+  console.log("API Routes:");
+  console.log("-----------");
+
+  for (const route of routes) {
+    console.log(
+      `${route.segment} - ${route.operation} ${route.model}: ${route.description}`
+    );
+  }
+}
+
+// function generateRouteDefinitions(modelTreeArray: ModelTree[]): string {
+//   let routes = "";
+
+//   function generateRoutes(modelTree: ModelTree, parentRoute: string) {
+//     const modelName = modelTree.modelName;
+//     const route =
+//       parentRoute + (parentRoute === "/" ? "" : "/") + modelName.toLowerCase();
+
+//     routes += `# Routes for ${modelName}\n`;
+
+//     // Create route
+//     routes += `POST ${route}/create - Create a ${modelName}\n`;
+
+//     // Edit route
+//     routes += `PUT ${route}/:id/edit - Edit a ${modelName} by ID\n`;
+
+//     // Show route
+//     routes += `GET ${route}/:id - Get details of a ${modelName} by ID\n`;
+
+//     // List route
+//     routes += `GET ${route} - Get a list of ${modelName}s\n`;
+
+//     routes += "\n";
+
+//     for (const child of modelTree.children) {
+//       generateRoutes(child, route);
+//     }
+//   }
+
+//   for (const modelTree of modelTreeArray) {
+//     generateRoutes(modelTree, "/");
+//   }
+
+//   return routes;
+// }
 
 function generateConvertToPrismaInputCode(
   tableFields: DMMF.Field[],
@@ -392,6 +493,11 @@ async function generateReactForms(
       outputDirectory
     );
 
+    const dmmf = await getDMMF({ datamodel: prismaSchema });
+    const modelTree = createModelTree(dmmf.datamodel);
+    const routes = generateAPIRoutes(modelTree);
+    prettyPrintAPIRoutes(routes);
+
     // Generate React forms for each table
     for (const tableName of tableNames) {
       const referencedModels = extractReferencedModels(tableName, prismaSchema);
@@ -486,19 +592,7 @@ async function generateReactForms(
         "{/* @nexquik showForm stop */}"
       );
 
-      const dmmf = await getDMMF({ datamodel: prismaSchema });
-      // console.log("brandin", JSON.stringify(dmmf.datamodel));
-      // fs.writeFile("./pathhh", JSON.stringify(dmmf.datamodel), (err) => {
-      //   if (err) {
-      //     console.error("Error writing file:", err);
-      //   } else {
-      //     console.log("File created and content written successfully!");
-      //   }
-      // });
-      const modelTree = createModelTree(dmmf.datamodel);
-
       // const modelTree = createModelTree(dmmf.datamodel);
-      console.log(JSON.stringify(modelTree, null, 2));
       const tableFields = await extractTableFields(tableName, prismaSchema);
       const uniqueField = tableFields.find((tableField) => tableField.isId);
 
