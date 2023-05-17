@@ -12,11 +12,12 @@ export default async function ShowNexquikTemplateModel({ params }) {
   });
   async function deleteNexquikTemplateModel(formData: FormData) {
     "use server";
-    await prisma.nexquikTemplateModel.delete(
-      //@nexquik prismaDeleteClause start
-      { where: { id: formData.get("id") } }
+    await prisma.nexquikTemplateModel.delete({
+      where:
+        //@nexquik prismaDeleteClause start
+        { id: formData.get("id") },
       //@nexquik prismaDeleteClause stop
-    );
+    });
     revalidatePath(`/nexquikTemplateModel`);
     redirect(`/nexquikTemplateModel`);
   }
