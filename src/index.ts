@@ -34,10 +34,13 @@ function generateAPIRoutes(modelTreeArray: ModelTree[]): RouteObject[] {
   function generateRoutes(modelTree: ModelTree, parentRoute: string) {
     const modelName = modelTree.modelName;
     const route =
-      parentRoute + (parentRoute === "/" ? "" : "/") + modelName.toLowerCase();
+      parentRoute +
+      (parentRoute === "/" ? "" : "/") +
+      modelName.charAt(0).toLowerCase() +
+      modelName.slice(1);
 
     routes.push({
-      segment: route,
+      segment: `${route}/create`,
       model: modelName,
       operation: "Create",
       description: `Create a ${modelName}`,
@@ -497,6 +500,10 @@ async function generateReactForms(
     const modelTree = createModelTree(dmmf.datamodel);
     const routes = generateAPIRoutes(modelTree);
     prettyPrintAPIRoutes(routes);
+
+    // For each route
+    // Create the directory structure
+    // Create relevent page.tsx file in the bottom directory
 
     // Generate React forms for each table
     for (const tableName of tableNames) {
