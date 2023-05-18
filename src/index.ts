@@ -1,14 +1,9 @@
 #! /usr/bin/env node
-import { Block } from "@mrleebo/prisma-ast";
 import chalk from "chalk";
 import { Command } from "commander";
 import figlet from "figlet";
 import { formatNextJsFilesRecursively } from "./fileHelpers";
 import { generateReactForms } from "./generators";
-export type PrismaSchemaSectionType = {
-  name: string;
-  value: Block;
-};
 
 async function main() {
   const program = new Command();
