@@ -26,6 +26,7 @@ export interface RouteObject {
 export interface ModelTree {
   modelName: string;
   children: ModelTree[];
+  uniqueIdentifierField?: string;
 }
 
 // Part 2 Begin
@@ -250,7 +251,9 @@ export async function generateReactForms(
 
     const dmmf = await getDMMF({ datamodel: prismaSchema });
     const modelTree = createModelTree(dmmf.datamodel);
-    const routes = generateAPIRoutes(modelTree);
+    console.log({ modelTree });
+
+    // const routes = generateAPIRoutes(modelTree);
 
     // TODO
     // For each route
@@ -484,10 +487,11 @@ export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
     }
 
     visitedModels.delete(model.name);
-
+    const uniqueIdField = model.fields.find((field) => field.isId === true);
     return {
       modelName: model.name,
       children,
+      uniqueIdentifierField: uniqueIdField.name,
     };
   }
 
