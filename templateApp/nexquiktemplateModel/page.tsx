@@ -3,7 +3,12 @@ import Link from "next/link";
 import { prisma } from "utils/db";
 
 export default async function ListNexquikTemplateModels() {
-  const nexquikTemplateModel = await prisma.nexquikTemplateModel.findMany();
+  const nexquikTemplateModel = await prisma.nexquikTemplateModel
+    .findMany
+    //@nexquik prismaWhereParentClause start
+    ();
+  //@nexquik prismaWhereParentClause stop
+
   async function deleteNexquikTemplateModel(formData: FormData) {
     "use server";
     await prisma.nexquikTemplateModel.delete({

@@ -543,6 +543,7 @@ export function generateAPIRoutes(
 
     // Create List Page
     // TODO: In list form, we need to dynamically inject the path to create, show, edit, and destroy
+    // TODO: In child list component (sessions) get sessions where userId = params.UserId
     // Can we just router.push something?
     const listFormCode = await generateListForm2(modelTree);
     addStringBetweenComments(
@@ -640,6 +641,26 @@ export function generateAPIRoutes(
       "//@nexquik prismaWhereInput stop"
     );
 
+    // Where parent clause
+    const parentIdentifierField = modelTree.model.fields.find(
+      (field) => field.isId
+    );
+    const whereparentClause = modelTree.parent
+      ? generateWhereParentClause(
+          "params",
+          getDynamicSlug(modelTree.parent.name, parentIdentifierField.name),
+          parentIdentifierField.name,
+          parentIdentifierField.type,
+          modelTree.parent.name
+        )
+      : "()";
+    addStringBetweenComments(
+      directoryToCreate,
+      whereparentClause,
+      "//@nexquik prismaWhereParentClause start",
+      "//@nexquik prismaWhereParentClause stop"
+    );
+
     // END GENERATION
     // #############
     // Create
@@ -727,6 +748,27 @@ export function generateConvertToPrismaInputCode(
   return `{
   ${convertToPrismaInputLines.join("\n")}
     }`;
+}
+
+export function generateWhereParentClause(
+  inputObject: string,
+  fieldAccessValue: string,
+  parentIdentifierFieldName: string,
+  parentIdentifierFieldType: string,
+  parentModelName: string
+): string {
+  let typecastValue = `${inputObject}.${fieldAccessValue}`;
+  if (
+    parentIdentifierFieldType === "Int" ||
+    parentIdentifierFieldType === "Float"
+  ) {
+    typecastValue = `Number(${typecastValue})`;
+  } else if (parentIdentifierFieldType === "Boolean") {
+    typecastValue = `Boolean(${typecastValue})`;
+  }
+  const parentModelNameLowerCase =
+    parentModelName.charAt(0).toLowerCase() + parentModelName.slice(1);
+  return `({ where: { ${parentModelNameLowerCase}: {${parentIdentifierFieldName}: {equals: ${typecastValue}} } } })`;
 }
 
 export function generateWhereClause(
