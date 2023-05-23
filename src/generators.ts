@@ -523,7 +523,7 @@ export function generateAPIRoutes(modelTreeArray: ModelTree[]): RouteObject[] {
     const modelName = modelTree.modelName;
     const route =
       parentRoute +
-      (parentRoute === "/" ? "" : "/") +
+      (parentRoute === "/" ? "" : "/:id/") +
       modelName.charAt(0).toLowerCase() +
       modelName.slice(1);
 
@@ -564,6 +564,7 @@ export function generateAPIRoutes(modelTreeArray: ModelTree[]): RouteObject[] {
     generateRoutes(modelTree, "/");
   }
 
+  console.log({ routes });
   prettyPrintAPIRoutes(routes);
   return routes;
 }
