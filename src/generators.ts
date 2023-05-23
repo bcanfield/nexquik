@@ -124,11 +124,11 @@ async function generateCreateForm(modelTree: ModelTree): Promise<string> {
 }
 
 async function generateRedirect(
-  modelTree: ModelTree,
+  identifierField: string,
   dataObjectName: string
 ): Promise<string> {
   const reactComponentTemplate = `
-    redirect(\`/nexquikTemplateModel/\${${dataObjectName}.${modelTree.uniqueIdentifierField.name}}\`);
+    redirect(\`/nexquikTemplateModel/\${${dataObjectName}.${identifierField}}\`);
   `;
   return reactComponentTemplate;
 }
@@ -153,7 +153,6 @@ async function generateListForm2(modelTree: ModelTree): Promise<string> {
   );
   const uniqueFieldInputType =
     prismaFieldToInputType[uniqueField.type] || "text";
-  console.log({ fields: modelTree.model.fields });
   // Define the React component template as a string
   const reactComponentTemplate = `
     <ul>
@@ -485,6 +484,9 @@ function prettyPrintAPIRoutes(routes: RouteObject[]) {
   }
 }
 
+const getDynamicSlug = (modelName: string, uniqueIdFieldName: string) => {
+  return `${modelName}${uniqueIdFieldName}`;
+};
 export function generateAPIRoutes(
   modelTreeArray: ModelTree[],
   outputDirectory: string
@@ -497,11 +499,15 @@ export function generateAPIRoutes(
   ) {
     const modelName = modelTree.modelName;
     const modelUniqueIdentifierField = modelTree.uniqueIdentifierField;
+    console.log("parentRoute", parentRoute.name);
     const route =
       parentRoute.name +
       (parentRoute.name === "/"
         ? ""
-        : `/[${parentRoute.uniqueIdentifierField}]/`) +
+        : `/[${getDynamicSlug(
+            modelTree.parent.name,
+            parentRoute.uniqueIdentifierField
+          )}]/`) +
       modelName.charAt(0).toLowerCase() +
       modelName.slice(1);
 
@@ -513,6 +519,11 @@ export function generateAPIRoutes(
 
     // START GENERATION
     // #############
+    const uniqueDynamicSlug = getDynamicSlug(
+      modelTree.modelName,
+      modelUniqueIdentifierField.name
+    );
+    console.log({ uniqueDynamicSlug });
 
     // Copy over template directory
     // Rename [id] directory to modelUniqueIdentifierField
@@ -521,6 +532,13 @@ export function generateAPIRoutes(
       path.join(__dirname, "templateApp", "nexquikTemplateModel"),
       directoryToCreate,
       true
+    );
+
+    const dir = fs.readdirSync(directoryToCreate);
+    console.log({ dir });
+    fs.renameSync(
+      path.join(directoryToCreate, "[id]"),
+      path.join(directoryToCreate, `[${uniqueDynamicSlug}]`)
     );
 
     // Create List Page
@@ -564,7 +582,10 @@ export function generateAPIRoutes(
     );
 
     // CreateRedirect
-    const createRedirect = await generateRedirect(modelTree, "created");
+    const createRedirect = await generateRedirect(
+      modelTree.uniqueIdentifierField.name,
+      "created"
+    );
     addStringBetweenComments(
       directoryToCreate,
       createRedirect,
@@ -582,7 +603,7 @@ export function generateAPIRoutes(
     );
 
     // EditRedirect
-    const editRedirect = await generateRedirect(modelTree, "params");
+    const editRedirect = await generateRedirect(uniqueDynamicSlug, "params");
     addStringBetweenComments(
       directoryToCreate,
       editRedirect,
@@ -608,8 +629,9 @@ export function generateAPIRoutes(
     const identifierField = modelTree.model.fields.find((field) => field.isId);
     const whereClause = generateWhereClause(
       "params",
-      identifierField.name,
-      identifierField.type
+      uniqueDynamicSlug,
+      identifierField.type,
+      identifierField.name
     );
     addStringBetweenComments(
       directoryToCreate,
@@ -630,7 +652,10 @@ export function generateAPIRoutes(
 
     // Edit
     routes.push({
-      segment: `${route}/[${modelUniqueIdentifierField.name}]/edit`,
+      segment: `${route}/[${getDynamicSlug(
+        modelName,
+        modelTree.uniqueIdentifierField.name
+      )}]/edit`,
       model: modelName,
       operation: "Edit",
       description: `Edit a ${modelName} by ID`,
@@ -638,7 +663,10 @@ export function generateAPIRoutes(
 
     // Show
     routes.push({
-      segment: `${route}/[${modelUniqueIdentifierField.name}]`,
+      segment: `${route}/[${getDynamicSlug(
+        modelName,
+        modelTree.uniqueIdentifierField.name
+      )}]`,
       model: modelName,
       operation: "Show",
       description: `Get details of a ${modelName} by ID`,
@@ -704,7 +732,8 @@ export function generateConvertToPrismaInputCode(
 export function generateWhereClause(
   inputObject: string,
   identifierFieldName: string,
-  identifierFieldType: string
+  identifierFieldType: string,
+  modelUniqueIdField: string
 ): string {
   let typecastValue = `${inputObject}.${identifierFieldName}`;
   if (identifierFieldType === "Int" || identifierFieldType === "Float") {
@@ -713,7 +742,7 @@ export function generateWhereClause(
     typecastValue = `Boolean(${typecastValue})`;
   }
 
-  return `{ ${identifierFieldName}: ${typecastValue} },`;
+  return `{ ${modelUniqueIdField}: ${typecastValue} },`;
 }
 
 export function generateDeleteClause(
