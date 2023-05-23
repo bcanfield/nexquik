@@ -25,7 +25,7 @@ export interface RouteObject {
 
 export interface ModelTree {
   modelName: string;
-  parent?: string;
+  parent?: { name?: string; uniqueIdentifierField?: string };
   children: ModelTree[];
   uniqueIdentifierField?: string;
 }
@@ -254,7 +254,7 @@ export async function generateReactForms(
     const modelTree = createModelTree(dmmf.datamodel);
     console.log({ modelTree });
 
-    // const routes = generateAPIRoutes(modelTree);
+    const routes = generateAPIRoutes(modelTree);
 
     // TODO
     // For each route
@@ -491,7 +491,12 @@ export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
     const uniqueIdField = model.fields.find((field) => field.isId === true);
     return {
       modelName: model.name,
-      parent: parent?.name,
+      parent: {
+        name: parent?.name,
+        uniqueIdentifierField: parent?.fields
+          ? parent.fields.find((field) => field.isId === true).name
+          : "",
+      },
       uniqueIdentifierField: uniqueIdField.name,
       children,
     };
@@ -525,11 +530,17 @@ function prettyPrintAPIRoutes(routes: RouteObject[]) {
 export function generateAPIRoutes(modelTreeArray: ModelTree[]): RouteObject[] {
   const routes: RouteObject[] = [];
 
-  function generateRoutes(modelTree: ModelTree, parentRoute: string) {
+  function generateRoutes(
+    modelTree: ModelTree,
+    parentRoute: { name: string; uniqueIdentifierField?: string }
+  ) {
     const modelName = modelTree.modelName;
+    const modelUniqueIdentifierField = modelTree.uniqueIdentifierField;
     const route =
-      parentRoute +
-      (parentRoute === "/" ? "" : "/:id/") +
+      parentRoute.name +
+      (parentRoute.name === "/"
+        ? ""
+        : `/[${parentRoute.uniqueIdentifierField}]/`) +
       modelName.charAt(0).toLowerCase() +
       modelName.slice(1);
 
@@ -541,14 +552,14 @@ export function generateAPIRoutes(modelTreeArray: ModelTree[]): RouteObject[] {
     });
 
     routes.push({
-      segment: `${route}/:id/edit`,
+      segment: `${route}/[${modelUniqueIdentifierField}]/edit`,
       model: modelName,
       operation: "Edit",
       description: `Edit a ${modelName} by ID`,
     });
 
     routes.push({
-      segment: `${route}/:id`,
+      segment: `${route}/[${modelUniqueIdentifierField}]`,
       model: modelName,
       operation: "Show",
       description: `Get details of a ${modelName} by ID`,
@@ -562,12 +573,18 @@ export function generateAPIRoutes(modelTreeArray: ModelTree[]): RouteObject[] {
     });
 
     for (const child of modelTree.children) {
-      generateRoutes(child, route);
+      generateRoutes(child, {
+        name: route,
+        uniqueIdentifierField: modelUniqueIdentifierField,
+      });
     }
   }
 
   for (const modelTree of modelTreeArray) {
-    generateRoutes(modelTree, "/");
+    generateRoutes(modelTree, {
+      name: "/",
+      uniqueIdentifierField: "",
+    });
   }
 
   console.log({ routes });
