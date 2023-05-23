@@ -25,6 +25,7 @@ export interface RouteObject {
 
 export interface ModelTree {
   modelName: string;
+  parent?: string;
   children: ModelTree[];
   uniqueIdentifierField?: string;
 }
@@ -466,7 +467,7 @@ export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
   const modelTrees: ModelTree[] = [];
 
   // Function to recursively build the model tree
-  function buildModelTree(model: DMMF.Model): ModelTree {
+  function buildModelTree(model: DMMF.Model, parent?: DMMF.Model): ModelTree {
     if (visitedModels.has(model.name)) {
       throw new Error(`Circular relationship detected in model: ${model.name}`);
     }
@@ -481,7 +482,7 @@ export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
     for (const relationship of childRelationships) {
       const childModel = modelMap[relationship.type];
       if (childModel) {
-        const childNode = buildModelTree(childModel);
+        const childNode = buildModelTree(childModel, model);
         children.push(childNode);
       }
     }
@@ -490,8 +491,9 @@ export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
     const uniqueIdField = model.fields.find((field) => field.isId === true);
     return {
       modelName: model.name,
-      children,
+      parent: parent?.name,
       uniqueIdentifierField: uniqueIdField.name,
+      children,
     };
   }
 
