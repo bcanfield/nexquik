@@ -109,13 +109,10 @@ function addStringBetweenComments(
 
 async function generateCreateForm(
   modelTree: ModelTree,
-  routeUrl: string
+  routeUrl: string,
+  enums: Record<string, string[]>
 ): Promise<string> {
-  // const tableFields = await extractTableFields(tableName, prismaSchema);
-  // console.log({ tableFields });
-  const formFields = generateFormFields(modelTree.model.fields);
-  // console.log({ formFields });
-  // Define the React component template as a string
+  const formFields = generateFormFields(modelTree.model.fields, enums);
   const reactComponentTemplate = `
       <form action={addNexquikTemplateModel}>
         ${formFields}
@@ -154,9 +151,15 @@ async function generateRevalidatePath(
   return reactComponentTemplate;
 }
 
-async function generateEditForm(modelTree: ModelTree): Promise<string> {
+async function generateEditForm(
+  modelTree: ModelTree,
+  enums: Record<string, string[]>
+): Promise<string> {
   // const tableFields = await extractTableFields(tableName, prismaSchema);
-  const formFields = generateFormFieldsWithDefaults(modelTree.model.fields);
+  const formFields = generateFormFieldsWithDefaults(
+    modelTree.model.fields,
+    enums
+  );
   // Define the React component template as a string
   const reactComponentTemplate = `
     <form action={editNexquikTemplateModel}>
@@ -168,7 +171,17 @@ async function generateEditForm(modelTree: ModelTree): Promise<string> {
   return reactComponentTemplate;
 }
 ``;
+function getEnums(datamodel: DMMF.Datamodel): Record<string, string[]> {
+  const enums: Record<string, string[]> = {};
 
+  for (const enumDef of datamodel.enums) {
+    const enumName = enumDef.name;
+    const enumValues = enumDef.values.map((value) => value.name);
+    enums[enumName] = enumValues;
+  }
+
+  return enums;
+}
 async function generateChildrenList(
   modelTree: ModelTree,
   routeUrl: string
@@ -258,9 +271,10 @@ export async function generateReactForms(
 
     const dmmf = await getDMMF({ datamodel: prismaSchema });
     const modelTree = createModelTree(dmmf.datamodel);
-    // console.log({ modelTree });
+    const enums = getEnums(dmmf.datamodel);
+    console.log({ enums });
 
-    const routes = generateAPIRoutes(modelTree, outputDirectory);
+    const routes = generateAPIRoutes(modelTree, outputDirectory, enums);
   } catch (error) {
     console.error("Error occurred:", error);
   }
@@ -415,7 +429,8 @@ function convertRouteToRedirectUrl(input: string): string {
 }
 export function generateAPIRoutes(
   modelTreeArray: ModelTree[],
-  outputDirectory: string
+  outputDirectory: string,
+  enums: Record<string, string[]>
 ): RouteObject[] {
   const routes: RouteObject[] = [];
 
@@ -506,7 +521,8 @@ export function generateAPIRoutes(
     // CreateForm
     const createFormCode = await generateCreateForm(
       modelTree,
-      convertRouteToRedirectUrl(route)
+      convertRouteToRedirectUrl(route),
+      enums
     );
     addStringBetweenComments(
       directoryToCreate,
@@ -563,7 +579,7 @@ export function generateAPIRoutes(
     );
 
     // EditForm
-    const editFormCode = await generateEditForm(modelTree);
+    const editFormCode = await generateEditForm(modelTree, enums);
     addStringBetweenComments(
       directoryToCreate,
       editFormCode,
@@ -842,11 +858,21 @@ export function isFieldRenderable(field: DMMF.Field): boolean {
   return !(field.isReadOnly || field.isList || !!field.relationName);
 }
 export function generateFormFields(
-  tableFields: DMMF.Field[]
-  // referencedModels: { fieldName: string; referencedModel: string }[]
+  tableFields: DMMF.Field[],
+  enums: Record<string, string[]>
 ): string {
   return tableFields
     .map((field) => {
+      // Enum
+      if (field.kind === "enum") {
+        const enumValues = enums[field.type];
+        return `<label>${field.name}</label>\n
+
+        <select name="${field.name}" id="${field.name}">
+        ${enumValues.map((v) => `<option value="${v}">${v}</option>`)}
+</select>`;
+      }
+
       if (!isFieldRenderable(field) || field.isId) {
         return "";
       }
@@ -860,13 +886,24 @@ export function generateFormFields(
 }
 
 export function generateFormFieldsWithDefaults(
-  tableFields: DMMF.Field[]
+  tableFields: DMMF.Field[],
+  enums: Record<string, string[]>
   // referencedModels: { fieldName: string; referencedModel: string }[]
 ): string {
   return tableFields
     .map((field) => {
       if (!isFieldRenderable(field)) {
         return "";
+      }
+      // Enum
+      if (field.kind === "enum") {
+        const enumValues = enums[field.type];
+        return `<label>${field.name}</label>\n
+              <select name="${field.name}" id="${
+          field.name
+        }" defaultValue={nexquikTemplateModel.${field.name}}>
+              ${enumValues.map((v) => `<option value="${v}">${v}</option>`)}
+      </select>`;
       }
       const inputType = prismaFieldToInputType[field.type] || "text";
       const defaultValue = field.isId
@@ -875,7 +912,7 @@ export function generateFormFieldsWithDefaults(
       const disabled = field.isId ? "disabled" : "";
       const required = field.isRequired ? "required" : "";
 
-      return `<label>${field.name}</label>\n<input type="${inputType}" name="${field.name}" value=${defaultValue}  ${disabled} ${required}/>`;
+      return `<label>${field.name}</label>\n<input type="${inputType}" name="${field.name}" defaultValue=${defaultValue}  ${disabled} ${required}/>`;
     })
     .join("\n");
 }
