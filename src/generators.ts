@@ -168,6 +168,28 @@ async function generateEditForm(modelTree: ModelTree): Promise<string> {
   return reactComponentTemplate;
 }
 ``;
+
+async function generateChildrenList(
+  modelTree: ModelTree,
+  routeUrl: string
+): Promise<string> {
+  // Define the React component template as a string
+  const slug = getDynamicSlug(
+    modelTree.model.name,
+    modelTree.uniqueIdentifierField.name
+  );
+  const childrenLinks = modelTree.children
+    .map(
+      (c) => `<Link href={\`${routeUrl}/\${params.${slug}}/${
+        c.modelName.charAt(0).toLowerCase() + c.modelName.slice(1)
+      }\`}>
+    ${c.modelName} List
+</Link>`
+    )
+    .join("\n");
+  return childrenLinks;
+}
+``;
 async function generateListForm2(
   modelTree: ModelTree,
   routeUrl: string
@@ -537,6 +559,20 @@ export function generateAPIRoutes(
       editRedirect,
       "//@nexquik editRedirect start",
       "//@nexquik editRedirect stop"
+    );
+
+    // ChildrenList
+    // Get Child Models
+    // Link to the child model list page
+    const childModelLinkList = await generateChildrenList(
+      modelTree,
+      convertRouteToRedirectUrl(route)
+    );
+    addStringBetweenComments(
+      directoryToCreate,
+      childModelLinkList,
+      "{/* @nexquik listChildren start */}",
+      "{/* @nexquik listChildren stop */}"
     );
 
     findAndReplaceInFiles(

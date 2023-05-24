@@ -57,6 +57,9 @@ export default async function ShowNexquikTemplateModel({ params }) {
         </ul>
       </form>
       {/* @nexquik showForm stop */}
+
+      {/* @nexquik listChildren start */}
+      {/* @nexquik listChildren stop */}
     </div>
   );
 }
