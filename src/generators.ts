@@ -258,7 +258,7 @@ export async function generateReactForms(
 
     const dmmf = await getDMMF({ datamodel: prismaSchema });
     const modelTree = createModelTree(dmmf.datamodel);
-    console.log({ modelTree });
+    // console.log({ modelTree });
 
     const routes = generateAPIRoutes(modelTree, outputDirectory);
   } catch (error) {
@@ -381,6 +381,27 @@ function prettyPrintAPIRoutes(routes: RouteObject[]) {
   }
 }
 
+function getParentReferenceField(modelTree: ModelTree): string | undefined {
+  if (!modelTree.parent) {
+    return undefined;
+  }
+
+  const parentModel = modelTree.model;
+  const parentField = parentModel.fields.find(
+    (field) => field.type === modelTree.parent.name
+  );
+
+  if (!parentField) {
+    return undefined;
+  }
+
+  // Find the unique ID field in the current model that matches the parent reference field
+  const uniqueIdField = modelTree.model.fields.find(
+    (field) => field.name === parentField.name
+  );
+
+  return uniqueIdField?.name;
+}
 const getDynamicSlug = (modelName: string, uniqueIdFieldName: string) => {
   return `${modelName}${uniqueIdFieldName}`;
 };
@@ -416,7 +437,7 @@ export function generateAPIRoutes(
       modelName.slice(1);
 
     const directoryToCreate = path.join(outputDirectory, route);
-    console.log(`Create directory: ${directoryToCreate}`);
+    // console.log(`Create directory: ${directoryToCreate}`);
     if (!fs.existsSync(directoryToCreate)) {
       fs.mkdirSync(directoryToCreate);
     }
@@ -612,7 +633,7 @@ export function generateAPIRoutes(
           getDynamicSlug(modelTree.parent.name, parentIdentifierField.name),
           parentIdentifierField.name,
           parentIdentifierField.type,
-          modelTree.parent.name
+          getParentReferenceField(modelTree)
         )
       : "()";
     addStringBetweenComments(
@@ -709,11 +730,11 @@ export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
       (f) => f.name === relationFieldToParent
     )?.type;
 
-    console.log({
-      modelName: modelTree.modelName,
-      relationFieldToParent,
-      fieldType,
-    });
+    // console.log({
+    //   modelName: modelTree.modelName,
+    //   relationFieldToParent,
+    //   fieldType,
+    // });
   }
 
   const fieldsToConvert: Partial<DMMF.Field>[] = modelTree.model.fields
@@ -770,7 +791,7 @@ export function generateWhereParentClause(
   fieldAccessValue: string,
   parentIdentifierFieldName: string,
   parentIdentifierFieldType: string,
-  parentModelName: string
+  parentReferenceField: string
 ): string {
   let typecastValue = `${inputObject}.${fieldAccessValue}`;
   if (
@@ -781,9 +802,9 @@ export function generateWhereParentClause(
   } else if (parentIdentifierFieldType === "Boolean") {
     typecastValue = `Boolean(${typecastValue})`;
   }
-  const parentModelNameLowerCase =
-    parentModelName.charAt(0).toLowerCase() + parentModelName.slice(1);
-  return `({ where: { ${parentModelNameLowerCase}: {${parentIdentifierFieldName}: {equals: ${typecastValue}} } } })`;
+  // const parentModelNameLowerCase =
+  //   parentModelName.charAt(0).toLowerCase() + parentModelName.slice(1);
+  return `({ where: { ${parentReferenceField}: {${parentIdentifierFieldName}: {equals: ${typecastValue}} } } })`;
 }
 
 export function generateWhereClause(
