@@ -17,14 +17,19 @@ export default async function ListNexquikTemplateModels({ params }) {
         { id: formData.get("id") },
       //@nexquik prismaDeleteClause stop
     });
+    //@nexquik revalidatePath start
     revalidatePath("/nexquikTemplateModel");
+    //@nexquik revalidatePath stop
   }
   return (
     <div>
       <h1> NexquikTemplateModels - List</h1>
+      {/* @nexquik createLink start */}
       <Link href={`/nexquikTemplateModel/create`}>
         Create New NexquikTemplateModel
       </Link>
+      {/* @nexquik createLink stop */}
+
       {/* @nexquik listForm start */}
       <ul>
         {nexquikTemplateModel?.map((nexquikTemplateModel, index) => (

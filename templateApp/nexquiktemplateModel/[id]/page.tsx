@@ -18,8 +18,13 @@ export default async function ShowNexquikTemplateModel({ params }) {
         { id: formData.get("id") },
       //@nexquik prismaDeleteClause stop
     });
-    revalidatePath(`/nexquikTemplateModel`);
+    //@nexquik revalidatePath start
+    revalidatePath("/nexquikTemplateModel");
+    //@nexquik revalidatePath stop
+
+    //@nexquik listRedirect start
     redirect(`/nexquikTemplateModel`);
+    //@nexquik listRedirect stop
   }
   return (
     <div>

@@ -16,7 +16,10 @@ export default async function CreateNexquikTemplateModel({ params }) {
         },
       //@nexquik prismaDataInput stop
     });
-    revalidatePath(`/nexquikTemplateModel`);
+    //@nexquik revalidatePath start
+    revalidatePath("/nexquikTemplateModel");
+    //@nexquik revalidatePath stop
+
     //@nexquik createRedirect start
     redirect(`/nexquikTemplateModel/${created.id}`);
     //@nexquik createRedirect stop
@@ -35,8 +38,8 @@ export default async function CreateNexquikTemplateModel({ params }) {
         <input type="number" name="lng" />
         <button type="submit">Create NexquikTemplateModel</button>
       </form>
-      {/* @nexquik createForm stop */}
       <Link href={`/nexquikTemplateModel`}>Cancel</Link>
+      {/* @nexquik createForm stop */}
     </div>
   );
 }

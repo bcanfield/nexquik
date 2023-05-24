@@ -107,7 +107,10 @@ function addStringBetweenComments(
   });
 } // Part 2 End
 
-async function generateCreateForm(modelTree: ModelTree): Promise<string> {
+async function generateCreateForm(
+  modelTree: ModelTree,
+  routeUrl: string
+): Promise<string> {
   // const tableFields = await extractTableFields(tableName, prismaSchema);
   // console.log({ tableFields });
   const formFields = generateFormFields(modelTree.model.fields);
@@ -118,6 +121,7 @@ async function generateCreateForm(modelTree: ModelTree): Promise<string> {
         ${formFields}
         <button type="submit">Create NexquikTemplateModel</button>
       </form>
+      <Link href={\`${routeUrl}\`}>Cancel</Link>
   `;
 
   return reactComponentTemplate;
@@ -126,6 +130,26 @@ async function generateCreateForm(modelTree: ModelTree): Promise<string> {
 async function generateRedirect(redirectUrl: string): Promise<string> {
   const reactComponentTemplate = `
     redirect(${redirectUrl});
+  `;
+  return reactComponentTemplate;
+}
+
+async function generateLink(
+  linkUrl: string,
+  linkText: string
+): Promise<string> {
+  const reactComponentTemplate = `
+  <Link href={\`${linkUrl}\`}>
+  ${linkText}
+</Link>  `;
+  return reactComponentTemplate;
+}
+
+async function generateRevalidatePath(
+  revalidationUrl: string
+): Promise<string> {
+  const reactComponentTemplate = `
+    revalidatePath(\`${revalidationUrl}\`);
   `;
   return reactComponentTemplate;
 }
@@ -144,7 +168,10 @@ async function generateEditForm(modelTree: ModelTree): Promise<string> {
   return reactComponentTemplate;
 }
 ``;
-async function generateListForm2(modelTree: ModelTree): Promise<string> {
+async function generateListForm2(
+  modelTree: ModelTree,
+  routeUrl: string
+): Promise<string> {
   const uniqueField = modelTree.model.fields.find(
     (tableField) => tableField.isId
   );
@@ -166,12 +193,12 @@ async function generateListForm2(modelTree: ModelTree): Promise<string> {
     }
     return `<p> ${field.name} {\`\${nexquikTemplateModel.${field.name}}\`} </p>`;
   })}
-          <Link href={\`/nexquikTemplateModel/\${nexquikTemplateModel.${
-            uniqueField.name
-          }}\`}>View</Link>
-          <Link href={\`/nexquikTemplateModel/\${nexquikTemplateModel.${
-            uniqueField.name
-          }}/edit\`}>Edit</Link>
+          <Link href={\`${routeUrl}/\${nexquikTemplateModel.${
+    uniqueField.name
+  }}\`}>View</Link>
+          <Link href={\`${routeUrl}/\${nexquikTemplateModel.${
+    uniqueField.name
+  }}/edit\`}>Edit</Link>
           <button formAction={deleteNexquikTemplateModel}>Delete</button>
         </form>
       </li>
@@ -229,7 +256,10 @@ export async function extractTableFields(
   return model.fields;
 }
 
-export async function generateShowForm(modelTree: ModelTree): Promise<string> {
+export async function generateShowForm(
+  modelTree: ModelTree,
+  routeUrl: string
+): Promise<string> {
   const uniqueField = modelTree.model.fields.find(
     (tableField) => tableField.isId
   );
@@ -242,10 +272,10 @@ export async function generateShowForm(modelTree: ModelTree): Promise<string> {
     uniqueField.name
   }" defaultValue={nexquikTemplateModel?.${uniqueField.name}} />
     <form>
-    <Link href={\`/nexquikTemplateModel/\`}>Back to All NexquikTemplateModels</Link>
-    <Link href={\`/nexquikTemplateModel/\${nexquikTemplateModel.${
-      uniqueField.name
-    }}/edit\`}>Edit</Link>
+    <Link href={\`${routeUrl}\`}>Back to All NexquikTemplateModels</Link>
+    <Link href={\`${routeUrl}/\${nexquikTemplateModel.${
+    uniqueField.name
+  }}/edit\`}>Edit</Link>
     <button formAction={deleteNexquikTemplateModel}>Delete</button>
     ${modelTree.model.fields.map((field) => {
       if (!isFieldRenderable(field)) {
@@ -396,7 +426,10 @@ export function generateAPIRoutes(
     // TODO: In list form, we need to dynamically inject the path to create, show, edit, and destroy
     // TODO: In child list component (sessions) get sessions where userId = params.UserId
     // Can we just router.push something?
-    const listFormCode = await generateListForm2(modelTree);
+    const listFormCode = await generateListForm2(
+      modelTree,
+      convertRouteToRedirectUrl(route)
+    );
     addStringBetweenComments(
       directoryToCreate,
       listFormCode,
@@ -416,7 +449,10 @@ export function generateAPIRoutes(
     );
 
     // ShowForm
-    const showFormCode = await generateShowForm(modelTree);
+    const showFormCode = await generateShowForm(
+      modelTree,
+      convertRouteToRedirectUrl(route)
+    );
     addStringBetweenComments(
       directoryToCreate,
       showFormCode,
@@ -425,7 +461,10 @@ export function generateAPIRoutes(
     );
 
     // CreateForm
-    const createFormCode = await generateCreateForm(modelTree);
+    const createFormCode = await generateCreateForm(
+      modelTree,
+      convertRouteToRedirectUrl(route)
+    );
     addStringBetweenComments(
       directoryToCreate,
       createFormCode,
@@ -444,6 +483,40 @@ export function generateAPIRoutes(
       createRedirect,
       "//@nexquik createRedirect start",
       "//@nexquik createRedirect stop"
+    );
+
+    // CreateRedirect
+    const listRedirect = await generateRedirect(
+      `\`${convertRouteToRedirectUrl(route)}\``
+    );
+    addStringBetweenComments(
+      directoryToCreate,
+      listRedirect,
+      "//@nexquik listRedirect start",
+      "//@nexquik listRedirect stop"
+    );
+
+    // RevalidatePath
+    const revalidatePath = await generateRevalidatePath(
+      `${convertRouteToRedirectUrl(route)}`
+    );
+    addStringBetweenComments(
+      directoryToCreate,
+      revalidatePath,
+      "//@nexquik revalidatePath start",
+      "//@nexquik revalidatePath stop"
+    );
+
+    // CreateLink
+    const createLink = await generateLink(
+      `${convertRouteToRedirectUrl(route)}/create`,
+      "Create New NexquikTemplateModel"
+    );
+    addStringBetweenComments(
+      directoryToCreate,
+      createLink,
+      "{/* @nexquik createLink start */}",
+      "{/* @nexquik createLink stop */}"
     );
 
     // EditForm
