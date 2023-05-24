@@ -112,7 +112,7 @@ async function generateCreateForm(
   routeUrl: string,
   enums: Record<string, string[]>
 ): Promise<string> {
-  const formFields = generateFormFields(modelTree.model.fields, enums);
+  const formFields = generateFormFields(modelTree, enums);
   const reactComponentTemplate = `
       <form action={addNexquikTemplateModel}>
         ${formFields}
@@ -729,12 +729,6 @@ export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
     // Get the field on the current model that is the id referencing the parent
     modelTree.model.fields.forEach((mf) => {
       if (mf.type === modelTree.parent.name) {
-        // console.log({
-        //   currentField: mf.name,
-        //   parentName: modelTree.parent.name,
-        //   from: mf.relationFromFields,
-        //   to: mf.relationToFields,
-        // });
         if (mf.relationFromFields.length > 0) {
           relationFieldToParent = mf.relationFromFields[0];
         }
@@ -745,12 +739,6 @@ export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
     fieldType = modelTree.model.fields.find(
       (f) => f.name === relationFieldToParent
     )?.type;
-
-    // console.log({
-    //   modelName: modelTree.modelName,
-    //   relationFieldToParent,
-    //   fieldType,
-    // });
   }
 
   const fieldsToConvert: Partial<DMMF.Field>[] = modelTree.model.fields
@@ -796,6 +784,44 @@ export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
       `    ${relationFieldToParent}: ${typecastValue},`
     );
   }
+
+  // Convert fields pointing to other relations differently
+  modelTree.model.fields.map((field) => {
+    if (field.kind === "object") {
+      console.log(
+        `Field '${field.name}' in model '${modelTree.modelName}' is a relation.`
+      );
+      const relationFrom = field.relationFromFields[0];
+      console.log(`relationFrom: ${relationFrom}`);
+
+      const referencedModelName = field.type;
+
+      if (referencedModelName === modelTree.parent?.name) {
+        console.log(
+          `Field '${field.name}' is a reference to the parent model.`
+        );
+      } else if (relationFrom) {
+        const fieldType2 = modelTree.model.fields.find(
+          (f) => f.name === relationFrom
+        ).type;
+
+        let typecastValue = `formData.get('${relationFrom}')`;
+        if (fieldType2 === "Int" || fieldType2 === "Float") {
+          typecastValue = `Number(${typecastValue})`;
+        } else if (fieldType2 === "Boolean") {
+          typecastValue = `Boolean(${typecastValue})`;
+        } else if (fieldType2 === "DateTime") {
+          typecastValue = `new Date(String(${typecastValue}))`;
+        } else {
+          typecastValue = `String(${typecastValue})`;
+        }
+
+        convertToPrismaInputLines.push(
+          `    ${relationFrom}: ${typecastValue},`
+        );
+      }
+    }
+  });
 
   return `{
   ${convertToPrismaInputLines.join("\n")}
@@ -858,10 +884,10 @@ export function isFieldRenderable(field: DMMF.Field): boolean {
   return !(field.isReadOnly || field.isList || !!field.relationName);
 }
 export function generateFormFields(
-  tableFields: DMMF.Field[],
+  modelTree: ModelTree,
   enums: Record<string, string[]>
 ): string {
-  return tableFields
+  return modelTree.model.fields
     .map((field) => {
       // Enum
       if (field.kind === "enum") {
@@ -873,12 +899,36 @@ export function generateFormFields(
 </select>`;
       }
 
-      if (!isFieldRenderable(field) || field.isId) {
-        return "";
-      }
       const inputType = prismaFieldToInputType[field.type] || "text";
       const required = field.isRequired ? "required" : "";
 
+      if (field.kind === "object") {
+        console.log(
+          `Field '${field.name}' in model '${modelTree.modelName}' is a relation.`
+        );
+        const relationFrom = field.relationFromFields[0];
+        console.log(`relationFrom: ${relationFrom}`);
+
+        const referencedModelName = field.type;
+
+        if (referencedModelName === modelTree.parent?.name) {
+          console.log(
+            `Field '${field.name}' is a reference to the parent model.`
+          );
+        } else if (relationFrom) {
+          const fieldType2 = modelTree.model.fields.find(
+            (f) => f.name === relationFrom
+          ).type;
+          const inputType2 = prismaFieldToInputType[fieldType2] || "text";
+
+          return `<label>${relationFrom}</label>\n
+            <input type="${inputType2}" name="${relationFrom}" ${required}/>`;
+        }
+      }
+
+      if (!isFieldRenderable(field) || field.isId) {
+        return "";
+      }
       return `<label>${field.name}</label>\n
         <input type="${inputType}" name="${field.name}" ${required}/>`;
     })
