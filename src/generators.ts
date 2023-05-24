@@ -123,12 +123,9 @@ async function generateCreateForm(modelTree: ModelTree): Promise<string> {
   return reactComponentTemplate;
 }
 
-async function generateRedirect(
-  identifierField: string,
-  dataObjectName: string
-): Promise<string> {
+async function generateRedirect(redirectUrl: string): Promise<string> {
   const reactComponentTemplate = `
-    redirect(\`/nexquikTemplateModel/\${${dataObjectName}.${identifierField}}\`);
+    redirect(${redirectUrl});
   `;
   return reactComponentTemplate;
 }
@@ -215,158 +212,6 @@ export async function generateReactForms(
     console.log({ modelTree });
 
     const routes = generateAPIRoutes(modelTree, outputDirectory);
-
-    // For each layer in model tree, create show, list, create, and edit with respect to parent, current, and children node 'partials'
-
-    // modelTree.forEach((mt) => {
-    //   console.log(mt.)
-    // })
-
-    // TODO
-    // For each route
-    // Create the directory structure
-    // Create relevent page.tsx file in the bottom directory
-
-    // Generate React forms for each table
-    // for (const tableName of tableNames) {
-    //   const referencedModels = extractReferencedModels(tableName, prismaSchema);
-    //   // console.log({ referencedModels });
-
-    //   // Let's just do a flat directory for now
-    //   const tableDirectory = path.join(
-    //     outputDirectory,
-    //     tableName.toLowerCase()
-    //   );
-    //   copyDirectory(
-    //     path.join(__dirname, "templateApp", "nexquikTemplateModel"),
-    //     tableDirectory,
-    //     true
-    //   );
-
-    //   // CreateForm
-    //   const createFormCode = await generateCreateForm(
-    //     tableName,
-    //     prismaSchema,
-    //     referencedModels
-    //   );
-    //   addStringBetweenComments(
-    //     tableDirectory,
-    //     createFormCode,
-    //     "{/* @nexquik createForm start */}",
-    //     "{/* @nexquik createForm stop */}"
-    //   );
-
-    //   // CreateRedirect
-    //   const createRedirect = await generateRedirect(
-    //     tableName,
-    //     prismaSchema,
-    //     "created"
-    //   );
-    //   addStringBetweenComments(
-    //     tableDirectory,
-    //     createRedirect,
-    //     "//@nexquik createRedirect start",
-    //     "//@nexquik createRedirect stop"
-    //   );
-
-    //   // EditForm
-    //   const editFormCode = await generateEditForm(
-    //     tableName,
-    //     prismaSchema,
-    //     referencedModels
-    //   );
-    //   addStringBetweenComments(
-    //     tableDirectory,
-    //     editFormCode,
-    //     "{/* @nexquik editForm start */}",
-    //     "{/* @nexquik editForm stop */}"
-    //   );
-
-    //   // EditRedirect
-    //   const editRedirect = await generateRedirect(
-    //     tableName,
-    //     prismaSchema,
-    //     "params"
-    //   );
-    //   addStringBetweenComments(
-    //     tableDirectory,
-    //     editRedirect,
-    //     "//@nexquik editRedirect start",
-    //     "//@nexquik editRedirect stop"
-    //   );
-
-    //   // HomeForm
-    //   const listFormCode = await generateListForm(
-    //     tableName,
-    //     prismaSchema,
-    //     referencedModels
-    //   );
-    //   addStringBetweenComments(
-    //     tableDirectory,
-    //     listFormCode,
-    //     "{/* @nexquik listForm start */}",
-    //     "{/* @nexquik listForm stop */}"
-    //   );
-
-    //   // ShowForm
-    //   const showFormCode = await generateShowForm(
-    //     tableName,
-    //     prismaSchema,
-    //     referencedModels
-    //   );
-    //   addStringBetweenComments(
-    //     tableDirectory,
-    //     showFormCode,
-    //     "{/* @nexquik showForm start */}",
-    //     "{/* @nexquik showForm stop */}"
-    //   );
-
-    //   // const modelTree = createModelTree(dmmf.datamodel);
-    //   const tableFields = await extractTableFields(tableName, prismaSchema);
-    //   const uniqueField = tableFields.find((tableField) => tableField.isId);
-
-    //   const prismaInput = generateConvertToPrismaInputCode(
-    //     tableFields,
-    //     referencedModels
-    //   );
-    //   addStringBetweenComments(
-    //     tableDirectory,
-    //     prismaInput,
-    //     "//@nexquik prismaDataInput start",
-    //     "//@nexquik prismaDataInput stop"
-    //   );
-    //   const identifierField = tableFields.find((field) => field.isId);
-    //   const whereClause = generateWhereClause(
-    //     "params",
-    //     identifierField.name,
-    //     identifierField.type
-    //   );
-    //   addStringBetweenComments(
-    //     tableDirectory,
-    //     whereClause,
-    //     "//@nexquik prismaWhereInput start",
-    //     "//@nexquik prismaWhereInput stop"
-    //   );
-
-    //   const deleteWhereClause = generateDeleteClause(
-    //     identifierField.name,
-    //     identifierField.type
-    //   );
-
-    //   addStringBetweenComments(
-    //     tableDirectory,
-    //     deleteWhereClause,
-    //     "//@nexquik prismaDeleteClause start",
-    //     "//@nexquik prismaDeleteClause stop"
-    //   );
-    //   findAndReplaceInFiles(tableDirectory, "nexquikTemplateModel", tableName);
-
-    //   // Rename the [id] file to the new unique identifier
-    //   fs.renameSync(
-    //     path.join(tableDirectory, "[id]"),
-    //     path.join(tableDirectory, `[${uniqueField.name}]`)
-    //   );
-    // }
   } catch (error) {
     console.error("Error occurred:", error);
   }
@@ -487,6 +332,14 @@ function prettyPrintAPIRoutes(routes: RouteObject[]) {
 const getDynamicSlug = (modelName: string, uniqueIdFieldName: string) => {
   return `${modelName}${uniqueIdFieldName}`;
 };
+function convertRouteToRedirectUrl(input: string): string {
+  const regex = /\[(.*?)\]/g;
+  const replaced = input.replace(regex, (_, innerValue) => {
+    return `\${params.${innerValue}}`;
+  });
+
+  return `${replaced}`;
+}
 export function generateAPIRoutes(
   modelTreeArray: ModelTree[],
   outputDirectory: string
@@ -499,7 +352,6 @@ export function generateAPIRoutes(
   ) {
     const modelName = modelTree.modelName;
     const modelUniqueIdentifierField = modelTree.uniqueIdentifierField;
-    console.log("parentRoute", parentRoute.name);
     const route =
       parentRoute.name +
       (parentRoute.name === "/"
@@ -534,7 +386,6 @@ export function generateAPIRoutes(
       true
     );
 
-    const dir = fs.readdirSync(directoryToCreate);
     // console.log({ dir });
     fs.renameSync(
       path.join(directoryToCreate, "[id]"),
@@ -584,8 +435,9 @@ export function generateAPIRoutes(
 
     // CreateRedirect
     const createRedirect = await generateRedirect(
-      modelTree.uniqueIdentifierField.name,
-      "created"
+      `\`${convertRouteToRedirectUrl(route)}/\${created.${
+        modelTree.uniqueIdentifierField.name
+      }}\``
     );
     addStringBetweenComments(
       directoryToCreate,
@@ -604,7 +456,9 @@ export function generateAPIRoutes(
     );
 
     // EditRedirect
-    const editRedirect = await generateRedirect(uniqueDynamicSlug, "params");
+    const editRedirect = await generateRedirect(
+      `\`${convertRouteToRedirectUrl(route)}/\${params.${uniqueDynamicSlug}}\``
+    );
     addStringBetweenComments(
       directoryToCreate,
       editRedirect,
@@ -729,12 +583,12 @@ export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
     // Get the field on the current model that is the id referencing the parent
     modelTree.model.fields.forEach((mf) => {
       if (mf.type === modelTree.parent.name) {
-        console.log({
-          currentField: mf.name,
-          parentName: modelTree.parent.name,
-          from: mf.relationFromFields,
-          to: mf.relationToFields,
-        });
+        // console.log({
+        //   currentField: mf.name,
+        //   parentName: modelTree.parent.name,
+        //   from: mf.relationFromFields,
+        //   to: mf.relationToFields,
+        // });
         if (mf.relationFromFields.length > 0) {
           relationFieldToParent = mf.relationFromFields[0];
         }
@@ -782,7 +636,7 @@ export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
       modelTree.parent.name,
       parentIdentifierField.name
     );
-    let typecastValue = `params.get('${parentSlug}')`;
+    let typecastValue = `params.${parentSlug}`;
     if (fieldType === "Int" || fieldType === "Float") {
       typecastValue = `Number(${typecastValue})`;
     } else if (fieldType === "Boolean") {
