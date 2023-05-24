@@ -523,7 +523,7 @@ export function generateAPIRoutes(
       modelTree.modelName,
       modelUniqueIdentifierField.name
     );
-    console.log({ uniqueDynamicSlug });
+    // console.log({ uniqueDynamicSlug });
 
     // Copy over template directory
     // Rename [id] directory to modelUniqueIdentifierField
@@ -535,7 +535,7 @@ export function generateAPIRoutes(
     );
 
     const dir = fs.readdirSync(directoryToCreate);
-    console.log({ dir });
+    // console.log({ dir });
     fs.renameSync(
       path.join(directoryToCreate, "[id]"),
       path.join(directoryToCreate, `[${uniqueDynamicSlug}]`)
@@ -618,9 +618,7 @@ export function generateAPIRoutes(
       modelTree.modelName
     );
 
-    const prismaInput = generateConvertToPrismaInputCode(
-      modelTree.model.fields
-    );
+    const prismaInput = generateConvertToPrismaInputCode(modelTree);
     addStringBetweenComments(
       directoryToCreate,
       prismaInput,
@@ -723,27 +721,81 @@ export function generateAPIRoutes(
   return routes;
 }
 
-export function generateConvertToPrismaInputCode(
-  tableFields: DMMF.Field[]
-): string {
-  // console.log({ referencedModels });
-  const convertToPrismaInputLines = tableFields
-    .filter(({ isId }) => !isId)
-    .filter((field) => isFieldRenderable(field))
-    .map(({ name, type }) => {
-      let typecastValue = `formData.get('${name}')`;
-      if (type === "Int" || type === "Float") {
-        typecastValue = `Number(${typecastValue})`;
-      } else if (type === "Boolean") {
-        typecastValue = `Boolean(${typecastValue})`;
-      } else if (type === "DateTime") {
-        typecastValue = `new Date(String(${typecastValue}))`;
-      } else {
-        typecastValue = `String(${typecastValue})`;
+export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
+  // If model has a parent, get the parent accessor
+  let relationFieldToParent = "";
+  let fieldType = "";
+  if (modelTree.parent) {
+    // Get the field on the current model that is the id referencing the parent
+    modelTree.model.fields.forEach((mf) => {
+      if (mf.type === modelTree.parent.name) {
+        console.log({
+          currentField: mf.name,
+          parentName: modelTree.parent.name,
+          from: mf.relationFromFields,
+          to: mf.relationToFields,
+        });
+        if (mf.relationFromFields.length > 0) {
+          relationFieldToParent = mf.relationFromFields[0];
+        }
       }
-
-      return `    ${name}: ${typecastValue},`;
     });
+
+    // Get the field type on the current model that is the id referencing the parent
+    fieldType = modelTree.model.fields.find(
+      (f) => f.name === relationFieldToParent
+    )?.type;
+
+    console.log({
+      modelName: modelTree.modelName,
+      relationFieldToParent,
+      fieldType,
+    });
+  }
+
+  const fieldsToConvert: Partial<DMMF.Field>[] = modelTree.model.fields
+    .filter(({ isId }) => !isId)
+    .filter((field) => isFieldRenderable(field));
+
+  const convertToPrismaInputLines = fieldsToConvert.map(({ name, type }) => {
+    let typecastValue = `formData.get('${name}')`;
+    if (type === "Int" || type === "Float") {
+      typecastValue = `Number(${typecastValue})`;
+    } else if (type === "Boolean") {
+      typecastValue = `Boolean(${typecastValue})`;
+    } else if (type === "DateTime") {
+      typecastValue = `new Date(String(${typecastValue}))`;
+    } else {
+      typecastValue = `String(${typecastValue})`;
+    }
+
+    return `    ${name}: ${typecastValue},`;
+  });
+
+  // Convert the parent accessor  differently
+  if (relationFieldToParent && fieldType) {
+    // Get the parent unique slug
+    const parentIdentifierField = modelTree.model.fields.find(
+      (field) => field.isId
+    );
+    const parentSlug = getDynamicSlug(
+      modelTree.parent.name,
+      parentIdentifierField.name
+    );
+    let typecastValue = `params.get('${parentSlug}')`;
+    if (fieldType === "Int" || fieldType === "Float") {
+      typecastValue = `Number(${typecastValue})`;
+    } else if (fieldType === "Boolean") {
+      typecastValue = `Boolean(${typecastValue})`;
+    } else if (fieldType === "DateTime") {
+      typecastValue = `new Date(String(${typecastValue}))`;
+    } else {
+      typecastValue = `String(${typecastValue})`;
+    }
+    convertToPrismaInputLines.push(
+      `    ${relationFieldToParent}: ${typecastValue},`
+    );
+  }
 
   return `{
   ${convertToPrismaInputLines.join("\n")}

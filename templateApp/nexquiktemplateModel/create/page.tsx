@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "utils/db";
 
-export default async function CreateNexquikTemplateModel() {
+export default async function CreateNexquikTemplateModel({ params }) {
   async function addNexquikTemplateModel(formData: FormData) {
     "use server";
     const created = await prisma.nexquikTemplateModel.create({

@@ -2,7 +2,7 @@ import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { prisma } from "utils/db";
 
-export default async function ListNexquikTemplateModels() {
+export default async function ListNexquikTemplateModels({ params }) {
   const nexquikTemplateModel = await prisma.nexquikTemplateModel
     .findMany
     //@nexquik prismaWhereParentClause start
