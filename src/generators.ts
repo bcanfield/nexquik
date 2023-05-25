@@ -261,13 +261,6 @@ export async function generateReactForms(
     if (!fs.existsSync(outputDirectory)) {
       fs.mkdirSync(outputDirectory);
     }
-    // Copy over the root page
-    const rootPageName = "page.tsx";
-
-    copyFileToDirectory(
-      path.join(__dirname, "templateApp", rootPageName),
-      outputDirectory
-    );
 
     const dmmf = await getDMMF({ datamodel: prismaSchema });
     const modelTree = createModelTree(dmmf.datamodel);
@@ -275,6 +268,21 @@ export async function generateReactForms(
 
     const routes = await generateAPIRoutes(modelTree, outputDirectory, enums);
     prettyPrintAPIRoutes(routes);
+    // Copy over the root page
+    // RouteList
+    const routeList = generateRouteList(routes);
+    addStringBetweenComments(
+      path.join(__dirname, "templateApp"),
+      routeList,
+      "{/* @nexquik routeList start */}",
+      "{/* @nexquik routeList stop */}"
+    );
+    const rootPageName = "page.tsx";
+
+    copyFileToDirectory(
+      path.join(__dirname, "templateApp", rootPageName),
+      outputDirectory
+    );
   } catch (error) {
     console.error("Error occurred:", error);
   }
@@ -405,6 +413,15 @@ function prettyPrintAPIRoutes(routes: RouteObject[]) {
   }
 }
 
+function generateRouteList(routes: RouteObject[]) {
+  const routeLinks = [];
+  for (const route of routes) {
+    routeLinks.push(
+      `<p>${route.segment} - ${route.operation} ${route.model}: ${route.description}</p>`
+    );
+  }
+  return routeLinks.join("\n");
+}
 function getParentReferenceField(modelTree: ModelTree): string | undefined {
   if (!modelTree.parent) {
     return undefined;
@@ -714,8 +731,6 @@ export async function generateAPIRoutes(
       description: `Get details of a ${modelName} by ID`,
     });
 
-    // Create ./[id]/page.tsx
-
     // List
     routes.push({
       segment: route,
@@ -723,7 +738,6 @@ export async function generateAPIRoutes(
       operation: "List",
       description: `Get a list of ${modelName}s`,
     });
-    // Create ./page.tsx
 
     for (const child of modelTree.children) {
       await generateRoutes(child, {
