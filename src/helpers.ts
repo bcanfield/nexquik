@@ -38,7 +38,7 @@ export function copyDirectory(
   });
 }
 
-export const formatNextJsFilesRecursively = async (directory) => {
+export const formatNextJsFilesRecursively = async (directory: string) => {
   try {
     // Get a list of all files and directories in the current directory
     const entries = await fs.promises.readdir(directory);
@@ -154,10 +154,14 @@ export function prettyPrintAPIRoutes(routes: RouteObject[]) {
   }
 }
 export const getDynamicSlug = (
-  modelName: string,
-  uniqueIdFieldName: string
+  modelName: string | undefined,
+  uniqueIdFieldName: string | undefined
 ) => {
-  return `${modelName}${uniqueIdFieldName}`;
+  if (modelName && uniqueIdFieldName) {
+    return `${modelName}${uniqueIdFieldName}`;
+  } else {
+    return "";
+  }
 };
 
 export function convertRouteToRedirectUrl(input: string): string {

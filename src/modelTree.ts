@@ -76,7 +76,7 @@ export function getParentReferenceField(
 
   const parentModel = modelTree.model;
   const parentField = parentModel.fields.find(
-    (field) => field.type === modelTree.parent.name
+    (field) => field.type === modelTree.parent?.name
   );
 
   if (!parentField) {

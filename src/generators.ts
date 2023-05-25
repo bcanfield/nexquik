@@ -74,7 +74,7 @@ function addStringBetweenComments(
       fs.writeFileSync(filePath, fileContent);
     }
   });
-} // Part 2 End
+}
 
 async function generateCreateForm(
   modelTree: ModelTree,
@@ -168,10 +168,9 @@ async function generateChildrenList(
   routeUrl: string
 ): Promise<string> {
   // Define the React component template as a string
-  const slug = getDynamicSlug(
-    modelTree.model.name,
-    modelTree.uniqueIdentifierField.name
-  );
+  const slug =
+    modelTree.uniqueIdentifierField?.name &&
+    getDynamicSlug(modelTree.model.name, modelTree.uniqueIdentifierField.name);
   const childrenLinks = modelTree.children
     .map(
       (
@@ -194,7 +193,7 @@ async function generateListForm2(
     (tableField) => tableField.isId
   );
   const uniqueFieldInputType =
-    prismaFieldToInputType[uniqueField.type] || "text";
+    (uniqueField?.type && prismaFieldToInputType[uniqueField.type]) || "text";
   // Define the React component template as a string
   const reactComponentTemplate = `
   <table className="item-list">
@@ -223,13 +222,13 @@ async function generateListForm2(
       <td className="action-cell">
       <form>
       <input hidden type="${uniqueFieldInputType}" name="${
-    uniqueField.name
-  }" defaultValue={nexquikTemplateModel?.${uniqueField.name}} />
+    uniqueField?.name
+  }" defaultValue={nexquikTemplateModel?.${uniqueField?.name}} />
           <Link href={\`${routeUrl}/\${nexquikTemplateModel.${
-    uniqueField.name
+    uniqueField?.name
   }}\`} className="action-link view-link">View</Link>
                   <Link href={\`${routeUrl}/\${nexquikTemplateModel.${
-    uniqueField.name
+    uniqueField?.name
   }}/edit\`} className="action-link edit-link">Edit</Link>
                   <button formAction={deleteNexquikTemplateModel} className="action-link delete-link">Delete</button>
                   </form>
@@ -307,19 +306,19 @@ export async function generateShowForm(
     (tableField) => tableField.isId
   );
   const uniqueFieldInputType =
-    prismaFieldToInputType[uniqueField.type] || "text";
+    (uniqueField?.type && prismaFieldToInputType[uniqueField.type]) || "text";
 
   // Define the React component template as a string
   const reactComponentTemplate = `
     <input hidden type="${uniqueFieldInputType}" name="${
-    uniqueField.name
-  }" defaultValue={nexquikTemplateModel?.${uniqueField.name}} />
+    uniqueField?.name
+  }" defaultValue={nexquikTemplateModel?.${uniqueField?.name}} />
     <form>
     <div className="button-group">
 
 
     <Link className="action-link edit-link" href={\`${routeUrl}/\${nexquikTemplateModel.${
-    uniqueField.name
+    uniqueField?.name
   }}/edit\`}>Edit</Link>
 
   
@@ -385,7 +384,7 @@ export async function generateAppDirectoryFromModelTree(
       (parentRoute.name === "/"
         ? ""
         : `/[${getDynamicSlug(
-            modelTree.parent.name,
+            modelTree.parent?.name,
             parentRoute.uniqueIdentifierField
           )}]/`) +
       modelName.charAt(0).toLowerCase() +
@@ -398,7 +397,7 @@ export async function generateAppDirectoryFromModelTree(
 
     const uniqueDynamicSlug = getDynamicSlug(
       modelTree.modelName,
-      modelUniqueIdentifierField.name
+      modelUniqueIdentifierField?.name
     );
 
     copyDirectory(
@@ -424,8 +423,8 @@ export async function generateAppDirectoryFromModelTree(
       "{/* @nexquik listForm stop */}"
     );
     const deleteWhereClause = generateDeleteClause(
-      modelTree.uniqueIdentifierField.name,
-      modelTree.uniqueIdentifierField.type
+      modelTree.uniqueIdentifierField?.name,
+      modelTree.uniqueIdentifierField?.type
     );
     addStringBetweenComments(
       directoryToCreate,
@@ -448,9 +447,9 @@ export async function generateAppDirectoryFromModelTree(
     const whereparentClause = modelTree.parent
       ? generateWhereParentClause(
           "params",
-          getDynamicSlug(modelTree.parent.name, parentIdentifierField.name),
-          parentIdentifierField.name,
-          parentIdentifierField.type,
+          getDynamicSlug(modelTree.parent.name, parentIdentifierField?.name),
+          parentIdentifierField?.name,
+          parentIdentifierField?.type,
           getParentReferenceField(modelTree)
         )
       : "()";
@@ -497,7 +496,7 @@ export async function generateAppDirectoryFromModelTree(
     );
     const createRedirect = await generateRedirect(
       `\`${convertRouteToRedirectUrl(route)}/\${created.${
-        modelTree.uniqueIdentifierField.name
+        modelTree.uniqueIdentifierField?.name
       }}\``
     );
     addStringBetweenComments(
@@ -527,8 +526,8 @@ export async function generateAppDirectoryFromModelTree(
     const whereClause = generateWhereClause(
       "params",
       uniqueDynamicSlug,
-      identifierField.type,
-      identifierField.name
+      identifierField?.type,
+      identifierField?.name
     );
     addStringBetweenComments(
       directoryToCreate,
@@ -613,7 +612,7 @@ export async function generateAppDirectoryFromModelTree(
     routes.push({
       segment: `${route}/[${getDynamicSlug(
         modelName,
-        modelTree.uniqueIdentifierField.name
+        modelTree.uniqueIdentifierField?.name
       )}]/edit`,
       model: modelName,
       operation: "Edit",
@@ -624,7 +623,7 @@ export async function generateAppDirectoryFromModelTree(
     routes.push({
       segment: `${route}/[${getDynamicSlug(
         modelName,
-        modelTree.uniqueIdentifierField.name
+        modelTree.uniqueIdentifierField?.name
       )}]`,
       model: modelName,
       operation: "Show",
@@ -642,7 +641,7 @@ export async function generateAppDirectoryFromModelTree(
     for (const child of modelTree.children) {
       await generateRoutes(child, {
         name: route,
-        uniqueIdentifierField: modelUniqueIdentifierField.name,
+        uniqueIdentifierField: modelUniqueIdentifierField?.name,
       });
     }
   }
@@ -663,17 +662,17 @@ export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
   if (modelTree.parent) {
     // Get the field on the current model that is the id referencing the parent
     modelTree.model.fields.forEach((mf) => {
-      if (mf.type === modelTree.parent.name) {
-        if (mf.relationFromFields.length > 0) {
+      if (mf.type === modelTree.parent?.name) {
+        if (mf.relationFromFields?.length && mf.relationFromFields.length > 0) {
           relationFieldToParent = mf.relationFromFields[0];
         }
       }
     });
 
     // Get the field type on the current model that is the id referencing the parent
-    fieldType = modelTree.model.fields.find(
-      (f) => f.name === relationFieldToParent
-    )?.type;
+    fieldType =
+      modelTree.model.fields.find((f) => f.name === relationFieldToParent)
+        ?.type || "";
   }
 
   const fieldsToConvert: Partial<DMMF.Field>[] = modelTree.model.fields
@@ -702,8 +701,8 @@ export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
       (field) => field.isId
     );
     const parentSlug = getDynamicSlug(
-      modelTree.parent.name,
-      parentIdentifierField.name
+      modelTree.parent?.name,
+      parentIdentifierField?.name
     );
     let typecastValue = `params.${parentSlug}`;
     if (fieldType === "Int" || fieldType === "Float") {
@@ -723,7 +722,8 @@ export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
   // Convert fields pointing to other relations differently
   modelTree.model.fields.map((field) => {
     if (field.kind === "object") {
-      const relationFrom = field.relationFromFields[0];
+      const relationFrom =
+        field.relationFromFields && field.relationFromFields[0];
 
       const referencedModelName = field.type;
 
@@ -731,7 +731,7 @@ export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
       } else if (relationFrom) {
         const fieldType2 = modelTree.model.fields.find(
           (f) => f.name === relationFrom
-        ).type;
+        )?.type;
 
         let typecastValue = `formData.get('${relationFrom}')`;
         if (fieldType2 === "Int" || fieldType2 === "Float") {
@@ -757,52 +757,75 @@ export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
 }
 
 export function generateWhereParentClause(
-  inputObject: string,
-  fieldAccessValue: string,
-  parentIdentifierFieldName: string,
-  parentIdentifierFieldType: string,
-  parentReferenceField: string
+  inputObject: string | undefined,
+  fieldAccessValue: string | undefined,
+  parentIdentifierFieldName: string | undefined,
+  parentIdentifierFieldType: string | undefined,
+  parentReferenceField: string | undefined
 ): string {
-  let typecastValue = `${inputObject}.${fieldAccessValue}`;
   if (
-    parentIdentifierFieldType === "Int" ||
-    parentIdentifierFieldType === "Float"
+    inputObject &&
+    fieldAccessValue &&
+    parentIdentifierFieldName &&
+    parentIdentifierFieldType &&
+    parentReferenceField
   ) {
-    typecastValue = `Number(${typecastValue})`;
-  } else if (parentIdentifierFieldType === "Boolean") {
-    typecastValue = `Boolean(${typecastValue})`;
+    let typecastValue = `${inputObject}.${fieldAccessValue}`;
+    if (
+      parentIdentifierFieldType === "Int" ||
+      parentIdentifierFieldType === "Float"
+    ) {
+      typecastValue = `Number(${typecastValue})`;
+    } else if (parentIdentifierFieldType === "Boolean") {
+      typecastValue = `Boolean(${typecastValue})`;
+    }
+    return `({ where: { ${parentReferenceField}: {${parentIdentifierFieldName}: {equals: ${typecastValue}} } } })`;
+  } else {
+    return "";
   }
-  return `({ where: { ${parentReferenceField}: {${parentIdentifierFieldName}: {equals: ${typecastValue}} } } })`;
 }
 
 export function generateWhereClause(
-  inputObject: string,
-  identifierFieldName: string,
-  identifierFieldType: string,
-  modelUniqueIdField: string
+  inputObject: string | undefined,
+  identifierFieldName: string | undefined,
+  identifierFieldType: string | undefined,
+  modelUniqueIdField: string | undefined
 ): string {
-  let typecastValue = `${inputObject}.${identifierFieldName}`;
-  if (identifierFieldType === "Int" || identifierFieldType === "Float") {
-    typecastValue = `Number(${typecastValue})`;
-  } else if (identifierFieldType === "Boolean") {
-    typecastValue = `Boolean(${typecastValue})`;
-  }
+  if (
+    inputObject &&
+    identifierFieldName &&
+    identifierFieldType &&
+    modelUniqueIdField
+  ) {
+    let typecastValue = `${inputObject}.${identifierFieldName}`;
+    if (identifierFieldType === "Int" || identifierFieldType === "Float") {
+      typecastValue = `Number(${typecastValue})`;
+    } else if (identifierFieldType === "Boolean") {
+      typecastValue = `Boolean(${typecastValue})`;
+    }
 
-  return `{ ${modelUniqueIdField}: ${typecastValue} },`;
+    return `{ ${modelUniqueIdField}: ${typecastValue} },`;
+  } else {
+    return "";
+  }
 }
 
 export function generateDeleteClause(
-  identifierFieldName: string,
-  identifierFieldType: string
+  identifierFieldName: string | undefined,
+  identifierFieldType: string | undefined
 ): string {
-  let typecastValue = `formData.get('${identifierFieldName}')`;
-  if (identifierFieldType === "Int" || identifierFieldType === "Float") {
-    typecastValue = `Number(${typecastValue})`;
-  } else if (identifierFieldType === "Boolean") {
-    typecastValue = `Boolean(${typecastValue})`;
-  }
+  if (identifierFieldName && identifierFieldType) {
+    let typecastValue = `formData.get('${identifierFieldName}')`;
+    if (identifierFieldType === "Int" || identifierFieldType === "Float") {
+      typecastValue = `Number(${typecastValue})`;
+    } else if (identifierFieldType === "Boolean") {
+      typecastValue = `Boolean(${typecastValue})`;
+    }
 
-  return `{ ${identifierFieldName}: ${typecastValue} },`;
+    return `{ ${identifierFieldName}: ${typecastValue} },`;
+  } else {
+    return "";
+  }
 }
 
 // Custom export function to check if field is renderable in a form
@@ -829,7 +852,8 @@ export function generateFormFields(
       const required = field.isRequired ? "required" : "";
 
       if (field.kind === "object") {
-        const relationFrom = field.relationFromFields[0];
+        const relationFrom =
+          field.relationFromFields && field.relationFromFields[0];
 
         const referencedModelName = field.type;
 
@@ -837,11 +861,15 @@ export function generateFormFields(
         } else if (relationFrom) {
           const fieldType2 = modelTree.model.fields.find(
             (f) => f.name === relationFrom
-          ).type;
-          const inputType2 = prismaFieldToInputType[fieldType2] || "text";
+          )?.type;
+          if (fieldType2) {
+            const inputType2 = prismaFieldToInputType[fieldType2] || "text";
 
-          return `<label>${relationFrom}</label>\n
+            return `<label>${relationFrom}</label>\n
             <input type="${inputType2}" name="${relationFrom}" ${required}/>`;
+          } else {
+            return "";
+          }
         }
       }
 
