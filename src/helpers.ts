@@ -1,6 +1,42 @@
+#! /usr/bin/env node
 import path from "path";
 import fs from "fs";
 import prettier from "prettier";
+import { RouteObject } from "./generators";
+
+export function copyDirectory(
+  sourceDir: string,
+  destinationDir: string,
+  toReplace: boolean = false
+): void {
+  if (toReplace && fs.existsSync(destinationDir)) {
+    fs.rmSync(destinationDir, { recursive: true });
+  }
+
+  // Create destination directory if it doesn't exist
+  if (!fs.existsSync(destinationDir)) {
+    fs.mkdirSync(destinationDir);
+  }
+
+  // Read the contents of the source directory
+  const files = fs.readdirSync(sourceDir);
+
+  files.forEach((file) => {
+    const sourceFile = path.join(sourceDir, file);
+    const destinationFile = path.join(destinationDir, file);
+
+    // Check if the file is a directory
+    if (fs.statSync(sourceFile).isDirectory()) {
+      // Recursively copy subdirectories
+      copyDirectory(sourceFile, destinationFile, toReplace);
+    } else {
+      // Copy file if it doesn't exist in the destination directory
+      if (!fs.existsSync(destinationFile)) {
+        fs.copyFileSync(sourceFile, destinationFile);
+      }
+    }
+  });
+}
 
 export const formatNextJsFilesRecursively = async (directory) => {
   try {
@@ -96,4 +132,39 @@ export function copyFileToDirectory(
   });
 
   readStream.pipe(writeStream);
+}
+
+export function popStringEnd(str: string, char: string): string {
+  const lastIndex = str.lastIndexOf(char);
+
+  if (lastIndex === -1) {
+    // Character not found in the string
+    return str;
+  }
+  return str.substring(0, lastIndex);
+}
+
+export function prettyPrintAPIRoutes(routes: RouteObject[]) {
+  console.log("API Routes:");
+  console.log("-----------");
+  for (const route of routes) {
+    console.log(
+      `${route.segment} - ${route.operation} ${route.model}: ${route.description}`
+    );
+  }
+}
+export const getDynamicSlug = (
+  modelName: string,
+  uniqueIdFieldName: string
+) => {
+  return `${modelName}${uniqueIdFieldName}`;
+};
+
+export function convertRouteToRedirectUrl(input: string): string {
+  const regex = /\[(.*?)\]/g;
+  const replaced = input.replace(regex, (_, innerValue) => {
+    return `\${params.${innerValue}}`;
+  });
+
+  return `${replaced}`;
 }

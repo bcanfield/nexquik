@@ -4,7 +4,20 @@ import { getDMMF } from "@prisma/internals";
 import path from "path";
 import { promisify } from "util";
 import fs from "fs";
-import { copyFileToDirectory, findAndReplaceInFiles } from "./fileHelpers";
+import {
+  convertRouteToRedirectUrl,
+  copyDirectory,
+  copyFileToDirectory,
+  findAndReplaceInFiles,
+  getDynamicSlug,
+  popStringEnd,
+  prettyPrintAPIRoutes,
+} from "./helpers";
+import {
+  createModelTree,
+  getParentReferenceField,
+  ModelTree,
+} from "./modelTree";
 const readFileAsync = promisify(fs.readFile);
 
 export const prismaFieldToInputType: Record<string, string> = {
@@ -21,50 +34,6 @@ export interface RouteObject {
   model: string;
   operation: string;
   description: string;
-}
-
-export interface ModelTree {
-  modelName: string;
-  parent?: DMMF.Model;
-  model: DMMF.Model;
-  children: ModelTree[];
-  // uniqueIdentifierField?: string;
-  uniqueIdentifierField?: DMMF.Field;
-}
-
-// Part 2 Begin
-function copyDirectory(
-  sourceDir: string,
-  destinationDir: string,
-  toReplace: boolean = false
-): void {
-  if (toReplace && fs.existsSync(destinationDir)) {
-    fs.rmSync(destinationDir, { recursive: true });
-  }
-
-  // Create destination directory if it doesn't exist
-  if (!fs.existsSync(destinationDir)) {
-    fs.mkdirSync(destinationDir);
-  }
-
-  // Read the contents of the source directory
-  const files = fs.readdirSync(sourceDir);
-
-  files.forEach((file) => {
-    const sourceFile = path.join(sourceDir, file);
-    const destinationFile = path.join(destinationDir, file);
-
-    // Check if the file is a directory
-    if (fs.statSync(sourceFile).isDirectory()) {
-      // Recursively copy subdirectories
-      copyDirectory(sourceFile, destinationFile, toReplace);
-    } else {
-      // Copy file if it doesn't exist in the destination directory
-      if (!fs.existsSync(destinationFile)) {
-        fs.copyFileSync(sourceFile, destinationFile);
-      }
-    }
-  });
 }
 
 function addStringBetweenComments(
@@ -276,7 +245,7 @@ async function generateListForm2(
   return reactComponentTemplate;
 }
 
-export async function generateReactForms(
+export async function generate(
   prismaSchemaPath: string,
   outputDirectory: string
 ) {
@@ -284,25 +253,24 @@ export async function generateReactForms(
     // Read the Prisma schema file
     const prismaSchema = await readFileAsync(prismaSchemaPath, "utf-8");
 
-    // Extract table names from the Prisma schema
-    const tableNames = prismaSchema
-      .match(/model\s+(\w+)\s+/g)!
-      .map((match) => match.split(" ")[1]);
-
     // Create the output Directory
     if (!fs.existsSync(outputDirectory)) {
       fs.mkdirSync(outputDirectory);
     }
 
+    // Main section to build the app from the modelTree
     const dmmf = await getDMMF({ datamodel: prismaSchema });
     const modelTree = createModelTree(dmmf.datamodel);
     const enums = getEnums(dmmf.datamodel);
-
-    const routes = await generateAPIRoutes(modelTree, outputDirectory, enums);
+    const routes = await generateAppDirectoryFromModelTree(
+      modelTree,
+      outputDirectory,
+      enums
+    );
     prettyPrintAPIRoutes(routes);
-    // Copy over the root page
-    // RouteList
     const routeList = generateRouteList(routes);
+
+    // Copy over the files in the root dir
     addStringBetweenComments(
       path.join(__dirname, "templateApp"),
       routeList,
@@ -310,20 +278,18 @@ export async function generateReactForms(
       "{/* @nexquik routeList stop */}"
     );
     const rootPageName = "page.tsx";
-
     copyFileToDirectory(
       path.join(__dirname, "templateApp", rootPageName),
       outputDirectory
     );
-    const globalStylesFileName = "globals.css";
 
+    const globalStylesFileName = "globals.css";
     copyFileToDirectory(
       path.join(__dirname, "templateApp", globalStylesFileName),
       outputDirectory
     );
 
     const rootLayoutFileName = "layout.tsx";
-
     copyFileToDirectory(
       path.join(__dirname, "templateApp", rootLayoutFileName),
       outputDirectory
@@ -331,18 +297,6 @@ export async function generateReactForms(
   } catch (error) {
     console.error("Error occurred:", error);
   }
-}
-
-export async function extractTableFields(
-  tableName: string,
-  prismaSchema: string
-): Promise<DMMF.Field[]> {
-  const dmmf = await getDMMF({ datamodel: prismaSchema });
-  const model = dmmf.datamodel.models.find((m) => m.name === tableName);
-  if (!model) {
-    throw new Error(`Table '${tableName}' not found in the Prisma schema.`);
-  }
-  return model.fields;
 }
 
 export async function generateShowForm(
@@ -393,85 +347,6 @@ export async function generateShowForm(
   return reactComponentTemplate;
 }
 
-function popStringEnd(str: string, char: string): string {
-  const lastIndex = str.lastIndexOf(char);
-
-  if (lastIndex === -1) {
-    // Character not found in the string
-    return str;
-  }
-  // console.log("POP", { str, char, result: str.substring(0, lastIndex) });
-  return str.substring(0, lastIndex);
-}
-
-export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
-  const models = dataModel.models;
-
-  // Create a map of models for efficient lookup
-  const modelMap: Record<string, DMMF.Model> = {};
-  for (const model of models) {
-    modelMap[model.name] = model;
-  }
-
-  const visitedModels: Set<string> = new Set();
-  const modelTrees: ModelTree[] = [];
-
-  // Function to recursively build the model tree
-  function buildModelTree(model: DMMF.Model, parent?: DMMF.Model): ModelTree {
-    if (visitedModels.has(model.name)) {
-      throw new Error(`Circular relationship detected in model: ${model.name}`);
-    }
-
-    visitedModels.add(model.name);
-
-    const childRelationships = model.fields.filter(
-      (field) => field.kind === "object" && field.isList
-    );
-
-    const children: ModelTree[] = [];
-    for (const relationship of childRelationships) {
-      const childModel = modelMap[relationship.type];
-      if (childModel) {
-        const childNode = buildModelTree(childModel, model);
-        children.push(childNode);
-      }
-    }
-
-    visitedModels.delete(model.name);
-    const uniqueIdField = model.fields.find((field) => field.isId === true);
-    return {
-      modelName: model.name,
-      model: model,
-      parent: parent,
-      uniqueIdentifierField: uniqueIdField,
-      children,
-    };
-  }
-
-  for (const model of models) {
-    if (
-      !model.fields.some(
-        (field) => field.kind === "object" && field.isRequired && !field.isList
-      )
-    ) {
-      const modelTree = buildModelTree(model);
-      modelTrees.push(modelTree);
-    }
-  }
-
-  return modelTrees;
-}
-
-function prettyPrintAPIRoutes(routes: RouteObject[]) {
-  console.log("API Routes:");
-  console.log("-----------");
-  for (const route of routes) {
-    console.log(
-      `${route.segment} - ${route.operation} ${route.model}: ${route.description}`
-    );
-  }
-}
-
 function generateRouteList(routes: RouteObject[]) {
   const routeLinks = [];
   for (const route of routes) {
@@ -491,39 +366,8 @@ function generateRouteList(routes: RouteObject[]) {
 </tr>${routeLinks.join("\n")}           </tbody> </table>
   `;
 }
-function getParentReferenceField(modelTree: ModelTree): string | undefined {
-  if (!modelTree.parent) {
-    return undefined;
-  }
 
-  const parentModel = modelTree.model;
-  const parentField = parentModel.fields.find(
-    (field) => field.type === modelTree.parent.name
-  );
-
-  if (!parentField) {
-    return undefined;
-  }
-
-  // Find the unique ID field in the current model that matches the parent reference field
-  const uniqueIdField = modelTree.model.fields.find(
-    (field) => field.name === parentField.name
-  );
-
-  return uniqueIdField?.name;
-}
-const getDynamicSlug = (modelName: string, uniqueIdFieldName: string) => {
-  return `${modelName}${uniqueIdFieldName}`;
-};
-function convertRouteToRedirectUrl(input: string): string {
-  const regex = /\[(.*?)\]/g;
-  const replaced = input.replace(regex, (_, innerValue) => {
-    return `\${params.${innerValue}}`;
-  });
-
-  return `${replaced}`;
-}
-export async function generateAPIRoutes(
+export async function generateAppDirectoryFromModelTree(
   modelTreeArray: ModelTree[],
   outputDirectory: string,
   enums: Record<string, string[]>
@@ -548,38 +392,27 @@ export async function generateAPIRoutes(
       modelName.slice(1);
 
     const directoryToCreate = path.join(outputDirectory, route);
-    // console.log(`Create directory: ${directoryToCreate}`);
     if (!fs.existsSync(directoryToCreate)) {
       fs.mkdirSync(directoryToCreate);
     }
 
-    // START GENERATION
-    // #############
     const uniqueDynamicSlug = getDynamicSlug(
       modelTree.modelName,
       modelUniqueIdentifierField.name
     );
-    // console.log({ uniqueDynamicSlug });
 
-    // Copy over template directory
-    // Rename [id] directory to modelUniqueIdentifierField
-    // Fill in partials
     copyDirectory(
       path.join(__dirname, "templateApp", "nexquikTemplateModel"),
       directoryToCreate,
       true
     );
 
-    // console.log({ dir });
     fs.renameSync(
       path.join(directoryToCreate, "[id]"),
       path.join(directoryToCreate, `[${uniqueDynamicSlug}]`)
     );
 
-    // Create List Page
-    // TODO: In list form, we need to dynamically inject the path to create, show, edit, and destroy
-    // TODO: In child list component (sessions) get sessions where userId = params.UserId
-    // Can we just router.push something?
+    // ############### List Page
     const listFormCode = await generateListForm2(
       modelTree,
       convertRouteToRedirectUrl(route)
@@ -594,15 +427,41 @@ export async function generateAPIRoutes(
       modelTree.uniqueIdentifierField.name,
       modelTree.uniqueIdentifierField.type
     );
-
     addStringBetweenComments(
       directoryToCreate,
       deleteWhereClause,
       "//@nexquik prismaDeleteClause start",
       "//@nexquik prismaDeleteClause stop"
     );
+    const listRedirect = await generateRedirect(
+      `\`${convertRouteToRedirectUrl(route)}\``
+    );
+    addStringBetweenComments(
+      directoryToCreate,
+      listRedirect,
+      "//@nexquik listRedirect start",
+      "//@nexquik listRedirect stop"
+    );
+    const parentIdentifierField = modelTree.model.fields.find(
+      (field) => field.isId
+    );
+    const whereparentClause = modelTree.parent
+      ? generateWhereParentClause(
+          "params",
+          getDynamicSlug(modelTree.parent.name, parentIdentifierField.name),
+          parentIdentifierField.name,
+          parentIdentifierField.type,
+          getParentReferenceField(modelTree)
+        )
+      : "()";
+    addStringBetweenComments(
+      directoryToCreate,
+      whereparentClause,
+      "//@nexquik prismaWhereParentClause start",
+      "//@nexquik prismaWhereParentClause stop"
+    );
 
-    // ShowForm
+    // ############### Show Page
     const showFormCode = await generateShowForm(
       modelTree,
       convertRouteToRedirectUrl(route)
@@ -613,120 +472,6 @@ export async function generateAPIRoutes(
       "{/* @nexquik showForm start */}",
       "{/* @nexquik showForm stop */}"
     );
-
-    // CreateForm
-    const createFormCode = await generateCreateForm(
-      modelTree,
-      convertRouteToRedirectUrl(route),
-      enums
-    );
-    addStringBetweenComments(
-      directoryToCreate,
-      createFormCode,
-      "{/* @nexquik createForm start */}",
-      "{/* @nexquik createForm stop */}"
-    );
-
-    // CreateRedirect
-    const createRedirect = await generateRedirect(
-      `\`${convertRouteToRedirectUrl(route)}/\${created.${
-        modelTree.uniqueIdentifierField.name
-      }}\``
-    );
-    addStringBetweenComments(
-      directoryToCreate,
-      createRedirect,
-      "//@nexquik createRedirect start",
-      "//@nexquik createRedirect stop"
-    );
-
-    // CreateRedirect
-    const listRedirect = await generateRedirect(
-      `\`${convertRouteToRedirectUrl(route)}\``
-    );
-    addStringBetweenComments(
-      directoryToCreate,
-      listRedirect,
-      "//@nexquik listRedirect start",
-      "//@nexquik listRedirect stop"
-    );
-
-    // RevalidatePath
-    const revalidatePath = await generateRevalidatePath(
-      `${convertRouteToRedirectUrl(route)}`
-    );
-    addStringBetweenComments(
-      directoryToCreate,
-      revalidatePath,
-      "//@nexquik revalidatePath start",
-      "//@nexquik revalidatePath stop"
-    );
-
-    // CreateLink
-    const createLink = await generateLink(
-      `${convertRouteToRedirectUrl(route)}/create`,
-      "Create New NexquikTemplateModel"
-    );
-    addStringBetweenComments(
-      directoryToCreate,
-      createLink,
-      "{/* @nexquik createLink start */}",
-      "{/* @nexquik createLink stop */}"
-    );
-
-    // Back Link
-    const backLink = await generateLink(
-      popStringEnd(`${convertRouteToRedirectUrl(route)}`, "/"),
-      "Back"
-    );
-    // console.log({ route, backLink });
-    addStringBetweenComments(
-      directoryToCreate,
-      backLink,
-      "{/* @nexquik backLink start */}",
-      "{/* @nexquik backLink stop */}"
-    );
-
-    // BacktoCurrent Link
-    const backToCurrent = await generateLink(
-      `${convertRouteToRedirectUrl(route)}`,
-      "Back"
-    );
-    // console.log({ route, backLink });
-    addStringBetweenComments(
-      directoryToCreate,
-      backToCurrent,
-      "{/* @nexquik backToCurrentLink start */}",
-      "{/* @nexquik backToCurrentLink stop */}"
-    );
-
-    // EditForm
-    const editFormCode = await generateEditForm(
-      modelTree,
-      convertRouteToRedirectUrl(route),
-      enums
-    );
-    addStringBetweenComments(
-      directoryToCreate,
-      editFormCode,
-      "{/* @nexquik editForm start */}",
-      "{/* @nexquik editForm stop */}"
-    );
-
-    // EditRedirect
-    const editRedirect = await generateRedirect(
-      `\`${convertRouteToRedirectUrl(route)}/\${params.${uniqueDynamicSlug}}\``
-    );
-    addStringBetweenComments(
-      directoryToCreate,
-      editRedirect,
-      "//@nexquik editRedirect start",
-      "//@nexquik editRedirect stop"
-    );
-
-    // ChildrenList
-    // Get Child Models
-    // Link to the child model list page
     const childModelLinkList = await generateChildrenList(
       modelTree,
       convertRouteToRedirectUrl(route)
@@ -738,12 +483,39 @@ export async function generateAPIRoutes(
       "{/* @nexquik listChildren stop */}"
     );
 
-    findAndReplaceInFiles(
-      directoryToCreate,
-      "nexquikTemplateModel",
-      modelTree.modelName
+    // ############### Create Page
+    const createFormCode = await generateCreateForm(
+      modelTree,
+      convertRouteToRedirectUrl(route),
+      enums
     );
-
+    addStringBetweenComments(
+      directoryToCreate,
+      createFormCode,
+      "{/* @nexquik createForm start */}",
+      "{/* @nexquik createForm stop */}"
+    );
+    const createRedirect = await generateRedirect(
+      `\`${convertRouteToRedirectUrl(route)}/\${created.${
+        modelTree.uniqueIdentifierField.name
+      }}\``
+    );
+    addStringBetweenComments(
+      directoryToCreate,
+      createRedirect,
+      "//@nexquik createRedirect start",
+      "//@nexquik createRedirect stop"
+    );
+    const createLink = await generateLink(
+      `${convertRouteToRedirectUrl(route)}/create`,
+      "Create New NexquikTemplateModel"
+    );
+    addStringBetweenComments(
+      directoryToCreate,
+      createLink,
+      "{/* @nexquik createLink start */}",
+      "{/* @nexquik createLink stop */}"
+    );
     const prismaInput = generateConvertToPrismaInputCode(modelTree);
     addStringBetweenComments(
       directoryToCreate,
@@ -765,28 +537,70 @@ export async function generateAPIRoutes(
       "//@nexquik prismaWhereInput stop"
     );
 
-    // Where parent clause
-    const parentIdentifierField = modelTree.model.fields.find(
-      (field) => field.isId
+    // ############### Edit Page
+    const editFormCode = await generateEditForm(
+      modelTree,
+      convertRouteToRedirectUrl(route),
+      enums
     );
-    const whereparentClause = modelTree.parent
-      ? generateWhereParentClause(
-          "params",
-          getDynamicSlug(modelTree.parent.name, parentIdentifierField.name),
-          parentIdentifierField.name,
-          parentIdentifierField.type,
-          getParentReferenceField(modelTree)
-        )
-      : "()";
     addStringBetweenComments(
       directoryToCreate,
-      whereparentClause,
-      "//@nexquik prismaWhereParentClause start",
-      "//@nexquik prismaWhereParentClause stop"
+      editFormCode,
+      "{/* @nexquik editForm start */}",
+      "{/* @nexquik editForm stop */}"
     );
 
-    // END GENERATION
-    // #############
+    const editRedirect = await generateRedirect(
+      `\`${convertRouteToRedirectUrl(route)}/\${params.${uniqueDynamicSlug}}\``
+    );
+    addStringBetweenComments(
+      directoryToCreate,
+      editRedirect,
+      "//@nexquik editRedirect start",
+      "//@nexquik editRedirect stop"
+    );
+
+    // ############### Extras
+    const revalidatePath = await generateRevalidatePath(
+      `${convertRouteToRedirectUrl(route)}`
+    );
+    addStringBetweenComments(
+      directoryToCreate,
+      revalidatePath,
+      "//@nexquik revalidatePath start",
+      "//@nexquik revalidatePath stop"
+    );
+
+    const backLink = await generateLink(
+      popStringEnd(`${convertRouteToRedirectUrl(route)}`, "/"),
+      "Back"
+    );
+    addStringBetweenComments(
+      directoryToCreate,
+      backLink,
+      "{/* @nexquik backLink start */}",
+      "{/* @nexquik backLink stop */}"
+    );
+
+    const backToCurrent = await generateLink(
+      `${convertRouteToRedirectUrl(route)}`,
+      "Back"
+    );
+    addStringBetweenComments(
+      directoryToCreate,
+      backToCurrent,
+      "{/* @nexquik backToCurrentLink start */}",
+      "{/* @nexquik backToCurrentLink stop */}"
+    );
+
+    // Replace all placeholder model names
+    findAndReplaceInFiles(
+      directoryToCreate,
+      "nexquikTemplateModel",
+      modelTree.modelName
+    );
+
+    // ############### Create Routes
     // Create
     routes.push({
       segment: `${route}/create`,
@@ -958,8 +772,6 @@ export function generateWhereParentClause(
   } else if (parentIdentifierFieldType === "Boolean") {
     typecastValue = `Boolean(${typecastValue})`;
   }
-  // const parentModelNameLowerCase =
-  //   parentModelName.charAt(0).toLowerCase() + parentModelName.slice(1);
   return `({ where: { ${parentReferenceField}: {${parentIdentifierFieldName}: {equals: ${typecastValue}} } } })`;
 }
 
@@ -1045,7 +857,6 @@ export function generateFormFields(
 export function generateFormFieldsWithDefaults(
   tableFields: DMMF.Field[],
   enums: Record<string, string[]>
-  // referencedModels: { fieldName: string; referencedModel: string }[]
 ): string {
   return tableFields
     .map((field) => {

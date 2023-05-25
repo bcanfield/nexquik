@@ -2,8 +2,8 @@
 import chalk from "chalk";
 import { Command } from "commander";
 import figlet from "figlet";
-import { formatNextJsFilesRecursively } from "./fileHelpers";
-import { generateReactForms } from "./generators";
+import { formatNextJsFilesRecursively } from "./helpers";
+import { generate } from "./generators";
 
 async function main() {
   const program = new Command();
@@ -38,7 +38,7 @@ async function main() {
         `Outputting generated files to: ${options.Out}`
       )}\n${chalk.blue.bold(`Prisma Import Value: ${options.PrismaImport}`)}`
     );
-    await generateReactForms(options.Schema, options.Out);
+    await generate(options.Schema, options.Out);
     await formatNextJsFilesRecursively(options.Out);
   }
 }
