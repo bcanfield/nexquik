@@ -49,11 +49,6 @@ export default async function EditNexquikTemplateModel({ params }) {
         <button type="submit">Update NexquikTemplateModel</button>
       </form>
       {/* @nexquik editForm stop */}
-      <div className="button-group">
-        {/* @nexquik backToCurrentLink start */}
-        <Link href={`/nexquikTemplateModel/create`}>Back</Link>
-        {/* @nexquik backToCurrentLink stop */}
-      </div>
     </div>
   );
 }

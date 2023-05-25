@@ -876,6 +876,8 @@ export function generateFormFieldsWithDefaults(
       const inputType = prismaFieldToInputType[field.type] || "text";
       const defaultValue = field.isId
         ? `{nexquikTemplateModel.${field.name} || 'N/A'}`
+        : field.type === "DateTime"
+        ? `{nexquikTemplateModel.${field.name}.toISOString().slice(0, 16)}`
         : `{nexquikTemplateModel.${field.name}}`;
       const disabled = field.isId ? "disabled" : "";
       const required = field.isRequired ? "required" : "";
