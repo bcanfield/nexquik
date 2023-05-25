@@ -58,6 +58,9 @@ export default async function ListNexquikTemplateModels({ params }) {
         ))}
       </ul>
       {/* @nexquik listForm stop */}
+      {/* @nexquik backLink start */}
+      <Link href={`/nexquikTemplateModel/create`}>Back</Link>
+      {/* @nexquik backLink stop */}
     </div>
   );
 }

@@ -95,9 +95,5 @@ export function copyFileToDirectory(
     console.error(`Error writing file: ${error}`);
   });
 
-  writeStream.on("finish", () => {
-    console.log(`File "${fileName}" copied to "${destinationDirectory}"`);
-  });
-
   readStream.pipe(writeStream);
 }

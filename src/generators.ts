@@ -272,9 +272,9 @@ export async function generateReactForms(
     const dmmf = await getDMMF({ datamodel: prismaSchema });
     const modelTree = createModelTree(dmmf.datamodel);
     const enums = getEnums(dmmf.datamodel);
-    console.log({ enums });
 
-    const routes = generateAPIRoutes(modelTree, outputDirectory, enums);
+    const routes = await generateAPIRoutes(modelTree, outputDirectory, enums);
+    prettyPrintAPIRoutes(routes);
   } catch (error) {
     console.error("Error occurred:", error);
   }
@@ -324,6 +324,17 @@ export async function generateShowForm(
   `;
 
   return reactComponentTemplate;
+}
+
+function popStringEnd(str: string, char: string): string {
+  const lastIndex = str.lastIndexOf(char);
+
+  if (lastIndex === -1) {
+    // Character not found in the string
+    return str;
+  }
+
+  return str.substring(0, lastIndex);
 }
 
 export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
@@ -387,7 +398,6 @@ export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
 function prettyPrintAPIRoutes(routes: RouteObject[]) {
   console.log("API Routes:");
   console.log("-----------");
-
   for (const route of routes) {
     console.log(
       `${route.segment} - ${route.operation} ${route.model}: ${route.description}`
@@ -427,11 +437,11 @@ function convertRouteToRedirectUrl(input: string): string {
 
   return `${replaced}`;
 }
-export function generateAPIRoutes(
+export async function generateAPIRoutes(
   modelTreeArray: ModelTree[],
   outputDirectory: string,
   enums: Record<string, string[]>
-): RouteObject[] {
+): Promise<RouteObject[]> {
   const routes: RouteObject[] = [];
 
   async function generateRoutes(
@@ -578,6 +588,19 @@ export function generateAPIRoutes(
       "{/* @nexquik createLink stop */}"
     );
 
+    // Back Link
+    const backLink = await generateLink(
+      popStringEnd(`${convertRouteToRedirectUrl(route)}`, "/"),
+      "Back"
+    );
+
+    addStringBetweenComments(
+      directoryToCreate,
+      backLink,
+      "{/* @nexquik backLink start */}",
+      "{/* @nexquik backLink stop */}"
+    );
+
     // EditForm
     const editFormCode = await generateEditForm(modelTree, enums);
     addStringBetweenComments(
@@ -703,7 +726,7 @@ export function generateAPIRoutes(
     // Create ./page.tsx
 
     for (const child of modelTree.children) {
-      generateRoutes(child, {
+      await generateRoutes(child, {
         name: route,
         uniqueIdentifierField: modelUniqueIdentifierField.name,
       });
@@ -711,13 +734,11 @@ export function generateAPIRoutes(
   }
 
   for (const modelTree of modelTreeArray) {
-    generateRoutes(modelTree, {
+    await generateRoutes(modelTree, {
       name: "/",
       uniqueIdentifierField: "",
     });
   }
-
-  prettyPrintAPIRoutes(routes);
   return routes;
 }
 
@@ -788,18 +809,11 @@ export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
   // Convert fields pointing to other relations differently
   modelTree.model.fields.map((field) => {
     if (field.kind === "object") {
-      console.log(
-        `Field '${field.name}' in model '${modelTree.modelName}' is a relation.`
-      );
       const relationFrom = field.relationFromFields[0];
-      console.log(`relationFrom: ${relationFrom}`);
 
       const referencedModelName = field.type;
 
       if (referencedModelName === modelTree.parent?.name) {
-        console.log(
-          `Field '${field.name}' is a reference to the parent model.`
-        );
       } else if (relationFrom) {
         const fieldType2 = modelTree.model.fields.find(
           (f) => f.name === relationFrom
@@ -903,18 +917,11 @@ export function generateFormFields(
       const required = field.isRequired ? "required" : "";
 
       if (field.kind === "object") {
-        console.log(
-          `Field '${field.name}' in model '${modelTree.modelName}' is a relation.`
-        );
         const relationFrom = field.relationFromFields[0];
-        console.log(`relationFrom: ${relationFrom}`);
 
         const referencedModelName = field.type;
 
         if (referencedModelName === modelTree.parent?.name) {
-          console.log(
-            `Field '${field.name}' is a reference to the parent model.`
-          );
         } else if (relationFrom) {
           const fieldType2 = modelTree.model.fields.find(
             (f) => f.name === relationFrom

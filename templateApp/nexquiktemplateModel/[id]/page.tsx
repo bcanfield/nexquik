@@ -60,6 +60,9 @@ export default async function ShowNexquikTemplateModel({ params }) {
 
       {/* @nexquik listChildren start */}
       {/* @nexquik listChildren stop */}
+      {/* @nexquik backLink start */}
+      <Link href={`/nexquikTemplateModel/create`}>Back</Link>
+      {/* @nexquik backLink stop */}
     </div>
   );
 }
