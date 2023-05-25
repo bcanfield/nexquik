@@ -116,9 +116,15 @@ async function generateCreateForm(
   const reactComponentTemplate = `
       <form action={addNexquikTemplateModel}>
         ${formFields}
-        <button type="submit">Create NexquikTemplateModel</button>
-      </form>
-      <Link href={\`${routeUrl}\`}>Cancel</Link>
+        <div className="button-group">
+        <button type="submit" className="create-button">
+            Create NexquikTemplateModel
+        </button>
+        <Link href={\`${routeUrl}\`} className="cancel-link">
+            Cancel
+        </Link>
+    </div>      
+    </form>     
   `;
 
   return reactComponentTemplate;
@@ -136,7 +142,7 @@ async function generateLink(
   linkText: string
 ): Promise<string> {
   const reactComponentTemplate = `
-  <Link href={\`${linkUrl}\`}>
+  <Link href={\`${linkUrl}\`} className="base-link">
   ${linkText}
 </Link>  `;
   return reactComponentTemplate;
@@ -153,6 +159,7 @@ async function generateRevalidatePath(
 
 async function generateEditForm(
   modelTree: ModelTree,
+  routeUrl: string,
   enums: Record<string, string[]>
 ): Promise<string> {
   // const tableFields = await extractTableFields(tableName, prismaSchema);
@@ -164,7 +171,12 @@ async function generateEditForm(
   const reactComponentTemplate = `
     <form action={editNexquikTemplateModel}>
         ${formFields}
-        <button type="submit">Update NexquikTemplateModel</button>
+        <div className="button-group">
+        <button className="create-button" type="submit">Update NexquikTemplateModel</button>
+        <Link href={\`${routeUrl}\`} className="cancel-link">
+            Cancel
+        </Link>
+        </div>
       </form>
   `;
 
@@ -193,7 +205,9 @@ async function generateChildrenList(
   );
   const childrenLinks = modelTree.children
     .map(
-      (c) => `<Link href={\`${routeUrl}/\${params.${slug}}/${
+      (
+        c
+      ) => `<Link className="action-link base-link" href={\`${routeUrl}/\${params.${slug}}/${
         c.modelName.charAt(0).toLowerCase() + c.modelName.slice(1)
       }\`}>
     ${c.modelName} List
@@ -214,32 +228,50 @@ async function generateListForm2(
     prismaFieldToInputType[uniqueField.type] || "text";
   // Define the React component template as a string
   const reactComponentTemplate = `
-    <ul>
+  <table className="item-list">
+  <tbody>
+  <tr className="header-row">
+  ${modelTree.model.fields
+    .map((field) => {
+      if (isFieldRenderable(field)) {
+        return `<th> ${field.name} </th>`;
+      }
+    })
+    .join("\n")}
+  </tr>
+
     {nexquikTemplateModel?.map((nexquikTemplateModel, index) => (
-      <li key={index}>
-        <form>
-        <input hidden type="${uniqueFieldInputType}" name="${
+      <tr key={index} className="item-row">
+      
+      ${modelTree.model.fields
+        .map((field) => {
+          if (isFieldRenderable(field)) {
+            return `<td> {\`\${nexquikTemplateModel.${field.name}}\`} </td>`;
+          }
+        })
+        .join("\n")}
+
+      <td className="action-cell">
+      <form>
+      <input hidden type="${uniqueFieldInputType}" name="${
     uniqueField.name
-  }" defaultValue={nexquikTemplateModel?.${
-    uniqueField.name
-  }} />        ${modelTree.model.fields.map((field) => {
-    if (!isFieldRenderable(field)) {
-      return "";
-    }
-    return `<p> ${field.name} {\`\${nexquikTemplateModel.${field.name}}\`} </p>`;
-  })}
+  }" defaultValue={nexquikTemplateModel?.${uniqueField.name}} />
           <Link href={\`${routeUrl}/\${nexquikTemplateModel.${
     uniqueField.name
-  }}\`}>View</Link>
-          <Link href={\`${routeUrl}/\${nexquikTemplateModel.${
+  }}\`} className="action-link view-link">View</Link>
+                  <Link href={\`${routeUrl}/\${nexquikTemplateModel.${
     uniqueField.name
-  }}/edit\`}>Edit</Link>
-          <button formAction={deleteNexquikTemplateModel}>Delete</button>
-        </form>
-      </li>
+  }}/edit\`} className="action-link edit-link">Edit</Link>
+                  <button formAction={deleteNexquikTemplateModel} className="action-link delete-link">Delete</button>
+                  </form>
+
+                  </td>
+      </tr>
+  
     ))}
-  </ul>
-  `;
+    </tbody>
+    </table>
+    `;
 
   return reactComponentTemplate;
 }
@@ -283,6 +315,19 @@ export async function generateReactForms(
       path.join(__dirname, "templateApp", rootPageName),
       outputDirectory
     );
+    const globalStylesFileName = "globals.css";
+
+    copyFileToDirectory(
+      path.join(__dirname, "templateApp", globalStylesFileName),
+      outputDirectory
+    );
+
+    const rootLayoutFileName = "layout.tsx";
+
+    copyFileToDirectory(
+      path.join(__dirname, "templateApp", rootLayoutFileName),
+      outputDirectory
+    );
   } catch (error) {
     console.error("Error occurred:", error);
   }
@@ -316,18 +361,32 @@ export async function generateShowForm(
     uniqueField.name
   }" defaultValue={nexquikTemplateModel?.${uniqueField.name}} />
     <form>
-    <Link href={\`${routeUrl}\`}>Back to All NexquikTemplateModels</Link>
-    <Link href={\`${routeUrl}/\${nexquikTemplateModel.${
+    <div className="button-group">
+
+
+    <Link className="action-link edit-link" href={\`${routeUrl}/\${nexquikTemplateModel.${
     uniqueField.name
   }}/edit\`}>Edit</Link>
-    <button formAction={deleteNexquikTemplateModel}>Delete</button>
-    ${modelTree.model.fields.map((field) => {
-      if (!isFieldRenderable(field)) {
-        return "";
-      }
-      // return `<p> ${name} {nexquikTemplateModel.${name}} </p>`;
-      return `<p> ${field.name} {\`\${nexquikTemplateModel.${field.name}}\`} </p>`;
-    })}
+
+  
+    <button className="action-link delete-link" formAction={deleteNexquikTemplateModel}>Delete</button>
+    </div>
+
+    <div className="container">
+
+    ${modelTree.model.fields
+      .map((field) => {
+        if (!isFieldRenderable(field)) {
+          return "";
+        }
+        return `<div className="pair">
+      <span className="key">${field.name}</span>
+      <span className="value">{\`\${nexquikTemplateModel.${field.name}}\`}</span>
+  </div>`;
+      })
+      .join("\n")}
+    </div>
+
     </form>
   `;
 
@@ -341,7 +400,7 @@ function popStringEnd(str: string, char: string): string {
     // Character not found in the string
     return str;
   }
-
+  // console.log("POP", { str, char, result: str.substring(0, lastIndex) });
   return str.substring(0, lastIndex);
 }
 
@@ -417,10 +476,20 @@ function generateRouteList(routes: RouteObject[]) {
   const routeLinks = [];
   for (const route of routes) {
     routeLinks.push(
-      `<p>${route.segment} - ${route.operation} ${route.model}: ${route.description}</p>`
+      `<tr className="item-row">
+      <td>${route.segment}</td>
+      <td>${route.operation} ${route.model}</td>
+      <td>${route.description}</td>
+      </tr>`
     );
   }
-  return routeLinks.join("\n");
+  return `<table className="item-list">  <tbody><tr className="header-row">
+
+  <th>Route</th>
+  <th>Operation</th>
+  <th>Description</th>
+</tr>${routeLinks.join("\n")}           </tbody> </table>
+  `;
 }
 function getParentReferenceField(modelTree: ModelTree): string | undefined {
   if (!modelTree.parent) {
@@ -610,7 +679,7 @@ export async function generateAPIRoutes(
       popStringEnd(`${convertRouteToRedirectUrl(route)}`, "/"),
       "Back"
     );
-
+    // console.log({ route, backLink });
     addStringBetweenComments(
       directoryToCreate,
       backLink,
@@ -618,8 +687,25 @@ export async function generateAPIRoutes(
       "{/* @nexquik backLink stop */}"
     );
 
+    // BacktoCurrent Link
+    const backToCurrent = await generateLink(
+      `${convertRouteToRedirectUrl(route)}`,
+      "Back"
+    );
+    // console.log({ route, backLink });
+    addStringBetweenComments(
+      directoryToCreate,
+      backToCurrent,
+      "{/* @nexquik backToCurrentLink start */}",
+      "{/* @nexquik backToCurrentLink stop */}"
+    );
+
     // EditForm
-    const editFormCode = await generateEditForm(modelTree, enums);
+    const editFormCode = await generateEditForm(
+      modelTree,
+      convertRouteToRedirectUrl(route),
+      enums
+    );
     addStringBetweenComments(
       directoryToCreate,
       editFormCode,

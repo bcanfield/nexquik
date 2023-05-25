@@ -27,8 +27,8 @@ export default async function ShowNexquikTemplateModel({ params }) {
     //@nexquik listRedirect stop
   }
   return (
-    <div>
-      <h1> NexquikTemplateModels - Show</h1>
+    <div className="container">
+      <h1 className="title"> View NexquikTemplateModel</h1>
       {/* @nexquik showForm start */}
       <form>
         <input
@@ -57,12 +57,16 @@ export default async function ShowNexquikTemplateModel({ params }) {
         </ul>
       </form>
       {/* @nexquik showForm stop */}
+      <div className="button-group">
+        {/* @nexquik listChildren start */}
+        {/* @nexquik listChildren stop */}
+      </div>
 
-      {/* @nexquik listChildren start */}
-      {/* @nexquik listChildren stop */}
-      {/* @nexquik backLink start */}
-      <Link href={`/nexquikTemplateModel/create`}>Back</Link>
-      {/* @nexquik backLink stop */}
+      <div className="button-group">
+        {/* @nexquik backToCurrentLink start */}
+        <Link href={`/nexquikTemplateModel/create`}>Back</Link>
+        {/* @nexquik backToCurrentLink stop */}
+      </div>
     </div>
   );
 }

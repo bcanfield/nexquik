@@ -22,13 +22,15 @@ export default async function ListNexquikTemplateModels({ params }) {
     //@nexquik revalidatePath stop
   }
   return (
-    <div>
-      <h1> NexquikTemplateModels - List</h1>
-      {/* @nexquik createLink start */}
-      <Link href={`/nexquikTemplateModel/create`}>
-        Create New NexquikTemplateModel
-      </Link>
-      {/* @nexquik createLink stop */}
+    <div className="container">
+      <h1> NexquikTemplateModels List</h1>
+      <div className="button-group">
+        {/* @nexquik createLink start */}
+        <Link href={`/nexquikTemplateModel/create`}>
+          Create New NexquikTemplateModel
+        </Link>
+        {/* @nexquik createLink stop */}
+      </div>
 
       {/* @nexquik listForm start */}
       <ul>

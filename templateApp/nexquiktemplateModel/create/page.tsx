@@ -26,8 +26,8 @@ export default async function CreateNexquikTemplateModel({ params }) {
   }
 
   return (
-    <div>
-      <h1> NexquikTemplateModels - Create</h1>
+    <div className="container">
+      <h1 className="title"> Create NexquikTemplateModels</h1>
       {/* @nexquik createForm start */}
       <form action={addNexquikTemplateModel}>
         <label>name</label>
