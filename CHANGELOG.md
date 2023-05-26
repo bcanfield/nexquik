@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/bcanfield/nexquik/compare/v1.1.0...v1.2.0) (2023-05-26)
+
+
+### Features
+
+* Initial generation of app dir ([#3](https://github.com/bcanfield/nexquik/issues/3)) ([20be668](https://github.com/bcanfield/nexquik/commit/20be6689bb314d52e8589bb47c18ef173aca2316))
+
 # [1.1.0](https://github.com/bcanfield/nexquik/compare/v1.0.3...v1.1.0) (2023-05-12)
 
 
