@@ -1,0 +1,6 @@
+src/**/*
+node_modules/
+prisma/
+.github/
+__tests__/
+*.md
