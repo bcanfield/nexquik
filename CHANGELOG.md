@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/bcanfield/nexquik/compare/v1.2.1...v1.2.2) (2023-05-26)
+
+
+### Bug Fixes
+
+* Add jest tests ([#4](https://github.com/bcanfield/nexquik/issues/4)) ([fbf3ff2](https://github.com/bcanfield/nexquik/commit/fbf3ff29fc26a6edc0b5fc440140eb1de790004a))
+
 ## [1.2.1](https://github.com/bcanfield/nexquik/compare/v1.2.0...v1.2.1) (2023-05-26)
 
 
