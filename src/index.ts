@@ -11,8 +11,15 @@ async function main() {
   const defaultPrismaClientImportPath = "~/server/db";
   const defaultOutputDirectory = "nexquikApp";
 
-  console.log(figlet.textSync("Nexquik"));
-
+  console.log(
+    chalk.bgYellow.blue.bold(
+      figlet.textSync("Nexquik", {
+        font: "Univers",
+        horizontalLayout: "default",
+        verticalLayout: "default",
+      })
+    )
+  );
   program
     .version(require("../package.json").version)
     .description("An example CLI for managing a directory")
@@ -32,17 +39,22 @@ async function main() {
   const options = program.opts();
   if (options.Schema && options.Out) {
     console.log(
-      `${chalk.green.bold(
-        `Looking for Prisma Schema at: ${options.Schema}`
-      )}\n${chalk.cyanBright.bold(
-        `Outputting generated files to: ${options.Out}`
-      )}\n${chalk.blue.bold(`Prisma Import Value: ${options.PrismaImport}`)}`
+      `${chalk.whiteBright.bold(
+        `\nParams:`
+      )}\n-----\nPrisma Schema location: ${chalk.yellow.bold(
+        `${options.Schema}`
+      )}\nOutput location: ${chalk.yellow.bold(
+        `${options.Out}`
+      )}\nPrisma Import: ${chalk.yellow.bold(
+        `${options.PrismaImport}\n`
+      )}-----\n`
     );
     await generate(options.Schema, options.Out);
+    console.log(chalk.blue("Formatting Generated Files"));
     await formatNextJsFilesRecursively(options.Out);
   }
 }
 
 main().then(() => {
-  console.log("Done.");
+  console.log(chalk.green.bold("\nGenerated Successfully."));
 });

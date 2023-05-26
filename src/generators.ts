@@ -4,6 +4,7 @@ import { getDMMF } from "@prisma/internals";
 import path from "path";
 import { promisify } from "util";
 import fs from "fs";
+import chalk from "chalk";
 import {
   convertRouteToRedirectUrl,
   copyDirectory,
@@ -250,23 +251,29 @@ export async function generate(
 ) {
   try {
     // Read the Prisma schema file
+    console.log(chalk.blue("Locating Prisma Schema File"));
     const prismaSchema = await readFileAsync(prismaSchemaPath, "utf-8");
 
     // Create the output Directory
+    console.log(chalk.blue("Looking for output directory"));
     if (!fs.existsSync(outputDirectory)) {
       fs.mkdirSync(outputDirectory);
     }
 
     // Main section to build the app from the modelTree
+    console.log(chalk.blue("Reading Prisma Schema"));
     const dmmf = await getDMMF({ datamodel: prismaSchema });
+    console.log(chalk.blue("Creating Tree"));
     const modelTree = createModelTree(dmmf.datamodel);
     const enums = getEnums(dmmf.datamodel);
+    console.log(chalk.blue("Generating App Directory"));
     const routes = await generateAppDirectoryFromModelTree(
       modelTree,
       outputDirectory,
       enums
     );
-    prettyPrintAPIRoutes(routes);
+    // prettyPrintAPIRoutes(routes);
+    console.log(chalk.blue("Generating Route List"));
     const routeList = generateRouteList(routes);
 
     // Copy over the files in the root dir
@@ -276,6 +283,7 @@ export async function generate(
       "{/* @nexquik routeList start */}",
       "{/* @nexquik routeList stop */}"
     );
+    console.log(chalk.blue("Finishing Up"));
     const rootPageName = "page.tsx";
     copyFileToDirectory(
       path.join(__dirname, "templateApp", rootPageName),
