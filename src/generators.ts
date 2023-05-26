@@ -1,10 +1,9 @@
-#! /usr/bin/env node
 import { DMMF } from "@prisma/generator-helper";
 import { getDMMF } from "@prisma/internals";
+import chalk from "chalk";
+import fs from "fs";
 import path from "path";
 import { promisify } from "util";
-import fs from "fs";
-import chalk from "chalk";
 import {
   convertRouteToRedirectUrl,
   copyDirectory,
@@ -12,7 +11,6 @@ import {
   findAndReplaceInFiles,
   getDynamicSlug,
   popStringEnd,
-  prettyPrintAPIRoutes,
 } from "./helpers";
 import {
   createModelTree,
