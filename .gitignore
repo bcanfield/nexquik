@@ -1,6 +1,7 @@
 node_modules/
 dist/
 prisnextApp/
-
+coverage/
+nexquikApp/
 # TypeScript cache
 *.tsbuildinfo\

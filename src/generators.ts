@@ -14,6 +14,7 @@ import {
 } from "./helpers";
 import {
   createModelTree,
+  getCompositeKeyFields,
   getParentReferenceField,
   ModelTree,
 } from "./modelTree";
@@ -247,61 +248,57 @@ export async function generate(
   prismaSchemaPath: string,
   outputDirectory: string
 ) {
-  try {
-    // Read the Prisma schema file
-    console.log(chalk.blue("Locating Prisma Schema File"));
-    const prismaSchema = await readFileAsync(prismaSchemaPath, "utf-8");
+  // Read the Prisma schema file
+  console.log(chalk.blue("Locating Prisma Schema File"));
+  const prismaSchema = await readFileAsync(prismaSchemaPath, "utf-8");
 
-    // Create the output Directory
-    console.log(chalk.blue("Looking for output directory"));
-    if (!fs.existsSync(outputDirectory)) {
-      fs.mkdirSync(outputDirectory);
-    }
-
-    // Main section to build the app from the modelTree
-    console.log(chalk.blue("Reading Prisma Schema"));
-    const dmmf = await getDMMF({ datamodel: prismaSchema });
-    console.log(chalk.blue("Creating Tree"));
-    const modelTree = createModelTree(dmmf.datamodel);
-    const enums = getEnums(dmmf.datamodel);
-    console.log(chalk.blue("Generating App Directory"));
-    const routes = await generateAppDirectoryFromModelTree(
-      modelTree,
-      outputDirectory,
-      enums
-    );
-    // prettyPrintAPIRoutes(routes);
-    console.log(chalk.blue("Generating Route List"));
-    const routeList = generateRouteList(routes);
-
-    // Copy over the files in the root dir
-    addStringBetweenComments(
-      path.join(__dirname, "templateApp"),
-      routeList,
-      "{/* @nexquik routeList start */}",
-      "{/* @nexquik routeList stop */}"
-    );
-    console.log(chalk.blue("Finishing Up"));
-    const rootPageName = "page.tsx";
-    copyFileToDirectory(
-      path.join(__dirname, "templateApp", rootPageName),
-      outputDirectory
-    );
-
-    const globalStylesFileName = "globals.css";
-    copyFileToDirectory(
-      path.join(__dirname, "templateApp", globalStylesFileName),
-      outputDirectory
-    );
-
-    const rootLayoutFileName = "layout.tsx";
-    copyFileToDirectory(
-      path.join(__dirname, "templateApp", rootLayoutFileName),
-      outputDirectory
-    );
-  } catch (error) {
-    console.error("Error occurred:", error);
+  // Create the output Directory
+  console.log(chalk.blue("Looking for output directory"));
+  if (!fs.existsSync(outputDirectory)) {
+    fs.mkdirSync(outputDirectory);
   }
+
+  // Main section to build the app from the modelTree
+  console.log(chalk.blue("Reading Prisma Schema"));
+  const dmmf = await getDMMF({ datamodel: prismaSchema });
+  console.log(chalk.blue("Creating Tree"));
+  const modelTree = createModelTree(dmmf.datamodel);
+  const enums = getEnums(dmmf.datamodel);
+  console.log(chalk.blue("Generating App Directory"));
+  const routes = await generateAppDirectoryFromModelTree(
+    modelTree,
+    outputDirectory,
+    enums
+  );
+  // prettyPrintAPIRoutes(routes);
+  console.log(chalk.blue("Generating Route List"));
+  const routeList = generateRouteList(routes);
+
+  // Copy over the files in the root dir
+  addStringBetweenComments(
+    path.join(__dirname, "templateApp"),
+    routeList,
+    "{/* @nexquik routeList start */}",
+    "{/* @nexquik routeList stop */}"
+  );
+  console.log(chalk.blue("Finishing Up"));
+  const rootPageName = "page.tsx";
+  copyFileToDirectory(
+    path.join(__dirname, "templateApp", rootPageName),
+    outputDirectory
+  );
+
+  const globalStylesFileName = "globals.css";
+  copyFileToDirectory(
+    path.join(__dirname, "templateApp", globalStylesFileName),
+    outputDirectory
+  );
+
+  const rootLayoutFileName = "layout.tsx";
+  copyFileToDirectory(
+    path.join(__dirname, "templateApp", rootLayoutFileName),
+    outputDirectory
+  );
 }
 
 export async function generateShowForm(
@@ -412,10 +409,35 @@ export async function generateAppDirectoryFromModelTree(
       true
     );
 
-    fs.renameSync(
-      path.join(directoryToCreate, "[id]"),
-      path.join(directoryToCreate, `[${uniqueDynamicSlug}]`)
-    );
+    let modelUniqueIdentifier: { fieldName: string; fieldType: string }[] = [];
+    const identifierField = modelTree.model.fields.find((field) => field.isId);
+    // Bypass the creation of dynamic routes for this model if we cannot find a unique id field
+    // TODO: Figure out how to support composite types in dynamic routes
+    if (!identifierField) {
+      console.log(
+        `Cannot find identifier field for model: ${modelTree.model.name}`
+      );
+      const compositeKeyFields = getCompositeKeyFields(modelTree);
+      if (compositeKeyFields && compositeKeyFields.length >= 2) {
+        modelUniqueIdentifier = compositeKeyFields;
+        `Found a composite key. Nexquik does not yet support this. So we will bypass some of the generation on this model`;
+      } else {
+        console.log(
+          `Could not find identifier field OR composite type for model: ${modelTree.model.name}`
+        );
+      }
+      // Just remove the dynamic directory for now
+      fs.rmSync(path.join(directoryToCreate, "[id]"), { recursive: true });
+    } else {
+      modelUniqueIdentifier.push({
+        fieldName: identifierField.name,
+        fieldType: identifierField.type,
+      });
+      fs.renameSync(
+        path.join(directoryToCreate, "[id]"),
+        path.join(directoryToCreate, `[${uniqueDynamicSlug}]`)
+      );
+    }
 
     // ############### List Page
     const listFormCode = await generateListForm2(
@@ -428,9 +450,42 @@ export async function generateAppDirectoryFromModelTree(
       "{/* @nexquik listForm start */}",
       "{/* @nexquik listForm stop */}"
     );
+
+    // ##############
+    // TODO: Get this at the top level. If a model doesnt have a traditional id field we need to get it this way
+    let relationFieldToParent = "";
+    let fieldType = "";
+    if (modelTree.parent) {
+      // Get the field on the current model that is the id referencing the parent
+      modelTree.model.fields.forEach((mf) => {
+        if (mf.type === modelTree.parent?.name) {
+          if (
+            mf.relationFromFields?.length &&
+            mf.relationFromFields.length > 0
+          ) {
+            relationFieldToParent = mf.relationFromFields[0];
+          }
+        }
+      });
+
+      // Get the field type on the current model that is the id referencing the parent
+      fieldType =
+        modelTree.model.fields.find((f) => f.name === relationFieldToParent)
+          ?.type || "";
+    }
+    const parentIdentifierFields = modelTree.model.fields.find((field) =>
+      field.relationFromFields?.includes(relationFieldToParent)
+    )?.relationToFields;
+    let parentIdentifierField = "";
+
+    if (parentIdentifierFields && parentIdentifierFields.length > 0) {
+      parentIdentifierField = parentIdentifierFields[0];
+    }
+    // ##############
+
     const deleteWhereClause = generateDeleteClause(
-      modelTree.uniqueIdentifierField?.name,
-      modelTree.uniqueIdentifierField?.type
+      modelTree.uniqueIdentifierField?.name || parentIdentifierField,
+      modelTree.uniqueIdentifierField?.type || fieldType
     );
     addStringBetweenComments(
       directoryToCreate,
@@ -447,15 +502,13 @@ export async function generateAppDirectoryFromModelTree(
       "//@nexquik listRedirect start",
       "//@nexquik listRedirect stop"
     );
-    const parentIdentifierField = modelTree.model.fields.find(
-      (field) => field.isId
-    );
     const whereparentClause = modelTree.parent
       ? generateWhereParentClause(
           "params",
-          getDynamicSlug(modelTree.parent.name, parentIdentifierField?.name),
-          parentIdentifierField?.name,
-          parentIdentifierField?.type,
+          getDynamicSlug(modelTree.parent.name, parentIdentifierField),
+          modelTree.model.fields.find((field) => field.isId)?.name ||
+            parentIdentifierField,
+          modelTree.model.fields.find((field) => field.isId)?.type || fieldType,
           getParentReferenceField(modelTree)
         )
       : "()";
@@ -528,7 +581,6 @@ export async function generateAppDirectoryFromModelTree(
       "//@nexquik prismaDataInput start",
       "//@nexquik prismaDataInput stop"
     );
-    const identifierField = modelTree.model.fields.find((field) => field.isId);
     const whereClause = generateWhereClause(
       "params",
       uniqueDynamicSlug,
@@ -701,14 +753,17 @@ export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
   });
 
   // Convert the parent accessor  differently
-  if (relationFieldToParent && fieldType) {
-    // Get the parent unique slug
-    const parentIdentifierField = modelTree.model.fields.find(
-      (field) => field.isId
-    );
+  if (relationFieldToParent && fieldType && modelTree.parent?.name) {
+    let parentIdentifierField = "";
+    const parentIdentifierFields = modelTree.model.fields.find((field) =>
+      field.relationFromFields?.includes(relationFieldToParent)
+    )?.relationToFields;
+    if (parentIdentifierFields && parentIdentifierFields.length > 0) {
+      parentIdentifierField = parentIdentifierFields[0];
+    }
     const parentSlug = getDynamicSlug(
       modelTree.parent?.name,
-      parentIdentifierField?.name
+      parentIdentifierField
     );
     let typecastValue = `params.${parentSlug}`;
     if (fieldType === "Int" || fieldType === "Float") {

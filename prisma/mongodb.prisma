@@ -1,0 +1,17 @@
+datasource db {
+    provider = "mongodb"
+    url      = env("DATABASE_URL")
+}
+
+model Product {
+    id    String @id @map("_id")
+    name  String
+    foo   Foo    @relation(fields: [fooId], references: [id])
+    fooId String
+}
+
+model Foo {
+    id      String    @id @map("_id")
+    bar     String
+    Product Product[]
+}
