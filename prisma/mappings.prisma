@@ -3,13 +3,6 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-// ER図作成用
-generator erd {
-    provider = "node ./dist/index.js"
-    output   = "../__tests__/Mappings.svg"
-    theme    = "forest"
-}
-
 // ユーザーデータ管理用
 model User {
     // ID

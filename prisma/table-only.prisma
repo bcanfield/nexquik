@@ -6,13 +6,6 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-generator erd {
-    provider  = "node ./dist/index.js"
-    output    = "../__tests__/TableOnly.svg"
-    theme     = "forest"
-    tableOnly = true
-}
-
 model Booking {
     id           Int      @id @default(autoincrement())
     inviteeEmail String

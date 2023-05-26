@@ -38,36 +38,32 @@ export function copyDirectory(
 }
 
 export const formatNextJsFilesRecursively = async (directory: string) => {
-  try {
-    // Get a list of all files and directories in the current directory
-    const entries = await fs.promises.readdir(directory);
+  // Get a list of all files and directories in the current directory
+  const entries = await fs.promises.readdir(directory);
 
-    for (const entry of entries) {
-      const entryPath = path.join(directory, entry);
+  for (const entry of entries) {
+    const entryPath = path.join(directory, entry);
 
-      // Check if the entry is a file
-      const isFile = (await fs.promises.stat(entryPath)).isFile();
+    // Check if the entry is a file
+    const isFile = (await fs.promises.stat(entryPath)).isFile();
 
-      if (isFile) {
-        // Filter the file to include only Next.js files (e.g., .js, .jsx, .ts, .tsx)
-        if (/\.(jsx?|tsx?)$/.test(path.extname(entry))) {
-          const fileContents = await fs.promises.readFile(entryPath, "utf8");
+    if (isFile) {
+      // Filter the file to include only Next.js files (e.g., .js, .jsx, .ts, .tsx)
+      if (/\.(jsx?|tsx?)$/.test(path.extname(entry))) {
+        const fileContents = await fs.promises.readFile(entryPath, "utf8");
 
-          // Format the file contents using Prettier
-          const formattedContents = prettier.format(fileContents, {
-            parser: "babel-ts", // Specify the parser according to your project's configuration
-          });
+        // Format the file contents using Prettier
+        const formattedContents = prettier.format(fileContents, {
+          parser: "babel-ts", // Specify the parser according to your project's configuration
+        });
 
-          // Write the formatted contents back to the file
-          await fs.promises.writeFile(entryPath, formattedContents);
-        }
-      } else {
-        // If the entry is a directory, recursively call the function for that directory
-        await formatNextJsFilesRecursively(entryPath);
+        // Write the formatted contents back to the file
+        await fs.promises.writeFile(entryPath, formattedContents);
       }
+    } else {
+      // If the entry is a directory, recursively call the function for that directory
+      await formatNextJsFilesRecursively(entryPath);
     }
-  } catch (error) {
-    console.error("An error occurred while formatting files:", error);
   }
 };
 

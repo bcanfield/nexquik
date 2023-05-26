@@ -6,12 +6,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-generator erd {
-  provider = "node ./dist/index.js"
-  output   = "../ERD.svg"
-  theme    = "default"
-}
-
 model User {
   id              Int                 @id @default(autoincrement())
   createdAt       DateTime            @default(now())

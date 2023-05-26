@@ -1,10 +1,40 @@
 import * as child_process from "child_process";
-import { readdirSync } from "fs";
+import { readdirSync, statSync } from "fs";
 import path from "path";
 
 const nexquikMain = "dist/index.js";
 const testOutputDirectory = path.join("__tests__", "testOutputDirectory");
+const prismaSchemaDirectory = "prisma";
 
+function buildDirectoryStructure(
+  directoryPath: string,
+  indentation: string = ""
+): string {
+  let result = "";
+
+  const files = readdirSync(directoryPath);
+
+  files.forEach((file) => {
+    const filePath = path.join(directoryPath, file);
+    const stats = statSync(filePath);
+
+    if (stats.isDirectory()) {
+      const subDirectoryPath = path.join(directoryPath, file);
+      const subDirectoryResult = buildDirectoryStructure(
+        subDirectoryPath,
+        `${indentation}  `
+      );
+      result += `${indentation}${file}/\n${subDirectoryResult}`;
+    }
+  });
+
+  return result;
+}
+
+function prettyPrintDirectory(directoryPath: string): void {
+  const directoryStructure = buildDirectoryStructure(directoryPath, "");
+  console.log(directoryStructure);
+}
 const isDirectoryNotEmpty = (path: string) => {
   try {
     const files = readdirSync(path);
@@ -20,22 +50,23 @@ const isDirectoryNotEmpty = (path: string) => {
   }
 };
 
-const testSchema = (prismaSchemaLocation: string) => {
-  child_process.execSync(`rm -rf ${testOutputDirectory}`);
+test.each(readdirSync(prismaSchemaDirectory))(
+  `Schema Test: %p`,
+  (schemaPath: string) => {
+    child_process.execSync(`rm -rf ${testOutputDirectory}`);
+    let res = child_process.execSync(
+      `node ${nexquikMain} -schema ${path.join(
+        prismaSchemaDirectory,
+        schemaPath
+      )} -out ${testOutputDirectory}`
+    );
+    console.log(`Schema Test: ${schemaPath}`);
+    prettyPrintDirectory(testOutputDirectory);
+    expect(
+      isDirectoryNotEmpty(testOutputDirectory) &&
+        !res.toString().includes("Nexquik Error")
+    ).toBeTruthy;
 
-  child_process.execSync(
-    `node ${nexquikMain} -schema ${prismaSchemaLocation} -out ${testOutputDirectory}`
-  );
-};
-
-test("simple-1-n", async () => {
-  testSchema("./prisma/simple-1-n.prisma");
-  expect(isDirectoryNotEmpty(testOutputDirectory)).toBeTruthy;
-  child_process.execSync(`rm -rf ${testOutputDirectory}`);
-});
-
-test("schema", async () => {
-  testSchema("./prisma/schema.prisma");
-  expect(isDirectoryNotEmpty(testOutputDirectory)).toBeTruthy;
-  child_process.execSync(`rm -rf ${testOutputDirectory}`);
-});
+    child_process.execSync(`rm -rf ${testOutputDirectory}`);
+  }
+);
