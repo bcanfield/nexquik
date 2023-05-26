@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/bcanfield/nexquik/compare/v1.2.0...v1.2.1) (2023-05-26)
+
+
+### Bug Fixes
+
+* Remove dist from release assets ([9a6403b](https://github.com/bcanfield/nexquik/commit/9a6403be0334a8f6213d0dd9fddc92a7022a0d7c))
+
 # [1.2.0](https://github.com/bcanfield/nexquik/compare/v1.1.0...v1.2.0) (2023-05-26)
 
 
