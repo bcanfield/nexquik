@@ -11,5 +11,5 @@
     "watch": false,
     "types": ["node"]
   }
-  , "exclude": ["prisnextApp/*", "lib/app/*", "dist/*", "templateApp/*", "nexquikApp/*"]
+  , "exclude": ["prisnextApp/*", "lib/app/*", "dist/*", "templateApp/*", "nexquikApp/*", "__tests__"]
 }

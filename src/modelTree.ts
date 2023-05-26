@@ -9,6 +9,39 @@ export interface ModelTree {
   uniqueIdentifierField?: DMMF.Field;
 }
 
+export function getCompositeKeyFields(
+  model: ModelTree
+): { fieldName: string; fieldType: string }[] | null {
+  const compositeKeyFields: { fieldName: string; fieldType: string }[] = [];
+
+  for (const field of model.model.fields) {
+    if (field.kind === "object" && !field.isList && field.relationFromFields) {
+      const relatedModel = model.children.find(
+        (child) => child.model.name === field.type
+      );
+      if (relatedModel) {
+        const relatedField = relatedModel.model.fields.find(
+          (f) =>
+            field.relationFromFields && f.name === field.relationFromFields[0]
+        );
+
+        if (relatedField) {
+          compositeKeyFields.push({
+            fieldName: field.relationFromFields[0],
+            fieldType: relatedField.type,
+          });
+        }
+      }
+    }
+  }
+
+  if (compositeKeyFields.length >= 2) {
+    return compositeKeyFields;
+  }
+
+  return null;
+}
+
 export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
   const models = dataModel.models;
 
@@ -22,9 +55,15 @@ export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
   const modelTrees: ModelTree[] = [];
 
   // Function to recursively build the model tree
-  function buildModelTree(model: DMMF.Model, parent?: DMMF.Model): ModelTree {
+  function buildModelTree(
+    model: DMMF.Model,
+    parent?: DMMF.Model
+  ): ModelTree | undefined {
+    // If we detect a circular relationship, just stop digging down into child nodes
     if (visitedModels.has(model.name)) {
-      throw new Error(`Circular relationship detected in model: ${model.name}`);
+      // throw new Error(`Circular relationship detected in model: ${model.name}`);
+      console.log(`Circular relationship detected in model: ${model.name}`);
+      return;
     }
 
     visitedModels.add(model.name);
@@ -38,7 +77,9 @@ export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
       const childModel = modelMap[relationship.type];
       if (childModel) {
         const childNode = buildModelTree(childModel, model);
-        children.push(childNode);
+        if (childNode) {
+          children.push(childNode);
+        }
       }
     }
 
@@ -60,7 +101,9 @@ export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
       )
     ) {
       const modelTree = buildModelTree(model);
-      modelTrees.push(modelTree);
+      if (modelTree) {
+        modelTrees.push(modelTree);
+      }
     }
   }
 
