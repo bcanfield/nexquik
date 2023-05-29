@@ -110,8 +110,9 @@ async function generateLink(
   linkUrl: string,
   linkText: string
 ): Promise<string> {
+  const linkString = linkUrl ? `\`${linkUrl}\`` : "'/'";
   const reactComponentTemplate = `
-  <Link href={\`${linkUrl}\`} className="base-link">
+  <Link href={${linkString}} className="base-link">
   ${linkText}
 </Link>  `;
   return reactComponentTemplate;
@@ -175,7 +176,7 @@ async function generateChildrenList(
     .map(
       (
         c
-      ) => `<Link className="action-link base-link" href={\`${routeUrl}/\${params.${slug}}/${
+      ) => `<Link className="base-link view-link" href={\`${routeUrl}/\${params.${slug}}/${
         c.modelName.charAt(0).toLowerCase() + c.modelName.slice(1)
       }\`}>
     ${c.modelName} List
@@ -185,7 +186,7 @@ async function generateChildrenList(
   return childrenLinks;
 }
 ``;
-async function generateListForm2(
+async function generateListForm(
   modelTree: ModelTree,
   routeUrl: string
 ): Promise<string> {
@@ -224,6 +225,7 @@ async function generateListForm2(
       <input hidden type="${uniqueFieldInputType}" name="${
     uniqueField?.name
   }" defaultValue={nexquikTemplateModel?.${uniqueField?.name}} />
+  <div className="action-buttons">
           <Link href={\`${routeUrl}/\${nexquikTemplateModel.${
     uniqueField?.name
   }}\`} className="action-link view-link">View</Link>
@@ -231,6 +233,7 @@ async function generateListForm2(
     uniqueField?.name
   }}/edit\`} className="action-link edit-link">Edit</Link>
                   <button formAction={deleteNexquikTemplateModel} className="action-link delete-link">Delete</button>
+                  </div>
                   </form>
 
                   </td>
@@ -253,10 +256,14 @@ export async function generate(
   const prismaSchema = await readFileAsync(prismaSchemaPath, "utf-8");
 
   // Create the output Directory
-  console.log(chalk.blue("Looking for output directory"));
-  if (!fs.existsSync(outputDirectory)) {
-    fs.mkdirSync(outputDirectory);
+  console.log(chalk.blue("Creating output directory"));
+  if (fs.existsSync(outputDirectory)) {
+    // Directory already exists, delete it
+    fs.rmSync(outputDirectory, { recursive: true });
   }
+
+  // Create the directory
+  fs.mkdirSync(outputDirectory);
 
   // Main section to build the app from the modelTree
   console.log(chalk.blue("Reading Prisma Schema"));
@@ -299,6 +306,7 @@ export async function generate(
     path.join(__dirname, "templateApp", rootLayoutFileName),
     outputDirectory
   );
+  return;
 }
 
 export async function generateShowForm(
@@ -313,10 +321,10 @@ export async function generateShowForm(
 
   // Define the React component template as a string
   const reactComponentTemplate = `
+    <form>
     <input hidden type="${uniqueFieldInputType}" name="${
     uniqueField?.name
   }" defaultValue={nexquikTemplateModel?.${uniqueField?.name}} />
-    <form>
     <div className="button-group">
 
 
@@ -328,7 +336,7 @@ export async function generateShowForm(
     <button className="action-link delete-link" formAction={deleteNexquikTemplateModel}>Delete</button>
     </div>
 
-    <div className="container">
+    <div className="container view-item">
 
     ${modelTree.model.fields
       .map((field) => {
@@ -354,7 +362,11 @@ function generateRouteList(routes: RouteObject[]) {
   for (const route of routes) {
     routeLinks.push(
       `<tr className="item-row">
-      <td>${route.segment}</td>
+      <td>${
+        route.segment.includes("[")
+          ? route.segment
+          : `<a href="${route.segment}">${route.segment}</a>`
+      }</td>
       <td>${route.operation} ${route.model}</td>
       <td>${route.description}</td>
       </tr>`
@@ -440,7 +452,7 @@ export async function generateAppDirectoryFromModelTree(
     }
 
     // ############### List Page
-    const listFormCode = await generateListForm2(
+    const listFormCode = await generateListForm(
       modelTree,
       convertRouteToRedirectUrl(route)
     );

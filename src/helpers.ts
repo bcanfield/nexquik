@@ -2,6 +2,7 @@ import path from "path";
 import fs from "fs";
 import prettier from "prettier";
 import { RouteObject } from "./generators";
+import { ESLint } from "eslint";
 
 export function copyDirectory(
   sourceDir: string,
@@ -67,6 +68,62 @@ export const formatNextJsFilesRecursively = async (directory: string) => {
   }
 };
 
+async function getFilePaths(directoryPath: string): Promise<string[]> {
+  const files: string[] = [];
+
+  const processDirectory = async (dirPath: string) => {
+    const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const fullPath = path.join(dirPath, entry.name);
+
+      if (entry.isDirectory()) {
+        await processDirectory(fullPath); // Recursively process subdirectories
+      } else if (entry.isFile()) {
+        files.push(fullPath); // Add file path to the array
+      }
+    }
+  };
+
+  await processDirectory(directoryPath);
+
+  return files;
+}
+
+export async function formatDirectory(directoryPath: string): Promise<void> {
+  const list = fs.readdirSync(directoryPath);
+  const eslint = new ESLint({
+    fix: true, // Enable automatic fixes
+    extensions: [".tsx"], // Specify file extensions to be linted
+    overrideConfig: {
+      parserOptions: {
+        ecmaVersion: 2020, // Specify the ECMAScript version to be linted (change as needed)
+        sourceType: "module", // Specify the source type (e.g., 'module', 'script')
+      },
+      rules: {}, // Add any additional rules or overrides
+    },
+  });
+
+  const files = await getFilePaths(directoryPath);
+
+  const results = await eslint.lintFiles(files);
+  await ESLint.outputFixes(results);
+
+  // Format the files using Prettier
+  const prettierConfig = await prettier.resolveConfig(directoryPath);
+  await Promise.all(
+    results.map(async (result) => {
+      const filePath = result.filePath;
+      const fileContent = await fs.promises.readFile(filePath, "utf-8");
+      const formattedContent = prettier.format(fileContent, {
+        ...prettierConfig,
+        filepath: filePath,
+      });
+      await fs.promises.writeFile(filePath, formattedContent, "utf-8");
+    })
+  );
+}
+
 export function findAndReplaceInFiles(
   directoryPath: string,
   searchString: string,
@@ -109,24 +166,13 @@ export function findAndReplaceInFiles(
 }
 
 export function copyFileToDirectory(
-  sourcePath: string,
-  destinationDirectory: string
+  sourceFilePath: string,
+  targetDirectoryPath: string
 ): void {
-  const fileName = path.basename(sourcePath);
-  const destinationPath = path.join(destinationDirectory, fileName);
+  const fileName = path.basename(sourceFilePath);
+  const targetFilePath = path.join(targetDirectoryPath, fileName);
 
-  const readStream = fs.createReadStream(sourcePath);
-  const writeStream = fs.createWriteStream(destinationPath);
-
-  readStream.on("error", (error) => {
-    console.error(`Error reading file: ${error}`);
-  });
-
-  writeStream.on("error", (error) => {
-    console.error(`Error writing file: ${error}`);
-  });
-
-  readStream.pipe(writeStream);
+  fs.copyFileSync(sourceFilePath, targetFilePath);
 }
 
 export function popStringEnd(str: string, char: string): string {

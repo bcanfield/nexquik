@@ -1,7 +1,19 @@
+.main {
+  padding: 20px;
+  text-align: left; /* Align everything to the left */
+  width: 70vw;
+  min-width: 300px;
+  margin: 2em auto;
+}
+
+.view-item {
+  margin-top: 10px;
+  background-color: lightgray;
+}
+
 .container {
     padding: 20px;
     text-align: left; /* Align everything to the left */
-
   }
   
   .title {
@@ -33,6 +45,7 @@
   .item-row td {
     padding: 8px;
     background-color: lightgray;
+    border-bottom: 1px solid darkgray;
   }
   
   .action-cell {
@@ -47,7 +60,7 @@
     border-radius: 4px;
     cursor: pointer;
     text-decoration: none;
-    color: white;
+    color: black;
   }
   
   .view-link {
@@ -118,3 +131,14 @@
   .value {
     margin-left: 5px;
   }
+
+
+  .action-cell {
+    width: 100px; /* Adjust the width as desired */
+  }
+  
+  .action-buttons {
+    display: flex;
+    justify-content: space-between;
+  }
+  

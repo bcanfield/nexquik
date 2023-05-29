@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import { Command } from "commander";
 import figlet from "figlet";
-import { formatNextJsFilesRecursively } from "./helpers";
+import { formatDirectory } from "./helpers";
 import { generate } from "./generators";
 
 export async function run() {
@@ -55,7 +55,7 @@ export async function run() {
       );
       await generate(options.Schema, options.Out);
       console.log(chalk.blue("Formatting Generated Files"));
-      await formatNextJsFilesRecursively(options.Out);
+      await formatDirectory(options.Out);
       console.log(chalk.green.bold("\nGenerated Successfully."));
     }
   } catch (error) {

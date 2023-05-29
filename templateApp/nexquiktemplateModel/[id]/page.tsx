@@ -27,7 +27,7 @@ export default async function ShowNexquikTemplateModel({ params }) {
     //@nexquik listRedirect stop
   }
   return (
-    <div className="container">
+    <div className="main">
       <h1 className="title"> View NexquikTemplateModel</h1>
       {/* @nexquik showForm start */}
       <form>

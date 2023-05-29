@@ -22,8 +22,8 @@ export default async function ListNexquikTemplateModels({ params }) {
     //@nexquik revalidatePath stop
   }
   return (
-    <div className="container">
-      <h1> NexquikTemplateModels List</h1>
+    <div className="main">
+      <h1> NexquikTemplateModel List</h1>
       <div className="button-group">
         {/* @nexquik createLink start */}
         <Link href={`/nexquikTemplateModel/create`}>
@@ -60,9 +60,11 @@ export default async function ListNexquikTemplateModels({ params }) {
         ))}
       </ul>
       {/* @nexquik listForm stop */}
-      {/* @nexquik backLink start */}
-      <Link href={`/nexquikTemplateModel/create`}>Back</Link>
-      {/* @nexquik backLink stop */}
+      <div className="button-group">
+        {/* @nexquik backLink start */}
+        <Link href={`/nexquikTemplateModel/create`}>Back</Link>
+        {/* @nexquik backLink stop */}
+      </div>
     </div>
   );
 }
