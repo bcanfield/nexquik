@@ -1,6 +1,6 @@
 {
   "name": "nexquik",
-  "version": "1.2.3",
+  "version": "1.2.2",
   "description": "Generate Next.js components from your Prisma Schema",
   "main": "dist/index.js",
   "repository": "https://github.com/bcanfield/nexquik",
@@ -28,12 +28,12 @@
   ],
   "dependencies": {
     "@prisma/internals": "^4.14.0",
-    "@types/prettier": "^2.7.2",
     "chalk": "^4.1.2",
     "commander": "^10.0.1",
     "figlet": "^1.6.0",
     "prettier": "^2.8.8",
-    "ts-toolbelt": "^9.6.0"
+    "ts-toolbelt": "^9.6.0",
+    "eslint": "^8.41.0"
   },
   "devDependencies": {
     "@babel/core": "^7.22.0",
@@ -45,11 +45,11 @@
     "@types/figlet": "^1.5.6",
     "@types/jest": "^29.5.1",
     "@types/node": "^20.1.2",
+    "@types/prettier": "^2.7.2",
     "@typescript-eslint/eslint-plugin": "^5.59.8",
     "@typescript-eslint/parser": "^5.59.8",
     "babel-jest": "^29.5.0",
     "copyfiles": "^2.4.1",
-    "eslint": "^8.41.0",
     "jest": "^29.5.0",
     "npm-run-all": "^4.1.5",
     "npm-watch": "^0.11.0",
