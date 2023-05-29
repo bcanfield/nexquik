@@ -9,7 +9,12 @@
     "esModuleInterop": true,
     "moduleResolution": "node",
     "watch": false,
-    "types": ["node"]
+    "types": ["node"],
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
   }
   , "exclude": ["prisnextApp/*", "lib/app/*", "dist/*", "templateApp/*", "nexquikApp/*", "__tests__"]
 }
