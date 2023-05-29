@@ -1,3 +1,11 @@
+## [1.2.3](https://github.com/bcanfield/nexquik/compare/v1.2.2...v1.2.3) (2023-05-29)
+
+
+### Bug Fixes
+
+* Dependencies ([3640861](https://github.com/bcanfield/nexquik/commit/364086138b40ab719d5e67aaf889af07c996406e))
+* Template Styling fixes and bugfixes  ([#5](https://github.com/bcanfield/nexquik/issues/5)) ([1b211d1](https://github.com/bcanfield/nexquik/commit/1b211d1fe404f8d35a5df46627ea473634cfeabe))
+
 ## [1.2.2](https://github.com/bcanfield/nexquik/compare/v1.2.1...v1.2.2) (2023-05-26)
 
 
