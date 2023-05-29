@@ -28,7 +28,7 @@ export default async function EditNexquikTemplateModel({ params }) {
   }
 
   return (
-    <div className="container">
+    <div className="main">
       <h1> Edit NexquikTemplateModel</h1>
       {/* @nexquik editForm start */}
       <form action={editNexquikTemplateModel}>
