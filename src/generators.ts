@@ -362,7 +362,11 @@ function generateRouteList(routes: RouteObject[]) {
   for (const route of routes) {
     routeLinks.push(
       `<tr className="item-row">
-      <td>${route.segment}</td>
+      <td>${
+        route.segment.includes("[")
+          ? route.segment
+          : `<a href="${route.segment}">${route.segment}</a>`
+      }</td>
       <td>${route.operation} ${route.model}</td>
       <td>${route.description}</td>
       </tr>`
