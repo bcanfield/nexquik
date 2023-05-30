@@ -18,8 +18,16 @@ With Next.js server actions, you can harness the power of server-side logic with
 
 ## Usage
 All you need to get started is:
-- A Next.js project (using app directory)
 - A Prisma Schema
+- A Next.js project
+    - Using App Directory
+    - In your next config, you will need to enable server actions since they are still in Alpha
+    ```
+        experimental: {
+          appDir: true,
+          serverActions: true,
+        }
+    ```
 
 Nexquik supports the following parameters:
 
