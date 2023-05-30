@@ -1,3 +1,10 @@
+## [1.2.5](https://github.com/bcanfield/nexquik/compare/v1.2.4...v1.2.5) (2023-05-30)
+
+
+### Bug Fixes
+
+* Dependency Upgrade ([d53b571](https://github.com/bcanfield/nexquik/commit/d53b571e7629b3d65e754cd34fbe73633b039440))
+
 ## [1.2.4](https://github.com/bcanfield/nexquik/compare/v1.2.3...v1.2.4) (2023-05-29)
 
 
