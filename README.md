@@ -37,3 +37,10 @@ With params:
 npx nexquik@latest -schema ./prisma/schema.prisma -out nexquikApp -prismaImport ~/server/db
 ```
 ![asdf](https://github.com/bcanfield/nexquik/assets/12603953/1362d685-3941-4b57-863e-a9d34db87d2c)
+
+## Contributors
+<a href="[https://github.com/t3-oss/create-t3-app/graphs/contributors](https://github.com/bcanfield/nexquik/graphs/contributors)">
+  <p align="left">
+    <img  src="https://contrib.rocks/image?repo=bcanfield/nexquik" alt="A table of avatars from the project's contributors" />
+  </p>
+</a>
