@@ -8,7 +8,7 @@ export async function run() {
   try {
     const program = new Command();
     const defaultPrismaSchemaPath = "./prisma/schema.prisma";
-    const defaultPrismaClientImportPath = "~/server/db";
+    const defaultPrismaClientImportPath = "@/lib/prisma";
     const defaultOutputDirectory = "nexquikApp";
 
     console.log(
@@ -41,7 +41,7 @@ export async function run() {
       .parse(process.argv);
 
     const options = program.opts();
-    if (options.Schema && options.Out) {
+    if (options.Schema && options.Out && options.PrismaImport) {
       console.log(
         `${chalk.whiteBright.bold(
           `\nParams:`
@@ -53,7 +53,7 @@ export async function run() {
           `${options.PrismaImport}\n`
         )}-----\n`
       );
-      await generate(options.Schema, options.Out);
+      await generate(options.Schema, options.Out, options.PrismaImport);
       console.log(chalk.blue("Formatting Generated Files"));
       await formatDirectory(options.Out);
       console.log(chalk.green.bold("\nGenerated Successfully."));

@@ -33,7 +33,7 @@ Nexquik supports the following parameters:
 
 - `-schema <value>`: Path to prisma schema file (default: "./prisma/schema.prisma").
 - `-out <value>`: Path to output directory (default: "nexquikApp").
-- `-prismaImport <value>`: String to use for Prisma Import (default: "~/server/db").
+- `-prismaImport <value>`: String to use for Prisma Import (default: "@/lib/prisma").
 
 ## Examples
 With defaults:
