@@ -1,3 +1,10 @@
+## [1.2.7](https://github.com/bcanfield/nexquik/compare/v1.2.6...v1.2.7) (2023-05-30)
+
+
+### Bug Fixes
+
+* Body Styling fix ([669d2d3](https://github.com/bcanfield/nexquik/commit/669d2d31d55988d812faf000ecf901b6d838a132))
+
 ## [1.2.6](https://github.com/bcanfield/nexquik/compare/v1.2.5...v1.2.6) (2023-05-30)
 
 
