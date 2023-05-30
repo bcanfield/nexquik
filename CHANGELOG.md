@@ -1,3 +1,10 @@
+## [1.2.6](https://github.com/bcanfield/nexquik/compare/v1.2.5...v1.2.6) (2023-05-30)
+
+
+### Bug Fixes
+
+* Styling and bugfixes related to prisma import ([#11](https://github.com/bcanfield/nexquik/issues/11)) ([8dab68c](https://github.com/bcanfield/nexquik/commit/8dab68cc28b5af105009e25ccee5e3ab0f93a86a))
+
 ## [1.2.5](https://github.com/bcanfield/nexquik/compare/v1.2.4...v1.2.5) (2023-05-30)
 
 
