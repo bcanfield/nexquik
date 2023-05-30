@@ -91,7 +91,6 @@ async function getFilePaths(directoryPath: string): Promise<string[]> {
 }
 
 export async function formatDirectory(directoryPath: string): Promise<void> {
-  const list = fs.readdirSync(directoryPath);
   const eslint = new ESLint({
     fix: true, // Enable automatic fixes
     extensions: [".tsx"], // Specify file extensions to be linted

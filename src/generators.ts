@@ -43,7 +43,6 @@ function addStringBetweenComments(
   endComment: string
 ): void {
   const files = fs.readdirSync(directory);
-
   files.forEach((file) => {
     const filePath = path.join(directory, file);
 
@@ -249,7 +248,8 @@ async function generateListForm(
 
 export async function generate(
   prismaSchemaPath: string,
-  outputDirectory: string
+  outputDirectory: string,
+  prismaImport: string
 ) {
   // Read the Prisma schema file
   console.log(chalk.blue("Locating Prisma Schema File"));
@@ -272,6 +272,13 @@ export async function generate(
   const modelTree = createModelTree(dmmf.datamodel);
   const enums = getEnums(dmmf.datamodel);
   console.log(chalk.blue("Generating App Directory"));
+  // Replace prisma client import
+  addStringBetweenComments(
+    path.join(__dirname, "templateApp"),
+    `import prisma from "${prismaImport}";`,
+    "//@nexquik prismaClientImport start",
+    "//@nexquik prismaClientImport stop"
+  );
   const routes = await generateAppDirectoryFromModelTree(
     modelTree,
     outputDirectory,
@@ -281,6 +288,7 @@ export async function generate(
   console.log(chalk.blue("Generating Route List"));
   const routeList = generateRouteList(routes);
 
+  console.log(chalk.blue("Finishing Up"));
   // Copy over the files in the root dir
   addStringBetweenComments(
     path.join(__dirname, "templateApp"),
@@ -288,7 +296,6 @@ export async function generate(
     "{/* @nexquik routeList start */}",
     "{/* @nexquik routeList stop */}"
   );
-  console.log(chalk.blue("Finishing Up"));
   const rootPageName = "page.tsx";
   copyFileToDirectory(
     path.join(__dirname, "templateApp", rootPageName),
