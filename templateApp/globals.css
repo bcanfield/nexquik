@@ -21,9 +21,8 @@ html * {
   );
 }
 
-.root {
-  height: 100vh;
-  width: 100vw;
+body {
+  min-height: 100vh;
   --border-radius: 12px;
   --font-mono: ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono",
     "Roboto Mono", "Oxygen Mono", "Ubuntu Monospace", "Source Code Pro",
@@ -41,6 +40,7 @@ html * {
     )
     rgb(var(--background-start-rgb));
 }
+
 .view-item {
   margin-top: 10px;
   background-color: #d8dedf;
