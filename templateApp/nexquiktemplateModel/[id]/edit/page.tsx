@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+//@nexquik prismaClientImport start
 import { prisma } from "utils/db";
+//@nexquik prismaClientImport stop
 
 export default async function EditNexquikTemplateModel({ params }) {
   const nexquikTemplateModel = await prisma.nexquikTemplateModel.findUnique({

@@ -1,6 +1,8 @@
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
+//@nexquik prismaClientImport start
 import { prisma } from "utils/db";
+//@nexquik prismaClientImport stop
 
 export default async function ListNexquikTemplateModels({ params }) {
   const nexquikTemplateModel = await prisma.nexquikTemplateModel

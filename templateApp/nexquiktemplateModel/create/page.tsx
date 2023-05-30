@@ -1,7 +1,9 @@
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+//@nexquik prismaClientImport start
 import { prisma } from "utils/db";
+//@nexquik prismaClientImport stop
 
 export default async function CreateNexquikTemplateModel({ params }) {
   async function addNexquikTemplateModel(formData: FormData) {
