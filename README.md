@@ -5,9 +5,24 @@
 [![Build / Publish](https://github.com/bcanfield/nexquik/actions/workflows/publish.yml/badge.svg)](https://github.com/bcanfield/nexquik/actions/workflows/publish.yml)
 
 
-**Nexquik** is a powerful tool that streamlines the process of setting up a complete Next.js app directory with server components, all based on a Prisma schema. 
+**Nexquik** is a CLI tool to auto-generate Next.js [server components](https://nextjs.org/docs/getting-started/react-essentials#server-components) & [server actions](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions) from a [Prisma](https://www.prisma.io/docs) schema. 
 
-This empowers developers to rapidly scaffold their applications, focusing more on building features and less on repetitive setup tasks.
+Get started by running `npx nexquik@latest` in your Next.js Project.
+
+## Description
+
+By providing full CRUD capabilities in seconds, it streamlines the initial setup process and enables you to focus on building your Next.js application without spending time on repetitive tasks.
+
+Next.js server actions are a game-changer as they allow usage of server-side logic within your React components, and reduce the amount of data needed to be sent across the web.
 
 
-Documentation coming soon.
+
+All you need to get started is:
+- A Next.js project (using app directory)
+- A Prisma Schema
+
+Nexquik supports the following parameters:
+
+- `-schema <value>`: Path to prisma schema file (default: "./prisma/schema.prisma").
+- `-out <value>`: Path to output directory (default: "nexquikApp").
+- `-prismaImport <value>`: String to use for Prisma Import (default: "~/server/db").
