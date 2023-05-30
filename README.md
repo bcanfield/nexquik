@@ -5,18 +5,18 @@
 [![Build / Publish](https://github.com/bcanfield/nexquik/actions/workflows/publish.yml/badge.svg)](https://github.com/bcanfield/nexquik/actions/workflows/publish.yml)
 
 
-**Nexquik** is a CLI tool to auto-generate Next.js [server components](https://nextjs.org/docs/getting-started/react-essentials#server-components) & [server actions](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions) from a [Prisma](https://www.prisma.io/docs) schema. 
-
-Get started by running `npx nexquik@latest` in your Next.js Project.
+**Nexquik** is a CLI tool to auto-generate Next.js full CRUD [server components](https://nextjs.org/docs/getting-started/react-essentials#server-components) & [server actions](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions) from a [Prisma](https://www.prisma.io/docs) schema. 
 
 ## Description
 
-By providing full CRUD capabilities in seconds, it streamlines the initial setup process and enables you to focus on building your Next.js application without spending time on repetitive tasks.
+Nexquik reads your Prisma Schema and automatically creates React components and server actions for all your Prisma models. 
 
-Next.js server actions are a game-changer as they allow usage of server-side logic within your React components, and reduce the amount of data needed to be sent across the web.
+Say goodbye to manual CRUD implementation and hello to full CRUD capabilities in seconds!
+This enables you to focus on building your application without spending time on repetitive tasks.
 
+With Next.js server actions, you can harness the power of server-side logic within your React components. Reduce data transfer and supercharge your application's performance.
 
-
+## Usage
 All you need to get started is:
 - A Next.js project (using app directory)
 - A Prisma Schema
@@ -26,3 +26,14 @@ Nexquik supports the following parameters:
 - `-schema <value>`: Path to prisma schema file (default: "./prisma/schema.prisma").
 - `-out <value>`: Path to output directory (default: "nexquikApp").
 - `-prismaImport <value>`: String to use for Prisma Import (default: "~/server/db").
+
+## Examples
+With defaults:
+```bash
+npx nexquik@latest
+```
+With params:
+```bash
+npx nexquik@latest -schema ./prisma/schema.prisma -out nexquikApp -prismaImport ~/server/db
+```
+![asdf](https://github.com/bcanfield/nexquik/assets/12603953/1362d685-3941-4b57-863e-a9d34db87d2c)
