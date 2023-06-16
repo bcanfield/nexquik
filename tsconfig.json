@@ -14,7 +14,15 @@
       {
         "name": "next"
       }
-    ],
-  }
-  , "exclude": ["prisnextApp/*", "lib/app/*", "dist/*", "templateApp/*", "nexquikApp/*", "__tests__"]
+    ]
+  },
+  "exclude": [
+    "prisnextApp/*",
+    "lib/app/*",
+    "dist/*",
+    "templateApp/*",
+    "nexquikApp/*",
+    "__tests__",
+    "dev/*"
+  ]
 }
