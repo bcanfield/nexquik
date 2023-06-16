@@ -5,3 +5,4 @@ prisma/
 __tests__/
 *.md
 templateApp/
+dev/
