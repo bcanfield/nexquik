@@ -36,3 +36,6 @@ next-env.d.ts
 
 # prisma sqlite db
 dev.db
+
+# prevent package lock from being tracked because it will change every time we build a new local package
+package-lock.json
