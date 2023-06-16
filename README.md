@@ -6,9 +6,11 @@
 
 **Nexquik** is a CLI tool to auto-generate Next.js full CRUD [server components](https://nextjs.org/docs/getting-started/react-essentials#server-components) & [server actions](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions) from a [Prisma](https://www.prisma.io/docs) schema.
 
+For a more in depth example, checkout this [Medium Article](https://medium.com/@bcanfield_60634/next-js-server-components-server-actions-setup-in-seconds-8593a557866a).
+
 ## Description
 
-Nexquik reads your Prisma Schema and automatically creates React components and server actions for all your Prisma models.
+Nexquik reads your Prisma Schema and generates an ENTIRE app directory containing React components and server actions for all your Prisma models.
 
 Say goodbye to manual CRUD implementation and hello to full CRUD capabilities in seconds!
 This enables you to focus on building your application without spending time on repetitive tasks.
@@ -16,6 +18,8 @@ This enables you to focus on building your application without spending time on 
 With Next.js server actions, you can harness the power of server-side logic within your React components. Reduce data transfer and supercharge your application's performance.
 
 ## Usage
+
+Reference the [dev folder](https://github.com/bcanfield/nexquik/tree/main/dev) for an example starting project.
 
 All you need to get started is:
 
