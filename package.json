@@ -26,7 +26,10 @@
     "copy-files2": "copyfiles -u 1 \"templateApp/**/*\" dist/templateApp"
   },
   "nodemonConfig": {
-    "watch": ["src", "templateApp"],
+    "watch": [
+      "src",
+      "templateApp"
+    ],
     "ext": "ts,tsx,css,",
     "exec": "npm-run-all dev:*",
     "delay": 1000
