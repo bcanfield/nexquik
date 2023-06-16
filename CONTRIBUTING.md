@@ -6,6 +6,8 @@
   ```
   npm run dev
   ```
+  - This command will  watch for file changes under the `src` and `templateApp` directories and spin up a local next.js project that is using the output from Nexquik.
+  - Check out the `dev` folder for the details of the local next.js project
 - To run tests, run:
   ```
   npm run test
