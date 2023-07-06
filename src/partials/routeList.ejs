@@ -1,0 +1,30 @@
+<table className="item-list">
+    <tbody>
+        <tr className="header-row">
+            <th>Route</th>
+            <th>Operation</th>
+            <th>Description</th>
+        </tr>
+
+        <% routes.forEach(function(route) { %>
+            <tr className="item-row">
+                <td>
+                    <% if (route.segment.includes('[')) { %>
+                        <%= route.segment %>
+                            <% } else { %>
+                                <a href="<%= route.segment%>">
+                                    <%=route.segment%>
+                                </a>
+                                <% } %>
+                </td>
+                <td>
+                    <%=route.operation%>
+                        <%=route.model%>
+                </td>
+                <td>
+                    <%=route.description%>
+                </td>
+            </tr>
+            <% }) %>
+    </tbody>
+</table>

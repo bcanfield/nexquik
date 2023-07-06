@@ -4,6 +4,7 @@ import chalk from "chalk";
 import fs from "fs";
 import path from "path";
 import { promisify } from "util";
+import ejs from "ejs";
 import {
   addStringBetweenComments,
   convertRouteToRedirectUrl,
@@ -247,7 +248,7 @@ export async function generateAppDirectory(
     enums
   );
   console.log(chalk.blue("Generating Route List"));
-  const routeList = generateRouteList(routes);
+  const routeList = await generateRouteList(routes);
 
   console.log(chalk.blue("Finishing Up"));
   // Copy over the files in the root dir
@@ -337,28 +338,20 @@ export async function generateShowForm(
   return reactComponentTemplate;
 }
 
-function generateRouteList(routes: RouteObject[]) {
-  const routeLinks = [];
-  for (const route of routes) {
-    routeLinks.push(
-      `<tr className="item-row">
-      <td>${
-        route.segment.includes("[")
-          ? route.segment
-          : `<a href="${route.segment}">${route.segment}</a>`
-      }</td>
-      <td>${route.operation} ${route.model}</td>
-      <td>${route.description}</td>
-      </tr>`
+async function generateRouteList(routes: RouteObject[]) {
+  const data = {
+    routes: routes,
+  };
+  try {
+    const renderedTemplate = await ejs.renderFile(
+      path.join(__dirname, "partials/routeList.ejs"),
+      data
     );
+    return renderedTemplate;
+  } catch (err) {
+    console.error(err);
+    throw err;
   }
-  return `<table className="item-list">  <tbody><tr className="header-row">
-
-  <th>Route</th>
-  <th>Operation</th>
-  <th>Description</th>
-</tr>${routeLinks.join("\n")}           </tbody> </table>
-  `;
 }
 
 export async function generateAppDirectoryFromModelTree(
