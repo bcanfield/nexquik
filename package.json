@@ -11,7 +11,7 @@
     "build": "npm-run-all build:*",
     "build:1": "npm run clean",
     "build:2": "npx tsc",
-    "build:3": "npm run copy-files2",
+    "build:3": "npm run copy-files",
     "dev": "nodemon",
     "dev:1": "npm run build",
     "dev:2": "npm pack --silent",
@@ -22,8 +22,10 @@
     "dev:7": "cd dev && npm run dev",
     "test": "jest",
     "clean": "rimraf dist/",
-    "copy-files": "copyfiles -u 1 \"lib/**/*\" dist",
-    "copy-files2": "copyfiles -u 1 \"templateApp/**/*\" dist/templateApp"
+    "copy-files": "npm-run-all copy-files:*",
+    "copy-files:1": "copyfiles -u 1 \"templateApp/**/*\" dist/templateApp",
+    "copy-files:2": "copyfiles -u 1 \"src/partials/**/*\" dist"
+
   },
   "nodemonConfig": {
     "watch": [
@@ -46,6 +48,7 @@
     "@prisma/internals": "^4.14.1",
     "chalk": "^4.1.2",
     "commander": "^11.0.0",
+    "ejs": "^3.1.9",
     "eslint": "^8.41.0",
     "figlet": "^1.6.0",
     "prettier": "^2.8.8",
@@ -57,6 +60,7 @@
     "@babel/preset-typescript": "^7.21.5",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
+    "@types/ejs": "^3.1.2",
     "@types/eslint": "^8.40.0",
     "@types/figlet": "^1.5.6",
     "@types/jest": "^29.5.1",
