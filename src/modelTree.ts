@@ -61,7 +61,6 @@ export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
   ): ModelTree | undefined {
     // If we detect a circular relationship, just stop digging down into child nodes
     if (visitedModels.has(model.name)) {
-      // throw new Error(`Circular relationship detected in model: ${model.name}`);
       console.log(`Circular relationship detected in model: ${model.name}`);
       return;
     }

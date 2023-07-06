@@ -2,7 +2,7 @@ import chalk from "chalk";
 import { Command } from "commander";
 import figlet from "figlet";
 import { formatDirectory } from "./helpers";
-import { generate } from "./generators";
+import { generateAppDirectory } from "./generators";
 
 export async function run() {
   try {
@@ -53,8 +53,12 @@ export async function run() {
           `${options.PrismaImport}\n`
         )}-----\n`
       );
-      await generate(options.Schema, options.Out, options.PrismaImport);
-      console.log(chalk.blue("Formatting Generated Files"));
+      await generateAppDirectory(
+        options.Schema,
+        options.Out,
+        options.PrismaImport
+      );
+      console.log(chalk.blue("\nFormatting Generated Files"));
       await formatDirectory(options.Out);
       console.log(chalk.green.bold("\nGenerated Successfully."));
     }
