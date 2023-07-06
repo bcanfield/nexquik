@@ -4,10 +4,49 @@ import prettier from "prettier";
 import { RouteObject } from "./generators";
 import { ESLint } from "eslint";
 
+export function addStringBetweenComments(
+  directory: string,
+  insertString: string,
+  startComment: string,
+  endComment: string
+): void {
+  const files = fs.readdirSync(directory);
+  files.forEach((file) => {
+    const filePath = path.join(directory, file);
+
+    // Check if the file is a directory
+    if (fs.statSync(filePath).isDirectory()) {
+      // Recursively process subdirectories
+      addStringBetweenComments(
+        filePath,
+        insertString,
+        startComment,
+        endComment
+      );
+    } else {
+      // Read file contents
+      let fileContent = fs.readFileSync(filePath, "utf8");
+      // Check if both comments exist in the file
+      while (
+        fileContent.includes(startComment) &&
+        fileContent.includes(endComment)
+      ) {
+        // Replace the content between the comments and the comments themselves with the insert string
+        const startIndex = fileContent.indexOf(startComment);
+        const endIndex = fileContent.indexOf(endComment) + endComment.length;
+        const contentToRemove = fileContent.slice(startIndex, endIndex);
+        fileContent = fileContent.replace(contentToRemove, insertString);
+      }
+      // Write the modified content back to the file
+      fs.writeFileSync(filePath, fileContent);
+    }
+  });
+}
+
 export function copyDirectory(
   sourceDir: string,
   destinationDir: string,
-  toReplace: boolean = false
+  toReplace = false
 ): void {
   if (toReplace && fs.existsSync(destinationDir)) {
     fs.rmSync(destinationDir, { recursive: true });

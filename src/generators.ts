@@ -5,6 +5,7 @@ import fs from "fs";
 import path from "path";
 import { promisify } from "util";
 import {
+  addStringBetweenComments,
   convertRouteToRedirectUrl,
   copyDirectory,
   copyFileToDirectory,
@@ -34,45 +35,6 @@ export interface RouteObject {
   model: string;
   operation: string;
   description: string;
-}
-
-function addStringBetweenComments(
-  directory: string,
-  insertString: string,
-  startComment: string,
-  endComment: string
-): void {
-  const files = fs.readdirSync(directory);
-  files.forEach((file) => {
-    const filePath = path.join(directory, file);
-
-    // Check if the file is a directory
-    if (fs.statSync(filePath).isDirectory()) {
-      // Recursively process subdirectories
-      addStringBetweenComments(
-        filePath,
-        insertString,
-        startComment,
-        endComment
-      );
-    } else {
-      // Read file contents
-      let fileContent = fs.readFileSync(filePath, "utf8");
-      // Check if both comments exist in the file
-      while (
-        fileContent.includes(startComment) &&
-        fileContent.includes(endComment)
-      ) {
-        // Replace the content between the comments and the comments themselves with the insert string
-        const startIndex = fileContent.indexOf(startComment);
-        const endIndex = fileContent.indexOf(endComment) + endComment.length;
-        const contentToRemove = fileContent.slice(startIndex, endIndex);
-        fileContent = fileContent.replace(contentToRemove, insertString);
-      }
-      // Write the modified content back to the file
-      fs.writeFileSync(filePath, fileContent);
-    }
-  });
 }
 
 async function generateCreateForm(
@@ -246,7 +208,7 @@ async function generateListForm(
   return reactComponentTemplate;
 }
 
-export async function generate(
+export async function generateAppDirectory(
   prismaSchemaPath: string,
   outputDirectory: string,
   prismaImport: string
@@ -284,7 +246,6 @@ export async function generate(
     outputDirectory,
     enums
   );
-  // prettyPrintAPIRoutes(routes);
   console.log(chalk.blue("Generating Route List"));
   const routeList = generateRouteList(routes);
 
@@ -313,6 +274,18 @@ export async function generate(
     path.join(__dirname, "templateApp", rootLayoutFileName),
     outputDirectory
   );
+
+  // Pretty Print API Routes
+  console.log(chalk.whiteBright("\nGenerated Pages:"));
+  console.log("-----------");
+  for (const route of routes) {
+    console.log(
+      `${chalk.blueBright(route.segment)} - ${chalk.white(route.operation)} ${
+        route.model
+      }: ${route.description}`
+    );
+  }
+
   return;
 }
 
