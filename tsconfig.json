@@ -1,27 +1,6 @@
 {
+  "include": ["src", "tsup.config.ts"],
   "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "dist",
-    "strict": true,
-    "target": "es6",
-    "module": "commonjs",
-    "sourceMap": true,
-    "esModuleInterop": true,
-    "moduleResolution": "node",
-    "types": ["node"],
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
-  },
-  "exclude": [
-    "prisnextApp/*",
-    "lib/app/*",
-    "dist/*",
-    "templateApp/*",
-    "nexquikApp/*",
-    "__tests__",
-    "dev/*"
-  ]
+    "strict": true
+  }
 }

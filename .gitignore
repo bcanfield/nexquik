@@ -4,5 +4,6 @@ prisnextApp/
 coverage/
 nexquikApp/
 dev/
+*.tgz
 # TypeScript cache
 *.tsbuildinfo\
