@@ -1,6 +1,16 @@
 {
   "include": ["src", "tsup.config.ts"],
   "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "~/*": ["./src/*"]
+    },
+    "checkJs": true,
+    "target": "es6",
+    "module": "commonjs",
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
     "strict": true
   }
 }
