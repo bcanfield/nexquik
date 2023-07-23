@@ -5,7 +5,11 @@ import { redirect } from "next/navigation";
 import { prisma } from "utils/db";
 //@nexquik prismaClientImport stop
 
-export default async function CreateNexquikTemplateModel({ params }) {
+export default async function CreateNexquikTemplateModel({
+  params,
+}: {
+  params: any;
+}) {
   async function addNexquikTemplateModel(formData: FormData) {
     "use server";
     const created = await prisma.nexquikTemplateModel.create({

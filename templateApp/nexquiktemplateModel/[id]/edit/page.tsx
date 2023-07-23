@@ -4,7 +4,11 @@ import { redirect } from "next/navigation";
 import { prisma } from "utils/db";
 //@nexquik prismaClientImport stop
 
-export default async function EditNexquikTemplateModel({ params }) {
+export default async function EditNexquikTemplateModel({
+  params,
+}: {
+  params: any;
+}) {
   const nexquikTemplateModel = await prisma.nexquikTemplateModel.findUnique({
     where:
       //@nexquik prismaWhereInput start

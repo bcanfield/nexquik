@@ -309,7 +309,7 @@ export async function generateShowForm(
     <div className="button-group">
 
 
-    <Link className="action-link edit-link" href={\`${routeUrl}/\${nexquikTemplateModel.${
+    <Link className="action-link edit-link" href={\`${routeUrl}/\${nexquikTemplateModel?.${
     uniqueField?.name
   }}/edit\`}>Edit</Link>
 
@@ -326,7 +326,7 @@ export async function generateShowForm(
         }
         return `<div className="pair">
       <span className="key">${field.name}</span>
-      <span className="value">{\`\${nexquikTemplateModel.${field.name}}\`}</span>
+      <span className="value">{\`\${nexquikTemplateModel?.${field.name}}\`}</span>
   </div>`;
       })
       .join("\n")}
