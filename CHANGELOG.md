@@ -1,3 +1,10 @@
+## [1.2.8](https://github.com/bcanfield/nexquik/compare/v1.2.7...v1.2.8) (2023-07-24)
+
+
+### Bug Fixes
+
+* Fix template app directory name ([#58](https://github.com/bcanfield/nexquik/issues/58)) ([54cf27f](https://github.com/bcanfield/nexquik/commit/54cf27f98cc7c0784f7e71a418a3f0eed64b487a))
+
 ## [1.2.7](https://github.com/bcanfield/nexquik/compare/v1.2.6...v1.2.7) (2023-05-30)
 
 ### Bug Fixes
