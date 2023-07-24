@@ -1,18 +1,25 @@
 #! /usr/bin/env node
 import { DMMF } from "@prisma/generator-helper";
+import chalk from "chalk";
 
 export interface ModelTree {
   modelName: string;
   parent?: DMMF.Model;
   model: DMMF.Model;
   children: ModelTree[];
-  uniqueIdentifierField?: DMMF.Field;
+  uniqueIdentifierField?: { name: string; type: string };
+}
+
+export function getCompositeIdField(model: DMMF.Model): DMMF.PrimaryKey | null {
+  return model.primaryKey;
 }
 
 export function getCompositeKeyFields(
   model: ModelTree
 ): { fieldName: string; fieldType: string }[] | null {
+  console.log("BRANDIN get composite key field");
   const compositeKeyFields: { fieldName: string; fieldType: string }[] = [];
+  console.log("BRANDIN MODEL", model.model);
 
   for (const field of model.model.fields) {
     if (field.kind === "object" && !field.isList && field.relationFromFields) {
@@ -84,12 +91,38 @@ export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
     }
 
     visitedModels.delete(model.name);
-    const uniqueIdField = model.fields.find((field) => field.isId === true);
+    const fullUniqueIdField = model.fields.find((field) => field.isId === true);
+    let uniqueIdFieldReturn: { name: string; type: string } | undefined =
+      undefined;
+    if (!fullUniqueIdField) {
+      // Check for composite id field
+      const compositePrimaryKey = getCompositeIdField(model);
+      if (compositePrimaryKey) {
+        console.log(
+          chalk.yellow(
+            `Nexquik does not yet support composite field types. Model: ${model.name}`
+          )
+        );
+        return;
+      } else {
+        console.log(
+          chalk.yellow(
+            `Nexquik could not fund a unique ID field for Model: ${model.name}`
+          )
+        );
+        return;
+      }
+    } else {
+      uniqueIdFieldReturn = {
+        name: fullUniqueIdField.name,
+        type: fullUniqueIdField.type,
+      };
+    }
     return {
       modelName: model.name,
       model: model,
       parent: parent,
-      uniqueIdentifierField: uniqueIdField,
+      uniqueIdentifierField: uniqueIdFieldReturn,
       children,
     };
   }
