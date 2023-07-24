@@ -13,10 +13,9 @@ import {
   popStringEnd,
 } from "./helpers";
 import {
-  createModelTree,
-  getCompositeKeyFields,
-  getParentReferenceField,
   ModelTree,
+  createModelTree,
+  getParentReferenceField,
 } from "./modelTree";
 const readFileAsync = promisify(fs.readFile);
 
@@ -270,6 +269,11 @@ export async function generate(
   const dmmf = await getDMMF({ datamodel: prismaSchema });
   console.log(chalk.blue("Creating Tree"));
   const modelTree = createModelTree(dmmf.datamodel);
+  if (modelTree.length === 0) {
+    console.log(chalk.red("Nexquik Error: No valid models detected in schema"));
+    throw new Error("Nexquik Error: No valid models detected in schema");
+    return;
+  }
   const enums = getEnums(dmmf.datamodel);
   console.log(chalk.blue("Generating App Directory"));
   // Replace prisma client import
@@ -428,35 +432,35 @@ export async function generateAppDirectoryFromModelTree(
       true
     );
 
-    let modelUniqueIdentifier: { fieldName: string; fieldType: string }[] = [];
-    const identifierField = modelTree.model.fields.find((field) => field.isId);
-    // Bypass the creation of dynamic routes for this model if we cannot find a unique id field
-    // TODO: Figure out how to support composite types in dynamic routes
-    if (!identifierField) {
-      console.log(
-        `Cannot find identifier field for model: ${modelTree.model.name}`
-      );
-      const compositeKeyFields = getCompositeKeyFields(modelTree);
-      if (compositeKeyFields && compositeKeyFields.length >= 2) {
-        modelUniqueIdentifier = compositeKeyFields;
-        `Found a composite key. Nexquik does not yet support this. So we will bypass some of the generation on this model`;
-      } else {
-        console.log(
-          `Could not find identifier field OR composite type for model: ${modelTree.model.name}`
-        );
-      }
-      // Just remove the dynamic directory for now
-      fs.rmSync(path.join(directoryToCreate, "[id]"), { recursive: true });
-    } else {
-      modelUniqueIdentifier.push({
-        fieldName: identifierField.name,
-        fieldType: identifierField.type,
-      });
-      fs.renameSync(
-        path.join(directoryToCreate, "[id]"),
-        path.join(directoryToCreate, `[${uniqueDynamicSlug}]`)
-      );
-    }
+    // let modelUniqueIdentifier: { fieldName: string; fieldType: string }[] = [];
+    // const identifierField = modelTree.model.fields.find((field) => field.isId);
+    // // Bypass the creation of dynamic routes for this model if we cannot find a unique id field
+    // // TODO: Figure out how to support composite types in dynamic routes
+    // if (!identifierField) {
+    //   console.log(
+    //     `Cannot find identifier field for model: ${modelTree.model.name}`
+    //   );
+    //   const compositeKeyFields = getCompositeKeyFields(modelTree);
+    //   if (compositeKeyFields && compositeKeyFields.length >= 2) {
+    //     modelUniqueIdentifier = compositeKeyFields;
+    //     `Found a composite key. Nexquik does not yet support this. So we will bypass some of the generation on this model`;
+    //   } else {
+    //     console.log(
+    //       `Could not find identifier field OR composite type for model: ${modelTree.model.name}`
+    //     );
+    //   }
+    //   // Just remove the dynamic directory for now
+    //   fs.rmSync(path.join(directoryToCreate, "[id]"), { recursive: true });
+    // } else {
+    //   modelUniqueIdentifier.push({
+    //     fieldName: identifierField.name,
+    //     fieldType: identifierField.type,
+    //   });
+    //   fs.renameSync(
+    //     path.join(directoryToCreate, "[id]"),
+    //     path.join(directoryToCreate, `[${uniqueDynamicSlug}]`)
+    //   );
+    // }
 
     // ############### List Page
     const listFormCode = await generateListForm(
@@ -603,8 +607,8 @@ export async function generateAppDirectoryFromModelTree(
     const whereClause = generateWhereClause(
       "params",
       uniqueDynamicSlug,
-      identifierField?.type,
-      identifierField?.name
+      modelUniqueIdentifierField?.type,
+      modelUniqueIdentifierField?.name
     );
     addStringBetweenComments(
       directoryToCreate,

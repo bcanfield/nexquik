@@ -62,10 +62,7 @@ test.each(readdirSync(prismaSchemaDirectory))(
     );
     console.log(`Schema Test: ${schemaPath}`);
     prettyPrintDirectory(testOutputDirectory);
-    expect(
-      isDirectoryNotEmpty(testOutputDirectory) &&
-        !res.toString().includes("Nexquik Error")
-    ).toBeTruthy;
+    expect(isDirectoryNotEmpty(testOutputDirectory)).toBeTruthy();
 
     child_process.execSync(`rm -rf ${testOutputDirectory}`);
   }
