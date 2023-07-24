@@ -1,6 +1,6 @@
 {
   "name": "nexquik",
-  "version": "1.2.7",
+  "version": "1.2.8",
   "description": "Generate Next.js components from your Prisma Schema",
   "main": "dist/index.js",
   "repository": "https://github.com/bcanfield/nexquik",
