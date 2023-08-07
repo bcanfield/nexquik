@@ -9,7 +9,7 @@ import {
   copyDirectory,
   copyFileToDirectory,
   findAndReplaceInFiles,
-  getDynamicSlug,
+  getDynamicSlugs,
   popStringEnd,
 } from "./helpers";
 import {
@@ -167,30 +167,43 @@ async function generateChildrenList(
   routeUrl: string
 ): Promise<string> {
   // Define the React component template as a string
-  const slug =
-    modelTree.uniqueIdentifierField?.name &&
-    getDynamicSlug(modelTree.model.name, modelTree.uniqueIdentifierField.name);
-  const childrenLinks = modelTree.children
-    .map(
-      (
-        c
-      ) => `<Link className="base-link view-link" href={\`${routeUrl}/\${params.${slug}}/${
-        c.modelName.charAt(0).toLowerCase() + c.modelName.slice(1)
-      }\`}>
-    ${c.modelName} List
-</Link>`
-    )
-    .join("\n");
-  return childrenLinks;
+  const slug = getDynamicSlugs(
+    modelTree.model.name,
+    modelTree.uniqueIdentifierField.map((f) => f.name)
+  );
+  const childrenLinks: string[] = [];
+  modelTree.children.forEach((c) => {
+    let childLink = `<Link className="base-link view-link" href={\`${routeUrl}/`;
+    slug.forEach((s) => {
+      childLink += `\${params.${s}}/`;
+    });
+
+    childLink += `${
+      c.modelName.charAt(0).toLowerCase() + c.modelName.slice(1)
+    }\`}>
+  ${c.modelName} List
+</Link>`;
+    childrenLinks.push(childLink);
+  });
+  console.log({ childrenLinks });
+  return childrenLinks.join("\n");
 }
-``;
 async function generateListForm(
   modelTree: ModelTree,
-  routeUrl: string
+  routeUrl: string,
+  uniqueFields: {
+    name: string;
+    type: string;
+  }[]
 ): Promise<string> {
   const uniqueField = modelTree.model.fields.find(
     (tableField) => tableField.isId
   );
+  let linkHref = routeUrl;
+  uniqueFields.forEach((f) => {
+    linkHref += "/" + "${" + "nexquikTemplateModel." + f.name + "}";
+  });
+
   const uniqueFieldInputType =
     (uniqueField?.type && prismaFieldToInputType[uniqueField.type]) || "text";
   // Define the React component template as a string
@@ -220,16 +233,11 @@ async function generateListForm(
 
       <td className="action-cell">
       <form>
-      <input hidden type="${uniqueFieldInputType}" name="${
-    uniqueField?.name
-  }" defaultValue={nexquikTemplateModel?.${uniqueField?.name}} />
+      <input hidden type="${uniqueFieldInputType}" name="${uniqueField?.name}"
+   />
   <div className="action-buttons">
-          <Link href={\`${routeUrl}/\${nexquikTemplateModel.${
-    uniqueField?.name
-  }}\`} className="action-link view-link">View</Link>
-                  <Link href={\`${routeUrl}/\${nexquikTemplateModel.${
-    uniqueField?.name
-  }}/edit\`} className="action-link edit-link">Edit</Link>
+          <Link href={\`${linkHref}\`} className="action-link view-link">View</Link>
+                  <Link href={\`${linkHref}}/edit\`} className="action-link edit-link">Edit</Link>
                   <button formAction={deleteNexquikTemplateModel} className="action-link delete-link">Delete</button>
                   </div>
                   </form>
@@ -288,6 +296,7 @@ export async function generate(
     outputDirectory,
     enums
   );
+  console.log({ routes });
   // prettyPrintAPIRoutes(routes);
   console.log(chalk.blue("Generating Route List"));
   const routeList = generateRouteList(routes);
@@ -401,71 +410,101 @@ export async function generateAppDirectoryFromModelTree(
 
   async function generateRoutes(
     modelTree: ModelTree,
-    parentRoute: { name: string; uniqueIdentifierField?: string }
+    parentRoute: {
+      name: string;
+      uniqueIdentifierField: { name: string; type: string }[];
+    }
   ) {
     const modelName = modelTree.modelName;
-    const modelUniqueIdentifierField = modelTree.uniqueIdentifierField;
-    const route =
-      parentRoute.name +
-      (parentRoute.name === "/"
-        ? ""
-        : `/[${getDynamicSlug(
-            modelTree.parent?.name,
-            parentRoute.uniqueIdentifierField
-          )}]/`) +
-      modelName.charAt(0).toLowerCase() +
-      modelName.slice(1);
 
+    // Get the current mode'ls array of prisma unique id fields
+    const modelUniqueIdentifierField = modelTree.uniqueIdentifierField;
+    console.log(
+      `MODEL NAME: ${modelName}\n Unique id field: ${modelUniqueIdentifierField.map(
+        (f) => f.name
+      )}`
+    );
+
+    // Get the unique slugs of the parent model (combines modelname and id field to ensure uniqueness (i.e. bookingid1))
+    // const parentUniqueSlugs = getDynamicSlugs(
+    //   modelTree.parent?.name,
+    //   parentRoute.uniqueIdentifierField.map((f) => f.name)
+    // );
+    let route = parentRoute.name;
+    // if (parentRoute.name !== "/") {
+    //   parentUniqueSlugs.forEach((parentSlug) => {
+    //     route += `/[${parentSlug}]/`;
+    //   });
+    // }
+    const parentSlugRoute = route;
+    route += modelName.charAt(0).toLowerCase() + modelName.slice(1);
+    getDynamicSlugs(
+      modelTree.modelName,
+      modelUniqueIdentifierField.map((f) => f.name)
+    ).forEach((parentSlug) => {
+      route += `/[${parentSlug}]/`;
+    });
     const directoryToCreate = path.join(outputDirectory, route);
-    if (!fs.existsSync(directoryToCreate)) {
-      fs.mkdirSync(directoryToCreate);
+    console.log("Creating directory for model", {
+      modelName,
+      directoryToCreate,
+    });
+
+    // Recursively create paths
+    const parts = directoryToCreate.split(path.sep);
+
+    let currentPath = "";
+    for (const part of parts) {
+      currentPath = path.join(currentPath, part);
+
+      if (!fs.existsSync(currentPath)) {
+        fs.mkdirSync(currentPath);
+      }
     }
 
-    const uniqueDynamicSlug = getDynamicSlug(
+    const pathChunks = directoryToCreate
+      .split("/")
+      .filter((chunk) => chunk.trim() !== "");
+
+    let currentDir = "";
+    for (const chunk of pathChunks) {
+      currentDir = path.join(currentDir, chunk);
+      if (!fs.existsSync(currentDir)) {
+        fs.mkdirSync(currentDir);
+      }
+    }
+    const uniqueDynamicSlugs = getDynamicSlugs(
       modelTree.modelName,
-      modelUniqueIdentifierField?.name
+      modelUniqueIdentifierField.map((f) => f.name)
     );
 
     copyDirectory(
       path.join(__dirname, "templateApp", "nexquikTemplateModel"),
       directoryToCreate,
-      true
+      true,
+      "[id]"
+    );
+    console.log({ directoryToCreate });
+    console.log({ parentSlugRoute });
+
+    // Copy the dynamic directory from template this
+    copyDirectory(
+      path.join(__dirname, "templateApp", "nexquikTemplateModel", "[id]"),
+
+      path.join(outputDirectory, parentSlugRoute),
+      false
     );
 
-    // let modelUniqueIdentifier: { fieldName: string; fieldType: string }[] = [];
-    // const identifierField = modelTree.model.fields.find((field) => field.isId);
-    // // Bypass the creation of dynamic routes for this model if we cannot find a unique id field
+    // // Byp ass the creation of dynamic routes for this model if we cannot find a unique id field
     // // TODO: Figure out how to support composite types in dynamic routes
-    // if (!identifierField) {
-    //   console.log(
-    //     `Cannot find identifier field for model: ${modelTree.model.name}`
-    //   );
-    //   const compositeKeyFields = getCompositeKeyFields(modelTree);
-    //   if (compositeKeyFields && compositeKeyFields.length >= 2) {
-    //     modelUniqueIdentifier = compositeKeyFields;
-    //     `Found a composite key. Nexquik does not yet support this. So we will bypass some of the generation on this model`;
-    //   } else {
-    //     console.log(
-    //       `Could not find identifier field OR composite type for model: ${modelTree.model.name}`
-    //     );
-    //   }
-    //   // Just remove the dynamic directory for now
-    //   fs.rmSync(path.join(directoryToCreate, "[id]"), { recursive: true });
-    // } else {
-    //   modelUniqueIdentifier.push({
-    //     fieldName: identifierField.name,
-    //     fieldType: identifierField.type,
-    //   });
-    //   fs.renameSync(
-    //     path.join(directoryToCreate, "[id]"),
-    //     path.join(directoryToCreate, `[${uniqueDynamicSlug}]`)
-    //   );
-    // }
+
+    // Delete the dynamic route page
 
     // ############### List Page
     const listFormCode = await generateListForm(
       modelTree,
-      convertRouteToRedirectUrl(route)
+      convertRouteToRedirectUrl(route),
+      modelUniqueIdentifierField
     );
     addStringBetweenComments(
       directoryToCreate,
@@ -499,23 +538,31 @@ export async function generateAppDirectoryFromModelTree(
     const parentIdentifierFields = modelTree.model.fields.find((field) =>
       field.relationFromFields?.includes(relationFieldToParent)
     )?.relationToFields;
+    // console.log({
+    //   currentFleidName: modelTree.model.name,
+    //   parentFieldName: modelTree.parent?.name,
+    //   fields: modelTree.model.fields,
+    // });
     let parentIdentifierField = "";
-
+    // console.log({ parentIdentifierFields });
     if (parentIdentifierFields && parentIdentifierFields.length > 0) {
       parentIdentifierField = parentIdentifierFields[0];
     }
+    // console.log({ parentIdentifierField });
     // ##############
 
-    const deleteWhereClause = generateDeleteClause(
-      modelTree.uniqueIdentifierField?.name || parentIdentifierField,
-      modelTree.uniqueIdentifierField?.type || fieldType
-    );
+    const deleteWhereClause = generateDeleteClause(modelUniqueIdentifierField);
+    // console.log({ deleteWhereClause });
+
+    // const thisDynamicDirectory = path.join(outputDirectory, parentSlugRoute);
+    // console.log("brandin adding delete clause in: ", thisDynamicDirectory);
     addStringBetweenComments(
       directoryToCreate,
       deleteWhereClause,
       "//@nexquik prismaDeleteClause start",
       "//@nexquik prismaDeleteClause stop"
     );
+    // console.log({ route });
     const listRedirect = await generateRedirect(
       `\`${convertRouteToRedirectUrl(route)}\``
     );
@@ -525,16 +572,44 @@ export async function generateAppDirectoryFromModelTree(
       "//@nexquik listRedirect start",
       "//@nexquik listRedirect stop"
     );
+    // const parentObjects: {
+    //   name: string;
+    //   type: string;
+    //   referenceField: string;
+    // }[] = [];
+
+    const parentIdFields = modelTree.model.fields.filter((field) => field.isId);
+    // console.log({ parentIdFields });
+    const parentObjects = parentIdentifierFields?.map((p) => ({
+      name: p,
+      type: modelTree.parent?.fields.find((f) => f.name === p)?.type || "",
+      referenceField: modelTree.model.fields.find(
+        (field) => field.type === modelTree.parent?.name
+      ),
+      slug: getDynamicSlugs(modelTree.modelName, [p])[0],
+    }));
+    // console.log({ parentObjects });
     const whereparentClause = modelTree.parent
       ? generateWhereParentClause(
           "params",
-          getDynamicSlug(modelTree.parent.name, parentIdentifierField),
+          getDynamicSlugs(modelTree.parent.name, [parentIdentifierField])[0],
           modelTree.model.fields.find((field) => field.isId)?.name ||
             parentIdentifierField,
           modelTree.model.fields.find((field) => field.isId)?.type || fieldType,
           getParentReferenceField(modelTree)
         )
       : "()";
+    // const whereparentClause = modelTree.parent
+    //   ? generateWhereParentClause(
+    //       "params",
+    //       getDynamicSlugs(modelTree.parent.name, [parentIdentifierField])[0],
+    //       modelTree.model.fields.find((field) => field.isId)?.name ||
+    //         parentIdentifierField,
+    //       modelTree.model.fields.find((field) => field.isId)?.type || fieldType,
+    //       getParentReferenceField(modelTree)
+    //     )
+    //   : "()";
+    // console.log({ whereparentClause });
     addStringBetweenComments(
       directoryToCreate,
       whereparentClause,
@@ -557,14 +632,14 @@ export async function generateAppDirectoryFromModelTree(
       modelTree,
       convertRouteToRedirectUrl(route)
     );
+    // console.log({ childModelLinkList });
     addStringBetweenComments(
       directoryToCreate,
       childModelLinkList,
       "{/* @nexquik listChildren start */}",
       "{/* @nexquik listChildren stop */}"
     );
-
-    // ############### Create Page
+    // // ############### Create Page
     const createFormCode = await generateCreateForm(
       modelTree,
       convertRouteToRedirectUrl(route),
@@ -576,10 +651,13 @@ export async function generateAppDirectoryFromModelTree(
       "{/* @nexquik createForm start */}",
       "{/* @nexquik createForm stop */}"
     );
+
+    let redirectStr = "";
+    modelTree.uniqueIdentifierField.forEach(
+      (f) => (redirectStr += "/" + `\${created.${f.name}}`)
+    );
     const createRedirect = await generateRedirect(
-      `\`${convertRouteToRedirectUrl(route)}/\${created.${
-        modelTree.uniqueIdentifierField?.name
-      }}\``
+      `\`${convertRouteToRedirectUrl(route)}${redirectStr}\``
     );
     addStringBetweenComments(
       directoryToCreate,
@@ -598,26 +676,29 @@ export async function generateAppDirectoryFromModelTree(
       "{/* @nexquik createLink stop */}"
     );
     const prismaInput = generateConvertToPrismaInputCode(modelTree);
+    console.log("NIKKI", { prismaInput });
     addStringBetweenComments(
       directoryToCreate,
       prismaInput,
       "//@nexquik prismaDataInput start",
       "//@nexquik prismaDataInput stop"
     );
+
     const whereClause = generateWhereClause(
       "params",
-      uniqueDynamicSlug,
-      modelUniqueIdentifierField?.type,
-      modelUniqueIdentifierField?.name
+      uniqueDynamicSlugs,
+      modelUniqueIdentifierField
     );
+    console.log({ whereClause, route });
     addStringBetweenComments(
+      // thisDynamicDirectory,
       directoryToCreate,
       whereClause,
       "//@nexquik prismaWhereInput start",
       "//@nexquik prismaWhereInput stop"
     );
 
-    // ############### Edit Page
+    // // ############### Edit Page
     const editFormCode = await generateEditForm(
       modelTree,
       convertRouteToRedirectUrl(route),
@@ -630,8 +711,13 @@ export async function generateAppDirectoryFromModelTree(
       "{/* @nexquik editForm stop */}"
     );
 
+    let redirectStr2 = "";
+    modelTree.uniqueIdentifierField.forEach(
+      (f) => (redirectStr2 += "/" + `\${params.${f.name}}`)
+    );
+
     const editRedirect = await generateRedirect(
-      `\`${convertRouteToRedirectUrl(route)}/\${params.${uniqueDynamicSlug}}\``
+      `\`${convertRouteToRedirectUrl(route)}${redirectStr2}\``
     );
     addStringBetweenComments(
       directoryToCreate,
@@ -640,7 +726,7 @@ export async function generateAppDirectoryFromModelTree(
       "//@nexquik editRedirect stop"
     );
 
-    // ############### Extras
+    // // ############### Extras
     const revalidatePath = await generateRevalidatePath(
       `${convertRouteToRedirectUrl(route)}`
     );
@@ -673,15 +759,20 @@ export async function generateAppDirectoryFromModelTree(
       "{/* @nexquik backToCurrentLink stop */}"
     );
 
-    // Replace all placeholder model names
+    // // Replace all placeholder model names
     findAndReplaceInFiles(
       directoryToCreate,
       "nexquikTemplateModel",
       modelTree.modelName
     );
+    // findAndReplaceInFiles(
+    //   thisDynamicDirectory,
+    //   "nexquikTemplateModel",
+    //   modelTree.modelName
+    // );
 
-    // ############### Create Routes
-    // Create
+    // // ############### Create Routes
+    // // Create
     routes.push({
       segment: `${route}/create`,
       model: modelName,
@@ -689,12 +780,18 @@ export async function generateAppDirectoryFromModelTree(
       description: `Create a ${modelName}`,
     });
 
-    // Edit
+    // // Edit
+
+    let splitRoute = "";
+    const slugss = getDynamicSlugs(
+      modelName,
+      modelTree.uniqueIdentifierField.map((f) => f.name)
+    );
+    slugss.forEach((s) => {
+      splitRoute += `/[${s}]`;
+    });
     routes.push({
-      segment: `${route}/[${getDynamicSlug(
-        modelName,
-        modelTree.uniqueIdentifierField?.name
-      )}]/edit`,
+      segment: `${route}${splitRoute}/edit`,
       model: modelName,
       operation: "Edit",
       description: `Edit a ${modelName} by ID`,
@@ -702,10 +799,7 @@ export async function generateAppDirectoryFromModelTree(
 
     // Show
     routes.push({
-      segment: `${route}/[${getDynamicSlug(
-        modelName,
-        modelTree.uniqueIdentifierField?.name
-      )}]`,
+      segment: `${route}${splitRoute}`,
       model: modelName,
       operation: "Show",
       description: `Get details of a ${modelName} by ID`,
@@ -722,7 +816,7 @@ export async function generateAppDirectoryFromModelTree(
     for (const child of modelTree.children) {
       await generateRoutes(child, {
         name: route,
-        uniqueIdentifierField: modelUniqueIdentifierField?.name,
+        uniqueIdentifierField: modelUniqueIdentifierField,
       });
     }
   }
@@ -730,7 +824,7 @@ export async function generateAppDirectoryFromModelTree(
   for (const modelTree of modelTreeArray) {
     await generateRoutes(modelTree, {
       name: "/",
-      uniqueIdentifierField: "",
+      uniqueIdentifierField: [],
     });
   }
   return routes;
@@ -738,22 +832,25 @@ export async function generateAppDirectoryFromModelTree(
 
 export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
   // If model has a parent, get the parent accessor
-  let relationFieldToParent = "";
+  let relationFieldsToParent: string[] = [];
   let fieldType = "";
   if (modelTree.parent) {
     // Get the field on the current model that is the id referencing the parent
-    modelTree.model.fields.forEach((mf) => {
+    modelTree.model.fields.forEach((mf, index) => {
       if (mf.type === modelTree.parent?.name) {
         if (mf.relationFromFields?.length && mf.relationFromFields.length > 0) {
-          relationFieldToParent = mf.relationFromFields[0];
+          relationFieldsToParent = mf.relationFromFields;
         }
       }
     });
+    console.log({ relationFieldsToParent });
 
     // Get the field type on the current model that is the id referencing the parent
     fieldType =
-      modelTree.model.fields.find((f) => f.name === relationFieldToParent)
-        ?.type || "";
+      modelTree.model.fields.find((f) =>
+        relationFieldsToParent.find((a) => a === f.name)
+      )?.type || "";
+    console.log({ fieldType });
   }
 
   const fieldsToConvert: Partial<DMMF.Field>[] = modelTree.model.fields
@@ -776,65 +873,73 @@ export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
   });
 
   // Convert the parent accessor  differently
-  if (relationFieldToParent && fieldType && modelTree.parent?.name) {
-    let parentIdentifierField = "";
-    const parentIdentifierFields = modelTree.model.fields.find((field) =>
-      field.relationFromFields?.includes(relationFieldToParent)
-    )?.relationToFields;
-    if (parentIdentifierFields && parentIdentifierFields.length > 0) {
-      parentIdentifierField = parentIdentifierFields[0];
-    }
-    const parentSlug = getDynamicSlug(
+  if (relationFieldsToParent && fieldType && modelTree.parent?.name) {
+    // let parentIdentifierField = "";
+    const parentIdentifierFields =
+      modelTree.model.fields.find((field) =>
+        field.relationFromFields?.includes(relationFieldsToParent[0])
+      )?.relationToFields || [];
+    // if (parentIdentifierFields && parentIdentifierFields.length > 0) {
+    //   parentIdentifierField = parentIdentifierFields[0];
+    // }
+    const parentSlugs = getDynamicSlugs(
       modelTree.parent?.name,
-      parentIdentifierField
+      parentIdentifierFields
     );
-    let typecastValue = `params.${parentSlug}`;
-    if (fieldType === "Int" || fieldType === "Float") {
-      typecastValue = `Number(${typecastValue})`;
-    } else if (fieldType === "Boolean") {
-      typecastValue = `Boolean(${typecastValue})`;
-    } else if (fieldType === "DateTime") {
-      typecastValue = `new Date(String(${typecastValue}))`;
-    } else {
-      typecastValue = `String(${typecastValue})`;
-    }
-    convertToPrismaInputLines.push(
-      `    ${relationFieldToParent}: ${typecastValue},`
-    );
+    parentSlugs.forEach((s, index) => {
+      console.log("in slugs", { parentIdentifierFields });
+      // const relationTo =
+      let typecastValue = `params.${s}`;
+      if (fieldType === "Int" || fieldType === "Float") {
+        typecastValue = `Number(${typecastValue})`;
+      } else if (fieldType === "Boolean") {
+        typecastValue = `Boolean(${typecastValue})`;
+      } else if (fieldType === "DateTime") {
+        typecastValue = `new Date(String(${typecastValue}))`;
+      } else {
+        typecastValue = `String(${typecastValue})`;
+      }
+      convertToPrismaInputLines.push(
+        `    ${parentIdentifierFields[index]}: ${typecastValue},`
+      );
+    });
   }
 
   // Convert fields pointing to other relations differently
-  modelTree.model.fields.map((field) => {
+  modelTree.model.fields.map((field, index) => {
     if (field.kind === "object") {
-      const relationFrom =
-        field.relationFromFields && field.relationFromFields[0];
+      const relationFrom = field.relationFromFields && field.relationFromFields;
+      console.log({ field }, { relationFrom });
 
       const referencedModelName = field.type;
 
       if (referencedModelName === modelTree.parent?.name) {
       } else if (relationFrom) {
-        const fieldType2 = modelTree.model.fields.find(
-          (f) => f.name === relationFrom
-        )?.type;
+        relationFrom.forEach((rf) => {
+          const fieldType2 = modelTree.model.fields.find(
+            (f) => f.name === rf
+          )?.type;
 
-        let typecastValue = `formData.get('${relationFrom}')`;
-        if (fieldType2 === "Int" || fieldType2 === "Float") {
-          typecastValue = `Number(${typecastValue})`;
-        } else if (fieldType2 === "Boolean") {
-          typecastValue = `Boolean(${typecastValue})`;
-        } else if (fieldType2 === "DateTime") {
-          typecastValue = `new Date(String(${typecastValue}))`;
-        } else {
-          typecastValue = `String(${typecastValue})`;
-        }
+          let typecastValue = `formData.get('${relationFrom}')`;
+          if (fieldType2 === "Int" || fieldType2 === "Float") {
+            typecastValue = `Number(${typecastValue})`;
+          } else if (fieldType2 === "Boolean") {
+            typecastValue = `Boolean(${typecastValue})`;
+          } else if (fieldType2 === "DateTime") {
+            typecastValue = `new Date(String(${typecastValue}))`;
+          } else {
+            typecastValue = `String(${typecastValue})`;
+          }
 
-        convertToPrismaInputLines.push(
-          `    ${relationFrom}: ${typecastValue},`
-        );
+          convertToPrismaInputLines.push(
+            `    ${relationFrom}: ${typecastValue},`
+          );
+        });
       }
     }
   });
 
+  console.log({ convertToPrismaInputLines });
   return `{
   ${convertToPrismaInputLines.join("\n")}
     }`;
@@ -847,6 +952,13 @@ export function generateWhereParentClause(
   parentIdentifierFieldType: string | undefined,
   parentReferenceField: string | undefined
 ): string {
+  console.log({
+    inputObject,
+    fieldAccessValue,
+    parentIdentifierFieldName,
+    parentIdentifierFieldType,
+    parentReferenceField,
+  });
   if (
     inputObject &&
     fieldAccessValue &&
@@ -871,45 +983,101 @@ export function generateWhereParentClause(
 
 export function generateWhereClause(
   inputObject: string | undefined,
-  identifierFieldName: string | undefined,
-  identifierFieldType: string | undefined,
-  modelUniqueIdField: string | undefined
+  uniqueDynamicSlugs: string[],
+  // identifierFieldName: string | undefined,
+  // identifierFieldType: string | undefined,
+  modelUniqueIdFields: {
+    name: string;
+    type: string;
+  }[]
 ): string {
+  console.log("WESLEY", { uniqueDynamicSlugs, modelUniqueIdFields });
+  let returnClause = "";
   if (
     inputObject &&
-    identifierFieldName &&
-    identifierFieldType &&
-    modelUniqueIdField
+    // identifierFieldName &&
+    // identifierFieldType &&
+    modelUniqueIdFields
   ) {
-    let typecastValue = `${inputObject}.${identifierFieldName}`;
-    if (identifierFieldType === "Int" || identifierFieldType === "Float") {
-      typecastValue = `Number(${typecastValue})`;
-    } else if (identifierFieldType === "Boolean") {
-      typecastValue = `Boolean(${typecastValue})`;
-    }
+    // where id1: params.bookingid1
+    if (modelUniqueIdFields.length > 0) {
+      returnClause +=
+        "{" + modelUniqueIdFields.map((f) => f.name).join("_") + ":{";
+      modelUniqueIdFields.forEach((f, index) => {
+        let typecastValue = `${inputObject}.${uniqueDynamicSlugs[index]}`;
+        if (f.type === "Int" || f.type === "Float") {
+          typecastValue = `Number(${typecastValue})`;
+        } else if (f.type === "Boolean") {
+          typecastValue = `Boolean(${typecastValue})`;
+        }
 
-    return `{ ${modelUniqueIdField}: ${typecastValue} },`;
+        returnClause += `${f.name}: ${typecastValue} ,`;
+      });
+      returnClause += "}},";
+    } else {
+      const { name, type } = modelUniqueIdFields[0];
+      let typecastValue = `${inputObject}.${uniqueDynamicSlugs[0]}`;
+      if (type === "Int" || type === "Float") {
+        typecastValue = `Number(${typecastValue})`;
+      } else if (type === "Boolean") {
+        typecastValue = `Boolean(${typecastValue})`;
+      }
+
+      return `{ ${name}: ${typecastValue} },`;
+    }
+    return returnClause;
   } else {
     return "";
   }
 }
 
 export function generateDeleteClause(
-  identifierFieldName: string | undefined,
-  identifierFieldType: string | undefined
+  uniqueIdentifierFields: {
+    name: string;
+    type: string;
+  }[]
 ): string {
-  if (identifierFieldName && identifierFieldType) {
-    let typecastValue = `formData.get('${identifierFieldName}')`;
-    if (identifierFieldType === "Int" || identifierFieldType === "Float") {
+  console.log("deleteClause", { uniqueIdentifierFields });
+  if (uniqueIdentifierFields.length === 1) {
+    const singleIdField = uniqueIdentifierFields[0];
+    let typecastValue = `formData.get('${singleIdField}')`;
+    if (singleIdField.type === "Int" || singleIdField.type === "Float") {
       typecastValue = `Number(${typecastValue})`;
-    } else if (identifierFieldType === "Boolean") {
+    } else if (singleIdField.type === "Boolean") {
       typecastValue = `Boolean(${typecastValue})`;
     }
+    return `{ ${singleIdField.name}: ${typecastValue} },`;
+  } else if (uniqueIdentifierFields.length >= 2) {
+    // let andClause = "{ AND: [";
+    // uniqueIdentifierFields.forEach((f) => {
+    //   let typecastValue = `formData.get('${f.name}')`;
+    //   if (f.type === "Int" || f.type === "Float") {
+    //     typecastValue = `Number(${typecastValue})`;
+    //   } else if (f.type === "Boolean") {
+    //     typecastValue = `Boolean(${typecastValue})`;
+    //   }
+    //   andClause += `{ ${f.name}: ${typecastValue} },`;
+    // });
+    // andClause += "]}";
+    // return andClause;
 
-    return `{ ${identifierFieldName}: ${typecastValue} },`;
-  } else {
-    return "";
+    let andClause = "{" + uniqueIdentifierFields.map((f) => f.name).join("_");
+    andClause += ":{";
+    uniqueIdentifierFields.forEach((f) => {
+      let typecastValue = `formData.get('${f.name}')`;
+      if (f.type === "Int" || f.type === "Float") {
+        typecastValue = `Number(${typecastValue})`;
+      } else if (f.type === "Boolean") {
+        typecastValue = `Boolean(${typecastValue})`;
+      }
+      andClause += `${f.name}: ${typecastValue},`;
+    });
+    andClause += "}}";
+    console.log({ andClause });
+    return andClause;
+    // const prismaIdentifier = `${f.name}`
   }
+  return "";
 }
 
 // Custom export function to check if field is renderable in a form

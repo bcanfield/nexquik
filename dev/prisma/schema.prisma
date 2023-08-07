@@ -1,41 +1,33 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
 generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+model Parent {
+  id3        Int
+  id4        Int
+  name       String
+  bookings   Booking @relation(fields: [bookingId1, bookingId2], references: [id1, id2])
+  bookingId1 Int
+  bookingId2 Int
+
+  @@id([id3, id4], map: "PK_0c1ca63368e3f0a8ea8ce9eee5c")
 }
 
-model Blog {
-  id       Int     @id @default(autoincrement())
-  name     String
-  posts    Post[]
-  Author   Author? @relation(fields: [authorId], references: [id])
-  authorId Int?
-}
+model Booking {
+  id1          Int
+  id2          Int
+  inviteeEmail String
+  startDateUTC DateTime
+  cancelCode   String
+  Parent       Parent[]
 
-model Author {
-  id    Int    @id @default(autoincrement())
-  name  String
-  blogs Blog[]
-}
-
-model Post {
-  id       Int      @id @default(autoincrement())
-  title    String
-  date     DateTime @default(now())
-  text     String
-  content  String?
-  authorId Int?
-  Blog     Blog?    @relation(fields: [blogId], references: [id])
-  blogId   Int?
-  tags     Tag[]
-}
-
-model Tag {
-  id     Int    @id @default(autoincrement())
-  name   String
-  Post   Post?  @relation(fields: [postId], references: [id])
-  postId Int?
+  @@id([id1, id2], map: "PK_0c1cc63368e3f0a8ea8ce9eee5c")
 }
