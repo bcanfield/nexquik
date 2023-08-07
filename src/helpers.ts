@@ -3,11 +3,45 @@ import fs from "fs";
 import prettier from "prettier";
 import { RouteObject } from "./generators";
 import { ESLint } from "eslint";
+import chalk from "chalk";
 
+export const copyDirectoryContents = async (
+  sourceDirectory: string,
+  destinationDirectory: string
+) => {
+  if (!fs.existsSync(sourceDirectory)) {
+    throw new Error(`Source directory "${sourceDirectory}" does not exist.`);
+  }
+
+  // Create the destination directory if it doesn't exist
+  if (!fs.existsSync(destinationDirectory)) {
+    fs.mkdirSync(destinationDirectory, { recursive: true });
+  }
+
+  const files = await fs.promises.readdir(sourceDirectory);
+
+  for (const file of files) {
+    const sourcePath = path.join(sourceDirectory, file);
+    const destinationPath = path.join(destinationDirectory, file);
+
+    const stat = await fs.promises.stat(sourcePath);
+
+    if (stat.isDirectory()) {
+      // If it's a sub-directory, recursively copy its contents
+      await copyDirectoryContents(sourcePath, destinationPath);
+    } else {
+      // If it's a file, copy it to the destination
+      await fs.promises.copyFile(sourcePath, destinationPath);
+    }
+  }
+};
+
+// copy files from one directory to another
 export function copyDirectory(
   sourceDir: string,
   destinationDir: string,
-  toReplace: boolean = false
+  toReplace: boolean = false,
+  skipChildDir?: string
 ): void {
   if (toReplace && fs.existsSync(destinationDir)) {
     fs.rmSync(destinationDir, { recursive: true });
@@ -22,13 +56,18 @@ export function copyDirectory(
   const files = fs.readdirSync(sourceDir);
 
   files.forEach((file) => {
+    if (file === skipChildDir) {
+      // Skip copying the specified child directory
+      return;
+    }
+
     const sourceFile = path.join(sourceDir, file);
     const destinationFile = path.join(destinationDir, file);
 
     // Check if the file is a directory
     if (fs.statSync(sourceFile).isDirectory()) {
       // Recursively copy subdirectories
-      copyDirectory(sourceFile, destinationFile, toReplace);
+      copyDirectory(sourceFile, destinationFile, toReplace, skipChildDir);
     } else {
       // Copy file if it doesn't exist in the destination directory
       if (!fs.existsSync(destinationFile)) {
@@ -37,7 +76,6 @@ export function copyDirectory(
     }
   });
 }
-
 export const formatNextJsFilesRecursively = async (directory: string) => {
   // Get a list of all files and directories in the current directory
   const entries = await fs.promises.readdir(directory);
@@ -67,7 +105,29 @@ export const formatNextJsFilesRecursively = async (directory: string) => {
     }
   }
 };
+export const deleteDirectoryRecursively = async (directoryPath: string) => {
+  if (!fs.existsSync(directoryPath)) {
+    throw new Error(`Directory "${directoryPath}" does not exist.`);
+  }
 
+  const files = await fs.promises.readdir(directoryPath);
+
+  for (const file of files) {
+    const filePath = path.join(directoryPath, file);
+    const stat = await fs.promises.stat(filePath);
+
+    if (stat.isDirectory()) {
+      // If it's a sub-directory, recursively delete it
+      await deleteDirectoryRecursively(filePath);
+    } else {
+      // If it's a file, delete it
+      await fs.promises.unlink(filePath);
+    }
+  }
+
+  // Delete the empty directory
+  await fs.promises.rmdir(directoryPath);
+};
 async function getFilePaths(directoryPath: string): Promise<string[]> {
   const files: string[] = [];
 
@@ -128,6 +188,11 @@ export function findAndReplaceInFiles(
   searchString: string,
   replacementString: string
 ): void {
+  console.log(
+    chalk.blue(
+      `Finding ${searchString}, replacing with ${replacementString}, in ${directoryPath}`
+    )
+  );
   // Read the directory contents
   const files = fs.readdirSync(directoryPath);
 
@@ -193,18 +258,26 @@ export function prettyPrintAPIRoutes(routes: RouteObject[]) {
     );
   }
 }
-export const getDynamicSlug = (
+export const getDynamicSlugs = (
   modelName: string | undefined,
-  uniqueIdFieldName: string | undefined
-) => {
-  if (modelName && uniqueIdFieldName) {
-    return `${modelName}${uniqueIdFieldName}`;
-  } else {
-    return "";
-  }
+  uniqueIdFieldNames: string[]
+): string[] => {
+  const slugs: string[] = [];
+  uniqueIdFieldNames.forEach((idField) => {
+    slugs.push(`${modelName}${idField}`);
+  });
+  return slugs;
 };
 
 export function convertRouteToRedirectUrl(input: string): string {
+  const regex = /\[(.*?)\]/g;
+  const replaced = input.replace(regex, (_, innerValue) => {
+    return `\${params.${innerValue}}`;
+  });
+
+  return `${replaced}`;
+}
+export function convertRoutesToRedirectUrl(input: string): string {
   const regex = /\[(.*?)\]/g;
   const replaced = input.replace(regex, (_, innerValue) => {
     return `\${params.${innerValue}}`;

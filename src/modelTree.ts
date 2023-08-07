@@ -7,7 +7,7 @@ export interface ModelTree {
   parent?: DMMF.Model;
   model: DMMF.Model;
   children: ModelTree[];
-  uniqueIdentifierField?: { name: string; type: string };
+  uniqueIdentifierField: { name: string; type: string }[];
 }
 
 export function getCompositeIdField(model: DMMF.Model): DMMF.PrimaryKey | null {
@@ -92,8 +92,7 @@ export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
 
     visitedModels.delete(model.name);
     const fullUniqueIdField = model.fields.find((field) => field.isId === true);
-    let uniqueIdFieldReturn: { name: string; type: string } | undefined =
-      undefined;
+    let uniqueIdFieldReturn: { name: string; type: string }[] = [];
     if (!fullUniqueIdField) {
       // Check for composite id field
       const compositePrimaryKey = getCompositeIdField(model);
@@ -103,7 +102,14 @@ export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
             `Nexquik does not yet support composite field types. Model: ${model.name}`
           )
         );
-        return;
+        // For each field in fields, find the actual field
+        const actualFields = model.fields
+          .filter((modelField) =>
+            compositePrimaryKey.fields.includes(modelField.name)
+          )
+          .map((f) => ({ name: f.name, type: f.type }));
+        console.log({ actualFields });
+        uniqueIdFieldReturn = actualFields;
       } else {
         console.log(
           chalk.yellow(
@@ -113,10 +119,10 @@ export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
         return;
       }
     } else {
-      uniqueIdFieldReturn = {
+      uniqueIdFieldReturn.push({
         name: fullUniqueIdField.name,
         type: fullUniqueIdField.type,
-      };
+      });
     }
     return {
       modelName: model.name,
