@@ -43,6 +43,9 @@ export function copyDirectory(
   toReplace: boolean = false,
   skipChildDir?: string
 ): void {
+  console.log(
+    chalk.yellowBright(`Copying directory: ${sourceDir} to ${destinationDir} `)
+  );
   if (toReplace && fs.existsSync(destinationDir)) {
     fs.rmSync(destinationDir, { recursive: true });
   }
