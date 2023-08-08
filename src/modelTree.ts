@@ -51,12 +51,15 @@ export function getCompositeKeyFields(
 
 export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
   const models = dataModel.models;
+  console.log("Creating model tree");
+  console.log({ models });
 
   // Create a map of models for efficient lookup
   const modelMap: Record<string, DMMF.Model> = {};
   for (const model of models) {
     modelMap[model.name] = model;
   }
+  console.log({ modelMap });
 
   const visitedModels: Set<string> = new Set();
   const modelTrees: ModelTree[] = [];
@@ -134,6 +137,7 @@ export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
   }
 
   for (const model of models) {
+    // Only include models that dont have required parent
     if (
       !model.fields.some(
         (field) => field.kind === "object" && field.isRequired && !field.isList

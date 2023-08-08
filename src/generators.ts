@@ -80,6 +80,7 @@ async function generateCreateForm(
   enums: Record<string, string[]>
 ): Promise<string> {
   const formFields = generateFormFields(modelTree, enums);
+  console.log({ formFields });
   const reactComponentTemplate = `
       <form action={addNexquikTemplateModel}>
         ${formFields}
@@ -244,7 +245,7 @@ async function generateListForm(
       ${uniqueFormInputs}
   <div className="action-buttons">
           <Link href={\`${linkHref}\`} className="action-link view-link">View</Link>
-                  <Link href={\`${linkHref}}/edit\`} className="action-link edit-link">Edit</Link>
+                  <Link href={\`${linkHref}/edit\`} className="action-link edit-link">Edit</Link>
                   <button formAction={deleteNexquikTemplateModel} className="action-link delete-link">Delete</button>
                   </div>
                   </form>
@@ -298,6 +299,7 @@ export async function generate(
     "//@nexquik prismaClientImport start",
     "//@nexquik prismaClientImport stop"
   );
+  console.log("TOP LEVEL MODEL TREE", { modelTree });
   const routes = await generateAppDirectoryFromModelTree(
     modelTree,
     outputDirectory,
@@ -360,7 +362,7 @@ export async function generateShowForm(
 
   let linkRoute = routeUrl;
   uniqueFields.forEach((f) => {
-    linkRoute += `\${nexquikTemplateModel?.${f?.name}}`;
+    linkRoute += `/\${nexquikTemplateModel?.${f?.name}}`;
   });
   const reactComponentTemplate = `
     <form>
@@ -379,7 +381,7 @@ export async function generateShowForm(
     <div className="button-group">
 
 
-    <Link className="action-link edit-link" href={\`${linkRoute}}/edit\`}>Edit</Link>
+    <Link className="action-link edit-link" href={\`${linkRoute}/edit\`}>Edit</Link>
 
   
     <button className="action-link delete-link" formAction={deleteNexquikTemplateModel}>Delete</button>
@@ -464,7 +466,7 @@ export async function generateAppDirectoryFromModelTree(
     console.log(
       `MODEL NAME: ${modelName}\n Unique id field: ${modelUniqueIdentifierField.map(
         (f) => f.name
-      )}`
+      )}\n\n #####CHILDREN: ${modelTree.children.map((c) => c.modelName)}`
     );
 
     // Get the unique slugs of the parent model (combines modelname and id field to ensure uniqueness (i.e. bookingid1))
@@ -481,6 +483,7 @@ export async function generateAppDirectoryFromModelTree(
     route += modelName.charAt(0).toLowerCase() + modelName.slice(1);
     const baseRoute = route;
     const createRedirectForm = convertRouteToRedirectUrl(baseRoute);
+    console.log("()()()()()()", { createRedirectForm });
 
     // Create base directory for model
     const baseModelDirectory = path.join(outputDirectory, route);
@@ -782,13 +785,14 @@ export async function generateAppDirectoryFromModelTree(
     );
 
     let redirectStr2 = "";
-    modelTree.uniqueIdentifierField.forEach(
-      (f) => (redirectStr2 += "/" + `\${params.${f.name}}`)
+    uniqueDynamicSlugs.forEach(
+      (f) => (redirectStr2 += "/" + `\${params.${f}}`)
     );
 
     const editRedirect = await generateRedirect(
-      `\`${createRedirectForm}${redirectStr2}\``
+      `\`${createRedirectForm}/${redirectStr2}\``
     );
+    console.log({ createRedirectForm, redirectStr2, editRedirect });
     addStringBetweenComments(
       baseModelDirectory,
       editRedirect,
@@ -896,6 +900,8 @@ export function generateConvertToPrismaCreateInputCode(
   modelTree: ModelTree,
   parentSlugs: string[]
 ): string {
+  const uniques = modelTree.model.fields;
+  console.log({ uniques });
   // If model has a parent, get the parent accessor
   let relationFieldsToParent: string[] = [];
   let fieldType = "";
@@ -919,8 +925,19 @@ export function generateConvertToPrismaCreateInputCode(
   }
 
   const fieldsToConvert: Partial<DMMF.Field>[] = modelTree.model.fields
-    .filter(({ isId }) => !isId)
+    .filter((field) => {
+      if (field.name === "id") {
+        const fieldRenderable = isFieldRenderable(field);
+        console.log("HERE IN NAME", {
+          bool: field.isId !== true || field.hasDefaultValue == false,
+          field,
+          fieldRenderable,
+        });
+      }
+      return field.isId !== true || field.hasDefaultValue == false;
+    })
     .filter((field) => isFieldRenderable(field));
+  console.log({ fieldsToConvert });
 
   const convertToPrismaInputLines = fieldsToConvert.map(({ name, type }) => {
     let typecastValue = `formData.get('${name}')`;
@@ -1181,7 +1198,7 @@ export function generateWhereClause(
     modelUniqueIdFields
   ) {
     // where id1: params.bookingid1
-    if (modelUniqueIdFields.length > 0) {
+    if (modelUniqueIdFields.length > 1) {
       returnClause +=
         "{" + modelUniqueIdFields.map((f) => f.name).join("_") + ":{";
       modelUniqueIdFields.forEach((f, index) => {
@@ -1221,7 +1238,7 @@ export function generateDeleteClause(
   console.log("deleteClause", { uniqueIdentifierFields });
   if (uniqueIdentifierFields.length === 1) {
     const singleIdField = uniqueIdentifierFields[0];
-    let typecastValue = `formData.get('${singleIdField}')`;
+    let typecastValue = `formData.get('${singleIdField.name}')`;
     if (singleIdField.type === "Int" || singleIdField.type === "Float") {
       typecastValue = `Number(${typecastValue})`;
     } else if (singleIdField.type === "Boolean") {
@@ -1306,11 +1323,28 @@ export function generateFormFields(
         }
       }
 
-      if (!isFieldRenderable(field) || field.isId) {
-        return "";
+      let returnValue = "";
+      if (field.name === "id") {
+        console.log("$$$$$$$$$$$$$$$$$$$$$$$\n", {
+          field,
+          isRender: isFieldRenderable(field),
+          bool: field.isId == false || field.hasDefaultValue === false,
+          full:
+            isFieldRenderable(field) &&
+            (field.isId == false || field.hasDefaultValue === false),
+        });
       }
-      return `<label>${field.name}</label>\n
+
+      if (
+        isFieldRenderable(field) &&
+        (field.isId == false || field.hasDefaultValue === false)
+      ) {
+        returnValue = `<label>${field.name}</label>\n
         <input type="${inputType}" name="${field.name}" ${required}/>`;
+      }
+      console.log({ returnValue });
+
+      return returnValue;
     })
     .join("\n");
 }
