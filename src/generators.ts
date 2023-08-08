@@ -723,8 +723,8 @@ export async function generateAppDirectoryFromModelTree(
     addStringBetweenComments(
       baseModelDirectory,
       prismaInput,
-      "//@nexquik prismaDataInput start",
-      "//@nexquik prismaDataInput stop"
+      "//@nexquik prismaEditDataInput start",
+      "//@nexquik prismaEditDataInput stop"
     );
 
     const whereClause = generateWhereClause(
