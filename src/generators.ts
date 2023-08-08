@@ -331,26 +331,48 @@ export async function generate(
 
 export async function generateShowForm(
   modelTree: ModelTree,
-  routeUrl: string
+  routeUrl: string,
+  enums: Record<string, string[]>
 ): Promise<string> {
-  const uniqueField = modelTree.model.fields.find(
-    (tableField) => tableField.isId
+  // const uniqueField = modelTree.model.fields.find(
+  //   (tableField) => tableField.isId
+  // );
+  // const uniqueFieldInputType =
+  //   (uniqueField?.type && prismaFieldToInputType[uniqueField.type]) || "text";
+  const formFields = generateFormFieldsWithDefaults(
+    modelTree.model.fields,
+    enums
   );
-  const uniqueFieldInputType =
-    (uniqueField?.type && prismaFieldToInputType[uniqueField.type]) || "text";
 
+  const uniqueFields = modelTree.uniqueIdentifierField;
+  const nonUniqueFields = modelTree.model.fields.filter(
+    (i) => !uniqueFields.find((j) => j.name === i.name)
+  );
+  console.log(" show form unique", { uniqueFields, nonUniqueFields });
   // Define the React component template as a string
+
+  let linkRoute = routeUrl;
+  uniqueFields.forEach((f) => {
+    linkRoute += `\${nexquikTemplateModel?.${f?.name}}`;
+  });
   const reactComponentTemplate = `
     <form>
-    <input hidden type="${uniqueFieldInputType}" name="${
-    uniqueField?.name
-  }" defaultValue={nexquikTemplateModel?.${uniqueField?.name}} />
+
+    ${modelTree.model.fields
+      .map((field) => {
+        if (!isFieldRenderable(field)) {
+          return "";
+        }
+        return `  <input hidden type="${field.type}" name="${field?.name}" defaultValue={nexquikTemplateModel?.${field?.name}} />`;
+      })
+      .join("\n")}
+
+
+  
     <div className="button-group">
 
 
-    <Link className="action-link edit-link" href={\`${routeUrl}/\${nexquikTemplateModel.${
-    uniqueField?.name
-  }}/edit\`}>Edit</Link>
+    <Link className="action-link edit-link" href={\`${linkRoute}}/edit\`}>Edit</Link>
 
   
     <button className="action-link delete-link" formAction={deleteNexquikTemplateModel}>Delete</button>
@@ -365,7 +387,7 @@ export async function generateShowForm(
         }
         return `<div className="pair">
       <span className="key">${field.name}</span>
-      <span className="value">{\`\${nexquikTemplateModel.${field.name}}\`}</span>
+      <span className="value">{\`\${nexquikTemplateModel?.${field.name}}\`}</span>
   </div>`;
       })
       .join("\n")}
@@ -373,6 +395,19 @@ export async function generateShowForm(
 
     </form>
   `;
+
+  // const reactComponentTemplate = `
+  //   <form>
+  //       ${formFields}
+  //       <div className="button-group">
+  //       <button className="create-button" type="submit">Update NexquikTemplateModel</button>
+  //       <Link href={\`${routeUrl}\`} className="cancel-link">
+  //           Cancel
+  //       </Link>
+  //       </div>
+  //     </form>
+  // `;
+  return reactComponentTemplate;
 
   return reactComponentTemplate;
 }
@@ -502,43 +537,10 @@ export async function generateAppDirectoryFromModelTree(
       true
     );
 
-    // const pathChunks = directoryToCreate
-    //   .split("/")
-    //   .filter((chunk) => chunk.trim() !== "");
-
-    // let currentDir = "";
-    // for (const chunk of pathChunks) {
-    //   currentDir = path.join(currentDir, chunk);
-    //   if (!fs.existsSync(currentDir)) {
-    //     fs.mkdirSync(currentDir);
-    //   }
-    // }
     const uniqueDynamicSlugs = getDynamicSlugs(
       modelTree.modelName,
       modelUniqueIdentifierField.map((f) => f.name)
     );
-
-    // copyDirectory(
-    //   path.join(__dirname, "templateApp", "nexquikTemplateModel"),
-    //   directoryToCreate,
-    //   true,
-    //   "[id]"
-    // );
-    // console.log({ directoryToCreate });
-    // console.log({ parentSlugRoute });
-
-    // Copy the dynamic directory from template this
-    // copyDirectory(
-    //   path.join(__dirname, "templateApp", "nexquikTemplateModel", "[id]"),
-
-    //   path.join(outputDirectory, parentSlugRoute),
-    //   false
-    // );
-
-    // // Byp ass the creation of dynamic routes for this model if we cannot find a unique id field
-    // // TODO: Figure out how to support composite types in dynamic routes
-
-    // Delete the dynamic route page
 
     // ############### List Page
     const listFormCode = await generateListForm(
@@ -547,7 +549,7 @@ export async function generateAppDirectoryFromModelTree(
       modelUniqueIdentifierField
     );
     addStringBetweenComments(
-      dynamicOutputDirectory,
+      baseModelDirectory,
       listFormCode,
       "{/* @nexquik listForm start */}",
       "{/* @nexquik listForm stop */}"
@@ -597,7 +599,7 @@ export async function generateAppDirectoryFromModelTree(
     // const thisDynamicDirectory = path.join(outputDirectory, parentSlugRoute);
     // console.log("brandin adding delete clause in: ", thisDynamicDirectory);
     addStringBetweenComments(
-      dynamicOutputDirectory,
+      baseModelDirectory,
       deleteWhereClause,
       "//@nexquik prismaDeleteClause start",
       "//@nexquik prismaDeleteClause stop"
@@ -607,7 +609,7 @@ export async function generateAppDirectoryFromModelTree(
       `\`${convertRouteToRedirectUrl(route)}\``
     );
     addStringBetweenComments(
-      dynamicOutputDirectory,
+      baseModelDirectory,
       listRedirect,
       "//@nexquik listRedirect start",
       "//@nexquik listRedirect stop"
@@ -651,7 +653,7 @@ export async function generateAppDirectoryFromModelTree(
     //   : "()";
     // console.log({ whereparentClause });
     addStringBetweenComments(
-      dynamicOutputDirectory,
+      baseModelDirectory,
       whereparentClause,
       "//@nexquik prismaWhereParentClause start",
       "//@nexquik prismaWhereParentClause stop"
@@ -660,10 +662,11 @@ export async function generateAppDirectoryFromModelTree(
     // ############### Show Page
     const showFormCode = await generateShowForm(
       modelTree,
-      convertRouteToRedirectUrl(route)
+      convertRouteToRedirectUrl(route),
+      enums
     );
     addStringBetweenComments(
-      dynamicOutputDirectory,
+      baseModelDirectory,
       showFormCode,
       "{/* @nexquik showForm start */}",
       "{/* @nexquik showForm stop */}"
@@ -674,7 +677,7 @@ export async function generateAppDirectoryFromModelTree(
     );
     // console.log({ childModelLinkList });
     addStringBetweenComments(
-      dynamicOutputDirectory,
+      baseModelDirectory,
       childModelLinkList,
       "{/* @nexquik listChildren start */}",
       "{/* @nexquik listChildren stop */}"
@@ -686,7 +689,7 @@ export async function generateAppDirectoryFromModelTree(
       enums
     );
     addStringBetweenComments(
-      dynamicOutputDirectory,
+      baseModelDirectory,
       createFormCode,
       "{/* @nexquik createForm start */}",
       "{/* @nexquik createForm stop */}"
@@ -700,7 +703,7 @@ export async function generateAppDirectoryFromModelTree(
       `\`${convertRouteToRedirectUrl(route)}${redirectStr}\``
     );
     addStringBetweenComments(
-      dynamicOutputDirectory,
+      baseModelDirectory,
       createRedirect,
       "//@nexquik createRedirect start",
       "//@nexquik createRedirect stop"
@@ -710,15 +713,15 @@ export async function generateAppDirectoryFromModelTree(
       "Create New NexquikTemplateModel"
     );
     addStringBetweenComments(
-      dynamicOutputDirectory,
+      baseModelDirectory,
       createLink,
       "{/* @nexquik createLink start */}",
       "{/* @nexquik createLink stop */}"
     );
     const prismaInput = generateConvertToPrismaInputCode(modelTree);
-    // console.log("NIKKI", { prismaInput });
+    console.log("NIKKI", { prismaInput });
     addStringBetweenComments(
-      dynamicOutputDirectory,
+      baseModelDirectory,
       prismaInput,
       "//@nexquik prismaDataInput start",
       "//@nexquik prismaDataInput stop"
@@ -732,7 +735,7 @@ export async function generateAppDirectoryFromModelTree(
     // console.log({ whereClause, route });
     addStringBetweenComments(
       // thisDynamicDirectory,
-      dynamicOutputDirectory,
+      baseModelDirectory,
       whereClause,
       "//@nexquik prismaWhereInput start",
       "//@nexquik prismaWhereInput stop"
@@ -745,7 +748,7 @@ export async function generateAppDirectoryFromModelTree(
       enums
     );
     addStringBetweenComments(
-      dynamicOutputDirectory,
+      baseModelDirectory,
       editFormCode,
       "{/* @nexquik editForm start */}",
       "{/* @nexquik editForm stop */}"
@@ -760,7 +763,7 @@ export async function generateAppDirectoryFromModelTree(
       `\`${convertRouteToRedirectUrl(route)}${redirectStr2}\``
     );
     addStringBetweenComments(
-      dynamicOutputDirectory,
+      baseModelDirectory,
       editRedirect,
       "//@nexquik editRedirect start",
       "//@nexquik editRedirect stop"
@@ -771,7 +774,7 @@ export async function generateAppDirectoryFromModelTree(
       `${convertRouteToRedirectUrl(route)}`
     );
     addStringBetweenComments(
-      dynamicOutputDirectory,
+      baseModelDirectory,
       revalidatePath,
       "//@nexquik revalidatePath start",
       "//@nexquik revalidatePath stop"
@@ -782,7 +785,7 @@ export async function generateAppDirectoryFromModelTree(
       "Back"
     );
     addStringBetweenComments(
-      dynamicOutputDirectory,
+      baseModelDirectory,
       backLink,
       "{/* @nexquik backLink start */}",
       "{/* @nexquik backLink stop */}"
@@ -793,41 +796,18 @@ export async function generateAppDirectoryFromModelTree(
       "Back"
     );
     addStringBetweenComments(
-      dynamicOutputDirectory,
+      baseModelDirectory,
       backToCurrent,
       "{/* @nexquik backToCurrentLink start */}",
       "{/* @nexquik backToCurrentLink stop */}"
     );
 
-    fs.readdir(dynamicOutputDirectory, (err, files) => {
-      console.log("reading directory", dynamicOutputDirectory);
-      if (err) {
-        console.error("Error reading directory:", err);
-        return;
-      }
-
-      const subdirectories = files.filter((file) => {
-        return fs
-          .statSync(path.join(dynamicOutputDirectory, file))
-          .isDirectory();
-      });
-
-      console.log("Subdirectories:");
-      subdirectories.forEach((subdir) => {
-        console.log(subdir);
-      });
-    });
     // // Replace all placeholder model names
     findAndReplaceInFiles(
       baseModelDirectory,
       "nexquikTemplateModel",
       modelTree.modelName
     );
-    // findAndReplaceInFiles(
-    //   thisDynamicDirectory,
-    //   "nexquikTemplateModel",
-    //   modelTree.modelName
-    // );
 
     // // ############### Create Routes
     // // Create
@@ -888,7 +868,10 @@ export async function generateAppDirectoryFromModelTree(
   return routes;
 }
 
-export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
+export function generateConvertToPrismaInputCode(
+  modelTree: ModelTree,
+  withParent: boolean = false
+): string {
   // If model has a parent, get the parent accessor
   let relationFieldsToParent: string[] = [];
   let fieldType = "";
@@ -940,27 +923,27 @@ export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
     // if (parentIdentifierFields && parentIdentifierFields.length > 0) {
     //   parentIdentifierField = parentIdentifierFields[0];
     // }
-    const parentSlugs = getDynamicSlugs(
-      modelTree.parent?.name,
-      parentIdentifierFields
-    );
-    parentSlugs.forEach((s, index) => {
-      console.log("in slugs", { parentIdentifierFields });
-      // const relationTo =
-      let typecastValue = `params.${s}`;
-      if (fieldType === "Int" || fieldType === "Float") {
-        typecastValue = `Number(${typecastValue})`;
-      } else if (fieldType === "Boolean") {
-        typecastValue = `Boolean(${typecastValue})`;
-      } else if (fieldType === "DateTime") {
-        typecastValue = `new Date(String(${typecastValue}))`;
-      } else {
-        typecastValue = `String(${typecastValue})`;
-      }
-      convertToPrismaInputLines.push(
-        `    ${parentIdentifierFields[index]}: ${typecastValue},`
-      );
-    });
+    // const parentSlugs = getDynamicSlugs(
+    //   modelTree.parent?.name,
+    //   parentIdentifierFields
+    // );
+    // parentSlugs.forEach((s, index) => {
+    //   console.log("in slugs", { parentIdentifierFields });
+    //   // const relationTo =
+    //   let typecastValue = `params.${s}`;
+    //   if (fieldType === "Int" || fieldType === "Float") {
+    //     typecastValue = `Number(${typecastValue})`;
+    //   } else if (fieldType === "Boolean") {
+    //     typecastValue = `Boolean(${typecastValue})`;
+    //   } else if (fieldType === "DateTime") {
+    //     typecastValue = `new Date(String(${typecastValue}))`;
+    //   } else {
+    //     typecastValue = `String(${typecastValue})`;
+    //   }
+    //   convertToPrismaInputLines.push(
+    //     `    ${parentIdentifierFields[index]}: ${typecastValue},`
+    //   );
+    // });
   }
 
   // Convert fields pointing to other relations differently
@@ -1207,16 +1190,16 @@ export function generateFormFieldsWithDefaults(
         return `<label>${field.name}</label>\n
               <select name="${field.name}" id="${
           field.name
-        }" defaultValue={nexquikTemplateModel.${field.name}}>
+        }" defaultValue={nexquikTemplateModel?.${field.name}}>
               ${enumValues.map((v) => `<option value="${v}">${v}</option>`)}
       </select>`;
       }
       const inputType = prismaFieldToInputType[field.type] || "text";
       const defaultValue = field.isId
-        ? `{nexquikTemplateModel.${field.name} || 'N/A'}`
+        ? `{nexquikTemplateModel?.${field.name} || 'N/A'}`
         : field.type === "DateTime"
-        ? `{nexquikTemplateModel.${field.name}.toISOString().slice(0, 16)}`
-        : `{nexquikTemplateModel.${field.name}}`;
+        ? `{nexquikTemplateModel?.${field.name}.toISOString().slice(0, 16)}`
+        : `{nexquikTemplateModel?.${field.name}}`;
       const disabled = field.isId ? "disabled" : "";
       const required = field.isRequired ? "required" : "";
 
