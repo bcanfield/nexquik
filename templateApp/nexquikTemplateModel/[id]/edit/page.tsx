@@ -20,9 +20,9 @@ export default async function EditNexquikTemplateModel({ params }) {
         { id: params.id },
       //@nexquik prismaWhereInput stop
       data:
-        //@nexquik prismaDataInput start
+        //@nexquik prismaEditDataInput start
         { name: formData.get("name") },
-      //@nexquik prismaDataInput stop
+      //@nexquik prismaEditDataInput stop
     });
     //@nexquik editRedirect start
     redirect(`/nexquikTemplateModel/${params.id}`);
