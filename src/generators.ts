@@ -472,6 +472,9 @@ export async function generateAppDirectoryFromModelTree(
     //   });
     // }
     route += modelName.charAt(0).toLowerCase() + modelName.slice(1);
+    const baseRoute = route;
+    const createRedirectForm = convertRouteToRedirectUrl(baseRoute);
+
     // Create base directory for model
     const baseModelDirectory = path.join(outputDirectory, route);
     const baseParts = baseModelDirectory
@@ -501,10 +504,11 @@ export async function generateAppDirectoryFromModelTree(
     }
     // Create dynamic directories
 
-    getDynamicSlugs(
+    const slugsForThisModel = getDynamicSlugs(
       modelTree.modelName,
       modelUniqueIdentifierField.map((f) => f.name)
-    ).forEach((parentSlug) => {
+    );
+    slugsForThisModel.forEach((parentSlug) => {
       route += `/[${parentSlug}]/`;
     });
     console.log("Creating dynamic directory for model", {
@@ -545,7 +549,7 @@ export async function generateAppDirectoryFromModelTree(
     // ############### List Page
     const listFormCode = await generateListForm(
       modelTree,
-      convertRouteToRedirectUrl(route),
+      createRedirectForm,
       modelUniqueIdentifierField
     );
     addStringBetweenComments(
@@ -605,9 +609,7 @@ export async function generateAppDirectoryFromModelTree(
       "//@nexquik prismaDeleteClause stop"
     );
     // console.log({ route });
-    const listRedirect = await generateRedirect(
-      `\`${convertRouteToRedirectUrl(route)}\``
-    );
+    const listRedirect = await generateRedirect(`\`${createRedirectForm}\``);
     addStringBetweenComments(
       baseModelDirectory,
       listRedirect,
@@ -662,7 +664,7 @@ export async function generateAppDirectoryFromModelTree(
     // ############### Show Page
     const showFormCode = await generateShowForm(
       modelTree,
-      convertRouteToRedirectUrl(route),
+      createRedirectForm,
       enums
     );
     addStringBetweenComments(
@@ -673,7 +675,7 @@ export async function generateAppDirectoryFromModelTree(
     );
     const childModelLinkList = await generateChildrenList(
       modelTree,
-      convertRouteToRedirectUrl(route)
+      createRedirectForm
     );
     // console.log({ childModelLinkList });
     addStringBetweenComments(
@@ -683,9 +685,10 @@ export async function generateAppDirectoryFromModelTree(
       "{/* @nexquik listChildren stop */}"
     );
     // // ############### Create Page
+    console.log({ createRedirectForm, baseRoute });
     const createFormCode = await generateCreateForm(
       modelTree,
-      convertRouteToRedirectUrl(route),
+      createRedirectForm,
       enums
     );
     addStringBetweenComments(
@@ -700,7 +703,7 @@ export async function generateAppDirectoryFromModelTree(
       (f) => (redirectStr += "/" + `\${created.${f.name}}`)
     );
     const createRedirect = await generateRedirect(
-      `\`${convertRouteToRedirectUrl(route)}${redirectStr}\``
+      `\`${createRedirectForm}${redirectStr}\``
     );
     addStringBetweenComments(
       baseModelDirectory,
@@ -709,7 +712,7 @@ export async function generateAppDirectoryFromModelTree(
       "//@nexquik createRedirect stop"
     );
     const createLink = await generateLink(
-      `${convertRouteToRedirectUrl(route)}/create`,
+      `${createRedirectForm}/create`,
       "Create New NexquikTemplateModel"
     );
     addStringBetweenComments(
@@ -726,7 +729,16 @@ export async function generateAppDirectoryFromModelTree(
       "//@nexquik prismaEditDataInput start",
       "//@nexquik prismaEditDataInput stop"
     );
-    const prismaCreateInput = generateConvertToPrismaCreateInputCode(modelTree);
+
+    const parentSlugs = getDynamicSlugs(
+      modelTree.parent?.name,
+      parentRoute.uniqueIdentifierField.map((f) => f.name)
+    );
+
+    const prismaCreateInput = generateConvertToPrismaCreateInputCode(
+      modelTree,
+      parentSlugs
+    );
     console.log("NIKKI", { prismaCreateInput });
     addStringBetweenComments(
       baseModelDirectory,
@@ -752,7 +764,7 @@ export async function generateAppDirectoryFromModelTree(
     // // ############### Edit Page
     const editFormCode = await generateEditForm(
       modelTree,
-      convertRouteToRedirectUrl(route),
+      createRedirectForm,
       enums
     );
     addStringBetweenComments(
@@ -768,7 +780,7 @@ export async function generateAppDirectoryFromModelTree(
     );
 
     const editRedirect = await generateRedirect(
-      `\`${convertRouteToRedirectUrl(route)}${redirectStr2}\``
+      `\`${createRedirectForm}${redirectStr2}\``
     );
     addStringBetweenComments(
       baseModelDirectory,
@@ -779,7 +791,7 @@ export async function generateAppDirectoryFromModelTree(
 
     // // ############### Extras
     const revalidatePath = await generateRevalidatePath(
-      `${convertRouteToRedirectUrl(route)}`
+      `${createRedirectForm}`
     );
     addStringBetweenComments(
       baseModelDirectory,
@@ -789,7 +801,7 @@ export async function generateAppDirectoryFromModelTree(
     );
 
     const backLink = await generateLink(
-      popStringEnd(`${convertRouteToRedirectUrl(route)}`, "/"),
+      popStringEnd(`${createRedirectForm}`, "/"),
       "Back"
     );
     addStringBetweenComments(
@@ -799,10 +811,7 @@ export async function generateAppDirectoryFromModelTree(
       "{/* @nexquik backLink stop */}"
     );
 
-    const backToCurrent = await generateLink(
-      `${convertRouteToRedirectUrl(route)}`,
-      "Back"
-    );
+    const backToCurrent = await generateLink(`${createRedirectForm}`, "Back");
     addStringBetweenComments(
       baseModelDirectory,
       backToCurrent,
@@ -878,7 +887,7 @@ export async function generateAppDirectoryFromModelTree(
 
 export function generateConvertToPrismaCreateInputCode(
   modelTree: ModelTree,
-  withParent: boolean = false
+  parentSlugs: string[]
 ): string {
   // If model has a parent, get the parent accessor
   let relationFieldsToParent: string[] = [];
@@ -938,7 +947,7 @@ export function generateConvertToPrismaCreateInputCode(
     relationFieldsToParent.forEach((s, index) => {
       console.log("in slugs", { relationFieldsToParent });
       // const relationTo =
-      let typecastValue = `params.${s}`;
+      let typecastValue = `params.${parentSlugs[index]}`;
       if (fieldType === "Int" || fieldType === "Float") {
         typecastValue = `Number(${typecastValue})`;
       } else if (fieldType === "Boolean") {
