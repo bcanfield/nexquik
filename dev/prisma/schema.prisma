@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -10,24 +7,15 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model Parent {
-  id3        Int
-  id4        Int
-  name       String
-  bookings   Booking @relation(fields: [bookingId1, bookingId2], references: [id1, id2], onDelete: Cascade)
-  bookingId1 Int
-  bookingId2 Int
-
-  @@id([id3, id4], map: "PK_0c1ca63368e3f0a8ea8ce9eee5c")
+model Product {
+  id    String @id
+  name  String
+  foo   Foo    @relation(fields: [fooId], references: [id], onDelete: Cascade)
+  fooId String
 }
 
-model Booking {
-  id1          Int
-  id2          Int
-  inviteeEmail String
-  startDateUTC DateTime
-  cancelCode   String
-  Parent       Parent[]
-
-  @@id([id1, id2], map: "PK_0c1cc63368e3f0a8ea8ce9eee5c")
+model Foo {
+  id      String    @id @default(cuid())
+  bar     String
+  Product Product[]
 }
