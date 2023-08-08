@@ -296,7 +296,7 @@ export async function generate(
     outputDirectory,
     enums
   );
-  console.log({ routes });
+  // console.log({ routes });
   // prettyPrintAPIRoutes(routes);
   console.log(chalk.blue("Generating Route List"));
   const routeList = generateRouteList(routes);
@@ -436,64 +436,104 @@ export async function generateAppDirectoryFromModelTree(
     //     route += `/[${parentSlug}]/`;
     //   });
     // }
-    const parentSlugRoute = route;
     route += modelName.charAt(0).toLowerCase() + modelName.slice(1);
+    // Create base directory for model
+    const baseModelDirectory = path.join(outputDirectory, route);
+    const baseParts = baseModelDirectory
+      .split(path.sep)
+      .filter((item) => item !== "");
+    console.log({ baseParts });
+    let currentBasePath = "";
+    for (const part of baseParts) {
+      currentBasePath = path.join(currentBasePath, part);
+      console.log("CREATING", currentBasePath);
+      if (!fs.existsSync(currentBasePath)) {
+        fs.mkdirSync(currentBasePath);
+      }
+    }
+    console.log({ baseModelDirectory });
+
+    if (baseModelDirectory !== "app/") {
+      // Copy base directory files from template
+      copyDirectory(
+        path.join(__dirname, "templateApp", "nexquikTemplateModel"),
+        baseModelDirectory,
+        true,
+        "[id]"
+      );
+    } else {
+      console.log("ERROR, not copying base model directory for ", modelName);
+    }
+    // Create dynamic directories
+
     getDynamicSlugs(
       modelTree.modelName,
       modelUniqueIdentifierField.map((f) => f.name)
     ).forEach((parentSlug) => {
       route += `/[${parentSlug}]/`;
     });
-    const directoryToCreate = path.join(outputDirectory, route);
-    console.log("Creating directory for model", {
+    console.log("Creating dynamic directory for model", {
       modelName,
-      directoryToCreate,
+      route,
     });
-
-    // Recursively create paths
-    const parts = directoryToCreate.split(path.sep);
-
+    // const parentSlugRoute = route;
+    const dynamicOutputDirectory = path.join(outputDirectory, route);
+    console.log("Creating base directory for model", {
+      modelName,
+      route,
+    });
+    const parts = dynamicOutputDirectory
+      .split(path.sep)
+      .filter((item) => item !== "");
+    console.log({ parts });
     let currentPath = "";
     for (const part of parts) {
       currentPath = path.join(currentPath, part);
-
+      console.log("CREATING", currentPath);
       if (!fs.existsSync(currentPath)) {
         fs.mkdirSync(currentPath);
       }
     }
 
-    const pathChunks = directoryToCreate
-      .split("/")
-      .filter((chunk) => chunk.trim() !== "");
+    // Copy template dynamic directory into new dynamic directory
+    copyDirectory(
+      path.join(__dirname, "templateApp", "nexquikTemplateModel", "[id]"),
+      dynamicOutputDirectory,
+      true
+    );
 
-    let currentDir = "";
-    for (const chunk of pathChunks) {
-      currentDir = path.join(currentDir, chunk);
-      if (!fs.existsSync(currentDir)) {
-        fs.mkdirSync(currentDir);
-      }
-    }
+    // const pathChunks = directoryToCreate
+    //   .split("/")
+    //   .filter((chunk) => chunk.trim() !== "");
+
+    // let currentDir = "";
+    // for (const chunk of pathChunks) {
+    //   currentDir = path.join(currentDir, chunk);
+    //   if (!fs.existsSync(currentDir)) {
+    //     fs.mkdirSync(currentDir);
+    //   }
+    // }
     const uniqueDynamicSlugs = getDynamicSlugs(
       modelTree.modelName,
       modelUniqueIdentifierField.map((f) => f.name)
     );
 
-    copyDirectory(
-      path.join(__dirname, "templateApp", "nexquikTemplateModel"),
-      directoryToCreate,
-      true,
-      "[id]"
-    );
-    console.log({ directoryToCreate });
-    console.log({ parentSlugRoute });
+    // copyDirectory(
+    //   path.join(__dirname, "templateApp", "nexquikTemplateModel"),
+    //   directoryToCreate,
+    //   true,
+    //   "[id]"
+    // );
+    // console.log({ directoryToCreate });
+    // console.log({ parentSlugRoute });
 
     // Copy the dynamic directory from template this
-    copyDirectory(
-      path.join(__dirname, "templateApp", "nexquikTemplateModel", "[id]"),
+    // copyDirectory(
+    //   path.join(__dirname, "templateApp", "nexquikTemplateModel", "[id]"),
 
-      path.join(outputDirectory, parentSlugRoute),
-      false
-    );
+    //   path.join(outputDirectory, parentSlugRoute),
+    //   false
+    // );
 
     // // Byp ass the creation of dynamic routes for this model if we cannot find a unique id field
     // // TODO: Figure out how to support composite types in dynamic routes
@@ -507,7 +547,7 @@ export async function generateAppDirectoryFromModelTree(
       modelUniqueIdentifierField
     );
     addStringBetweenComments(
-      directoryToCreate,
+      dynamicOutputDirectory,
       listFormCode,
       "{/* @nexquik listForm start */}",
       "{/* @nexquik listForm stop */}"
@@ -557,7 +597,7 @@ export async function generateAppDirectoryFromModelTree(
     // const thisDynamicDirectory = path.join(outputDirectory, parentSlugRoute);
     // console.log("brandin adding delete clause in: ", thisDynamicDirectory);
     addStringBetweenComments(
-      directoryToCreate,
+      dynamicOutputDirectory,
       deleteWhereClause,
       "//@nexquik prismaDeleteClause start",
       "//@nexquik prismaDeleteClause stop"
@@ -567,7 +607,7 @@ export async function generateAppDirectoryFromModelTree(
       `\`${convertRouteToRedirectUrl(route)}\``
     );
     addStringBetweenComments(
-      directoryToCreate,
+      dynamicOutputDirectory,
       listRedirect,
       "//@nexquik listRedirect start",
       "//@nexquik listRedirect stop"
@@ -611,7 +651,7 @@ export async function generateAppDirectoryFromModelTree(
     //   : "()";
     // console.log({ whereparentClause });
     addStringBetweenComments(
-      directoryToCreate,
+      dynamicOutputDirectory,
       whereparentClause,
       "//@nexquik prismaWhereParentClause start",
       "//@nexquik prismaWhereParentClause stop"
@@ -623,7 +663,7 @@ export async function generateAppDirectoryFromModelTree(
       convertRouteToRedirectUrl(route)
     );
     addStringBetweenComments(
-      directoryToCreate,
+      dynamicOutputDirectory,
       showFormCode,
       "{/* @nexquik showForm start */}",
       "{/* @nexquik showForm stop */}"
@@ -634,7 +674,7 @@ export async function generateAppDirectoryFromModelTree(
     );
     // console.log({ childModelLinkList });
     addStringBetweenComments(
-      directoryToCreate,
+      dynamicOutputDirectory,
       childModelLinkList,
       "{/* @nexquik listChildren start */}",
       "{/* @nexquik listChildren stop */}"
@@ -646,7 +686,7 @@ export async function generateAppDirectoryFromModelTree(
       enums
     );
     addStringBetweenComments(
-      directoryToCreate,
+      dynamicOutputDirectory,
       createFormCode,
       "{/* @nexquik createForm start */}",
       "{/* @nexquik createForm stop */}"
@@ -660,7 +700,7 @@ export async function generateAppDirectoryFromModelTree(
       `\`${convertRouteToRedirectUrl(route)}${redirectStr}\``
     );
     addStringBetweenComments(
-      directoryToCreate,
+      dynamicOutputDirectory,
       createRedirect,
       "//@nexquik createRedirect start",
       "//@nexquik createRedirect stop"
@@ -670,15 +710,15 @@ export async function generateAppDirectoryFromModelTree(
       "Create New NexquikTemplateModel"
     );
     addStringBetweenComments(
-      directoryToCreate,
+      dynamicOutputDirectory,
       createLink,
       "{/* @nexquik createLink start */}",
       "{/* @nexquik createLink stop */}"
     );
     const prismaInput = generateConvertToPrismaInputCode(modelTree);
-    console.log("NIKKI", { prismaInput });
+    // console.log("NIKKI", { prismaInput });
     addStringBetweenComments(
-      directoryToCreate,
+      dynamicOutputDirectory,
       prismaInput,
       "//@nexquik prismaDataInput start",
       "//@nexquik prismaDataInput stop"
@@ -689,10 +729,10 @@ export async function generateAppDirectoryFromModelTree(
       uniqueDynamicSlugs,
       modelUniqueIdentifierField
     );
-    console.log({ whereClause, route });
+    // console.log({ whereClause, route });
     addStringBetweenComments(
       // thisDynamicDirectory,
-      directoryToCreate,
+      dynamicOutputDirectory,
       whereClause,
       "//@nexquik prismaWhereInput start",
       "//@nexquik prismaWhereInput stop"
@@ -705,7 +745,7 @@ export async function generateAppDirectoryFromModelTree(
       enums
     );
     addStringBetweenComments(
-      directoryToCreate,
+      dynamicOutputDirectory,
       editFormCode,
       "{/* @nexquik editForm start */}",
       "{/* @nexquik editForm stop */}"
@@ -720,7 +760,7 @@ export async function generateAppDirectoryFromModelTree(
       `\`${convertRouteToRedirectUrl(route)}${redirectStr2}\``
     );
     addStringBetweenComments(
-      directoryToCreate,
+      dynamicOutputDirectory,
       editRedirect,
       "//@nexquik editRedirect start",
       "//@nexquik editRedirect stop"
@@ -731,7 +771,7 @@ export async function generateAppDirectoryFromModelTree(
       `${convertRouteToRedirectUrl(route)}`
     );
     addStringBetweenComments(
-      directoryToCreate,
+      dynamicOutputDirectory,
       revalidatePath,
       "//@nexquik revalidatePath start",
       "//@nexquik revalidatePath stop"
@@ -742,7 +782,7 @@ export async function generateAppDirectoryFromModelTree(
       "Back"
     );
     addStringBetweenComments(
-      directoryToCreate,
+      dynamicOutputDirectory,
       backLink,
       "{/* @nexquik backLink start */}",
       "{/* @nexquik backLink stop */}"
@@ -753,15 +793,33 @@ export async function generateAppDirectoryFromModelTree(
       "Back"
     );
     addStringBetweenComments(
-      directoryToCreate,
+      dynamicOutputDirectory,
       backToCurrent,
       "{/* @nexquik backToCurrentLink start */}",
       "{/* @nexquik backToCurrentLink stop */}"
     );
 
+    fs.readdir(dynamicOutputDirectory, (err, files) => {
+      console.log("reading directory", dynamicOutputDirectory);
+      if (err) {
+        console.error("Error reading directory:", err);
+        return;
+      }
+
+      const subdirectories = files.filter((file) => {
+        return fs
+          .statSync(path.join(dynamicOutputDirectory, file))
+          .isDirectory();
+      });
+
+      console.log("Subdirectories:");
+      subdirectories.forEach((subdir) => {
+        console.log(subdir);
+      });
+    });
     // // Replace all placeholder model names
     findAndReplaceInFiles(
-      directoryToCreate,
+      baseModelDirectory,
       "nexquikTemplateModel",
       modelTree.modelName
     );
@@ -991,7 +1049,7 @@ export function generateWhereClause(
     type: string;
   }[]
 ): string {
-  console.log("WESLEY", { uniqueDynamicSlugs, modelUniqueIdFields });
+  // console.log("WESLEY", { uniqueDynamicSlugs, modelUniqueIdFields });
   let returnClause = "";
   if (
     inputObject &&
