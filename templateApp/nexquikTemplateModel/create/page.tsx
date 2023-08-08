@@ -10,13 +10,13 @@ export default async function CreateNexquikTemplateModel({ params }) {
     "use server";
     const created = await prisma.nexquikTemplateModel.create({
       data:
-        //@nexquik prismaDataInput start
+        //@nexquik prismaCreateDataInput start
         {
           name: formData.get("name"),
           lat: Number(formData.get("lat")),
           lng: Number(formData.get("lng")),
         },
-      //@nexquik prismaDataInput stop
+      //@nexquik prismaCreateDataInput stop
     });
     //@nexquik revalidatePath start
     revalidatePath("/nexquikTemplateModel");
