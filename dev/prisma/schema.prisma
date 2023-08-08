@@ -14,7 +14,7 @@ model Parent {
   id3        Int
   id4        Int
   name       String
-  bookings   Booking @relation(fields: [bookingId1, bookingId2], references: [id1, id2])
+  bookings   Booking @relation(fields: [bookingId1, bookingId2], references: [id1, id2], onDelete: Cascade)
   bookingId1 Int
   bookingId2 Int
 

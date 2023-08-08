@@ -206,6 +206,14 @@ async function generateListForm(
 
   const uniqueFieldInputType =
     (uniqueField?.type && prismaFieldToInputType[uniqueField.type]) || "text";
+
+  let uniqueFormInputs = "";
+  uniqueFields.forEach((u) => {
+    uniqueFormInputs += `<input hidden type="${
+      prismaFieldToInputType[u.type]
+    }" name="${u.name}" value={nexquikTemplateModel.${u.name}} readOnly/>`;
+  });
+
   // Define the React component template as a string
   const reactComponentTemplate = `
   <table className="item-list">
@@ -233,8 +241,7 @@ async function generateListForm(
 
       <td className="action-cell">
       <form>
-      <input hidden type="${uniqueFieldInputType}" name="${uniqueField?.name}"
-   />
+      ${uniqueFormInputs}
   <div className="action-buttons">
           <Link href={\`${linkHref}\`} className="action-link view-link">View</Link>
                   <Link href={\`${linkHref}}/edit\`} className="action-link edit-link">Edit</Link>
