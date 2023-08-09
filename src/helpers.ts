@@ -10,7 +10,6 @@ export function copyAndRenameFile(
   destinationDirectory: string,
   newFileName: string
 ) {
-  const sourceFileName = path.basename(sourceFilePath);
   const destinationFilePath = path.join(destinationDirectory, newFileName);
 
   try {
@@ -22,8 +21,6 @@ export function copyAndRenameFile(
 
     // Copy the source file to the destination
     fs.copyFileSync(sourceFilePath, destinationFilePath);
-
-    console.log(`File copied and renamed: ${sourceFileName} -> ${newFileName}`);
   } catch (error) {
     console.error(`An error occurred: ${error}`);
   }
@@ -89,12 +86,12 @@ export const copyDirectoryContents = async (
 export function copyDirectory(
   sourceDir: string,
   destinationDir: string,
-  toReplace: boolean = false,
+  toReplace = false,
   skipChildDir?: string
 ): void {
-  console.log(
-    chalk.yellowBright(`Copying directory: ${sourceDir} to ${destinationDir}`)
-  );
+  // console.log(
+  //   chalk.yellowBright(`Copying directory: ${sourceDir} to ${destinationDir}`)
+  // );
 
   try {
     if (toReplace && fs.existsSync(destinationDir)) {
@@ -106,7 +103,6 @@ export function copyDirectory(
     }
 
     const files = fs.readdirSync(sourceDir, { withFileTypes: true });
-    console.log(files.map((f) => f.name));
     files.forEach((entry) => {
       const file = entry.name;
 
@@ -125,8 +121,6 @@ export function copyDirectory(
         }
       }
     });
-
-    console.log(chalk.green("Directory copied successfully."));
   } catch (error) {
     console.error(chalk.red("An error occurred:", error));
   }
@@ -245,11 +239,11 @@ export function findAndReplaceInFiles(
   searchString: string,
   replacementString: string
 ): void {
-  console.log(
-    chalk.blue(
-      `Finding ${searchString}, replacing with ${replacementString}, in ${directoryPath}`
-    )
-  );
+  // console.log(
+  //   chalk.blue(
+  //     `Finding ${searchString}, replacing with ${replacementString}, in ${directoryPath}`
+  //   )
+  // );
   // Read the directory contents
   const files = fs.readdirSync(directoryPath);
 

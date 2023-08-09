@@ -8,10 +8,8 @@ import {
   convertRouteToRedirectUrl,
   copyAndRenameFile,
   copyDirectory,
-  copyFileToDirectory,
   findAndReplaceInFiles,
   getDynamicSlugs,
-  listFilesInDirectory,
   popStringEnd,
 } from "./helpers";
 import {
@@ -19,6 +17,7 @@ import {
   createModelTree,
   getParentReferenceField,
 } from "./modelTree";
+
 const readFileAsync = promisify(fs.readFile);
 
 export const prismaFieldToInputType: Record<string, string> = {
@@ -264,23 +263,21 @@ export async function generate(
   console.log(chalk.blue("Locating Prisma Schema File"));
   const prismaSchema = await readFileAsync(prismaSchemaPath, "utf-8");
 
-  // Create the output Directory
+  // Create the output directory
   console.log(chalk.blue("Creating output directory"));
   if (fs.existsSync(outputDirectory)) {
-    // Directory already exists, delete it
     fs.rmSync(outputDirectory, { recursive: true });
   }
-
-  // Create the directory
   fs.mkdirSync(outputDirectory);
+
   // Create the app directory
   const appDirectory = path.join(outputDirectory, "app");
   fs.mkdirSync(appDirectory);
 
-  // Copy over user's prisma file
   // Main section to build the app from the modelTree
   console.log(chalk.blue("Reading Prisma Schema"));
   const dmmf = await getDMMF({ datamodel: prismaSchema });
+
   console.log(chalk.blue("Creating Tree"));
   const modelTree = createModelTree(dmmf.datamodel);
   if (modelTree.length === 0) {
@@ -288,8 +285,6 @@ export async function generate(
     throw new Error("Nexquik Error: No valid models detected in schema");
     return;
   }
-  const enums = getEnums(dmmf.datamodel);
-  console.log(chalk.blue("Generating App Directory"));
   // Replace prisma client import
   addStringBetweenComments(
     path.join(__dirname, "templateRoot", "app"),
@@ -298,89 +293,53 @@ export async function generate(
     "//@nexquik prismaClientImport stop"
   );
 
-  // console.log(
-  //   "list source",
-  //   await listFilesInDirectory(path.join(__dirname, "templateRoot"))
-  // );
-  // Copy all files from the root dir
+  // Copy all files from the root dir except for app. (package.json, next.config, etc)
   copyDirectory(
     path.join(__dirname, "templateRoot"),
     outputDirectory,
     true,
     "app"
   );
-  // copyFileToDirectory(prismaSchemaPath, path.join(outputDirectory, "prisma"));
+
+  // Copy over the user's prisma schema and rename it to schema.prisma
   copyAndRenameFile(
     prismaSchemaPath,
     path.join(outputDirectory, "prisma"),
     "schema.prisma"
   );
 
-  // console.log("list destination", await listFilesInDirectory(outputDirectory));
-
   console.log(
-    "TOP LEVEL MODEL TREE\n",
-    modelTree.map((t) => t.modelName)
+    chalk.magentaBright.bold(
+      "TOP LEVEL MODEL TREE\n-------------\n",
+      modelTree.map((t) => t.modelName)
+    )
   );
+
+  const enums = getEnums(dmmf.datamodel);
+  console.log(chalk.blue("Generating App Directory"));
   const routes = await generateAppDirectoryFromModelTree(
     modelTree,
     appDirectory,
     enums
   );
-  // console.log({ routes });
-  // prettyPrintAPIRoutes(routes);
+
   console.log(chalk.blue("Generating Route List"));
   const routeList = generateRouteList(routes);
-
-  console.log(chalk.blue("Finishing Up"));
-  // Copy over the files in the root dir
   addStringBetweenComments(
     appDirectory,
     routeList,
     "{/* @nexquik routeList start */}",
     "{/* @nexquik routeList stop */}"
   );
-  // const rootPageName = "page.tsx";
-  // copyFileToDirectory(
-  //   path.join(__dirname, "templateRoot", "app", rootPageName),
-  //   outputDirectory
-  // );
-
-  // const globalStylesFileName = "globals.css";
-  // copyFileToDirectory(
-  //   path.join(__dirname, "templateRoot", "app", globalStylesFileName),
-  //   outputDirectory
-  // );
-
-  // const rootLayoutFileName = "layout.tsx";
-  // copyFileToDirectory(
-  //   path.join(__dirname, "templateRoot", "app", rootLayoutFileName),
-  //   outputDirectory
-  // );
+  console.log(chalk.blue("Finishing Up"));
   return;
 }
 
 export async function generateShowForm(
   modelTree: ModelTree,
-  routeUrl: string,
-  enums: Record<string, string[]>
+  routeUrl: string
 ): Promise<string> {
-  // const uniqueField = modelTree.model.fields.find(
-  //   (tableField) => tableField.isId
-  // );
-  // const uniqueFieldInputType =
-  //   (uniqueField?.type && prismaFieldToInputType[uniqueField.type]) || "text";
-  const formFields = generateFormFieldsWithDefaults(
-    modelTree.model.fields,
-    enums
-  );
-  // console.log({ formFields });
   const uniqueFields = modelTree.uniqueIdentifierField;
-  const nonUniqueFields = modelTree.model.fields.filter(
-    (i) => !uniqueFields.find((j) => j.name === i.name)
-  );
-  // console.log(" show form unique", { uniqueFields, nonUniqueFields });
-  // Define the React component template as a string
 
   let linkRoute = routeUrl;
   uniqueFields.forEach((f) => {
@@ -388,34 +347,17 @@ export async function generateShowForm(
   });
   const reactComponentTemplate = `
     <form>
-
     ${modelTree.model.fields
       .map((field) => {
         if (!isFieldRenderable(field)) {
           return "";
         }
-        // if (field.kind === "enum") {
-        //   const enumValues = enums[field.type];
-        //   return `<label>${field.name}</label>\n
-        //         <select name="${field.name}" id="${
-        //     field.name
-        //   }" defaultValue={nexquikTemplateModel?.${field.name}}>
-        //         ${enumValues.map((v) => `<option value="${v}">${v}</option>`)}
-        // </select>`;
-        // }
         let typecastValue = `nexquikTemplateModel?.${field?.name}`;
         if (field?.type === "Int" || field?.type === "Float") {
           typecastValue = `Number(${typecastValue})`;
         } else {
           typecastValue = `String(${typecastValue})`;
         }
-        // else if (field?.type === "Boolean") {
-        //   typecastValue = `Boolean(${typecastValue})`;
-        // } else if (field?.type === "String") {
-        //   typecastValue = `String(${typecastValue})`;
-        // } else if (field?.type === "DateTime") {
-        //   typecastValue = `String(${typecastValue})`;
-        // }
         return `  <input hidden type="${field.type}" name="${field?.name}" defaultValue={${typecastValue}} />`;
       })
       .join("\n")}
@@ -449,26 +391,12 @@ export async function generateShowForm(
     </form>
   `;
 
-  // const reactComponentTemplate = `
-  //   <form>
-  //       ${formFields}
-  //       <div className="button-group">
-  //       <button className="create-button" type="submit">Update NexquikTemplateModel</button>
-  //       <Link href={\`${routeUrl}\`} className="cancel-link">
-  //           Cancel
-  //       </Link>
-  //       </div>
-  //     </form>
-  // `;
-  return reactComponentTemplate;
-
   return reactComponentTemplate;
 }
 
 function generateRouteList(routes: RouteObject[]) {
   const routeLinks = [];
   for (const route of routes) {
-    // console.log({ route });
     routeLinks.push(
       `<tr className="item-row">
       <td>${route.model}</td>
@@ -505,17 +433,16 @@ export async function generateAppDirectoryFromModelTree(
       uniqueIdentifierField: { name: string; type: string }[];
     }
   ) {
-    // console.log({ outputDirectory });
+    // Get the current model name
     const modelName = modelTree.modelName;
 
     // Get the current mode'ls array of prisma unique id fields
     const modelUniqueIdentifierField = modelTree.uniqueIdentifierField;
 
     let route = parentRoute.name;
-    console.log({ brandin: route });
 
     if (route === "/") {
-      // Copy over the root dir to this dir
+      // Copy over the files in the template app dir, skipping the model directory. (globals.css, layout.tsx, page.tsx)
       copyDirectory(
         path.join(__dirname, "templateRoot", "app"),
         outputDirectory,
@@ -523,11 +450,6 @@ export async function generateAppDirectoryFromModelTree(
         "nexquikTemplateModel"
       );
     }
-    // if (parentRoute.name !== "/") {
-    //   parentUniqueSlugs.forEach((parentSlug) => {
-    //     route += `/[${parentSlug}]/`;
-    //   });
-    // }
     route += modelName.charAt(0).toLowerCase() + modelName.slice(1) + "/";
     routes.push({
       segment: `${route}create`,
@@ -535,6 +457,7 @@ export async function generateAppDirectoryFromModelTree(
       operation: "Create",
       description: `Create a ${modelName}`,
     });
+
     // List
     routes.push({
       segment: route,
@@ -550,7 +473,6 @@ export async function generateAppDirectoryFromModelTree(
     slugss.forEach((s) => {
       splitRoute += `[${s}]`;
     });
-    // console.log({ slugss, splitRoute });
 
     routes.push({
       segment: `${route}${splitRoute}/edit`,
@@ -569,37 +491,32 @@ export async function generateAppDirectoryFromModelTree(
 
     const baseRoute = route;
     const createRedirectForm = convertRouteToRedirectUrl(baseRoute);
-    // console.log("()()()()()()", { createRedirectForm });
 
-    // Create base directory for model
+    // Create base directory for this model under the app dir
     const baseModelDirectory = path.join(outputDirectory, route);
     const baseParts = baseModelDirectory
       .split(path.sep)
       .filter((item) => item !== "");
-    // console.log({ baseParts });
+
     let currentBasePath = "";
     for (const part of baseParts) {
       currentBasePath = path.join(currentBasePath, part);
-      console.log("CREATING", currentBasePath);
       if (!fs.existsSync(currentBasePath)) {
         fs.mkdirSync(currentBasePath);
       }
     }
-    // console.log({ baseModelDirectory });
 
     if (baseModelDirectory !== "app/") {
-      // Copy base directory files from template
+      // Copy files from template model, skipping dynamic directory. (create/, page.tsx)
       copyDirectory(
         path.join(__dirname, "templateRoot", "app", "nexquikTemplateModel"),
         baseModelDirectory,
         true,
         "[id]"
       );
-    } else {
-      console.log("ERROR, not copying base model directory for ", modelName);
     }
-    // Create dynamic directories
 
+    // Create dynamic directories
     const slugsForThisModel = getDynamicSlugs(
       modelTree.modelName,
       modelUniqueIdentifierField.map((f) => f.name)
@@ -607,24 +524,13 @@ export async function generateAppDirectoryFromModelTree(
     slugsForThisModel.forEach((parentSlug) => {
       route += `[${parentSlug}]/`;
     });
-    // console.log("Creating dynamic directory for model", {
-    //   modelName,
-    //   route,
-    // });
-    // const parentSlugRoute = route;
     const dynamicOutputDirectory = path.join(outputDirectory, route);
-    // console.log("Creating base directory for model", {
-    //   modelName,
-    //   route,
-    // });
     const parts = dynamicOutputDirectory
       .split(path.sep)
       .filter((item) => item !== "");
-    // console.log({ parts });
     let currentPath = "";
     for (const part of parts) {
       currentPath = path.join(currentPath, part);
-      // console.log("CREATING", currentPath);
       if (!fs.existsSync(currentPath)) {
         fs.mkdirSync(currentPath);
       }
@@ -661,8 +567,7 @@ export async function generateAppDirectoryFromModelTree(
       "{/* @nexquik listForm stop */}"
     );
 
-    // ##############
-    // TODO: Get this at the top level. If a model doesnt have a traditional id field we need to get it this way
+    // Get relation fields to parent
     let relationFieldToParent = "";
     let fieldType = "";
     if (modelTree.parent) {
@@ -686,31 +591,19 @@ export async function generateAppDirectoryFromModelTree(
     const parentIdentifierFields = modelTree.model.fields.find((field) =>
       field.relationFromFields?.includes(relationFieldToParent)
     )?.relationToFields;
-    // console.log({
-    //   currentFleidName: modelTree.model.name,
-    //   parentFieldName: modelTree.parent?.name,
-    //   fields: modelTree.model.fields,
-    // });
     let parentIdentifierField = "";
-    // console.log({ parentIdentifierFields });
     if (parentIdentifierFields && parentIdentifierFields.length > 0) {
       parentIdentifierField = parentIdentifierFields[0];
     }
-    // console.log({ parentIdentifierField });
-    // ##############
 
+    // Delete Where Clause
     const deleteWhereClause = generateDeleteClause(modelUniqueIdentifierField);
-    // console.log({ deleteWhereClause });
-
-    // const thisDynamicDirectory = path.join(outputDirectory, parentSlugRoute);
-    // console.log("brandin adding delete clause in: ", thisDynamicDirectory);
     addStringBetweenComments(
       baseModelDirectory,
       deleteWhereClause,
       "//@nexquik prismaDeleteClause start",
       "//@nexquik prismaDeleteClause stop"
     );
-    // console.log({ route });
     const listRedirect = await generateRedirect(`\`${createRedirectForm}\``);
     addStringBetweenComments(
       baseModelDirectory,
@@ -718,28 +611,11 @@ export async function generateAppDirectoryFromModelTree(
       "//@nexquik listRedirect start",
       "//@nexquik listRedirect stop"
     );
-    // const parentObjects: {
-    //   name: string;
-    //   type: string;
-    //   referenceField: string;
-    // }[] = [];
-
-    const parentIdFields = modelTree.model.fields.filter((field) => field.isId);
-    // console.log({ parentIdFields });
-    const parentObjects = parentIdentifierFields?.map((p) => ({
-      name: p,
-      type: modelTree.parent?.fields.find((f) => f.name === p)?.type || "",
-      referenceField: modelTree.model.fields.find(
-        (field) => field.type === modelTree.parent?.name
-      ),
-      slug: getDynamicSlugs(modelTree.modelName, [p])[0],
-    }));
-    // console.log({ parentObjects });
 
     // In parent, loop through fields and find field of 'type' current model
     let isManyToMany = false;
     let referenceFieldNameToParent = "";
-    let parentIdField = modelTree.parent?.fields.find((f) => f.isId);
+    const parentIdField = modelTree.parent?.fields.find((f) => f.isId);
     const relationNameToParent = modelTree.parent?.fields.find(
       (a) => a.type === modelTree.modelName
     )?.relationName;
@@ -787,18 +663,8 @@ export async function generateAppDirectoryFromModelTree(
     },
     `;
     }
-    // console.log({
-    //   name: modelTree.modelName,
-    //   fields: modelTree.model.fields,
-    //   parent: modelTree.parent,
-    //   parentFields: modelTree.parent?.fields,
-    //   manyToManyWhere,
-    // });
-    // Does the current model have a many to many relation ship to its parent
-    // Get the current model's parent
-    // Find that field in the current model by type
-    // if it is list, its a many to many
-    // const aCurrentParent = modelTree.parent.
+
+    // Where parent clause
     const whereparentClause = modelTree.parent
       ? generateWhereParentClause(
           "params",
@@ -810,18 +676,8 @@ export async function generateAppDirectoryFromModelTree(
           manyToManyWhere
         )
       : "()";
-    // const whereparentClause = modelTree.parent
-    //   ? generateWhereParentClause(
-    //       "params",
-    //       getDynamicSlugs(modelTree.parent.name, [parentIdentifierField])[0],
-    //       modelTree.model.fields.find((field) => field.isId)?.name ||
-    //         parentIdentifierField,
-    //       modelTree.model.fields.find((field) => field.isId)?.type || fieldType,
-    //       getParentReferenceField(modelTree)
-    //     )
-    //   : "()";
-    // console.log({ whereparentClause });
 
+    // Enum import for create and edit pages
     const enumImport = Object.keys(enums)
       .map((e) => `import { ${e} } from "@prisma/client";`)
       .join("\n");
@@ -841,11 +697,7 @@ export async function generateAppDirectoryFromModelTree(
     );
 
     // ############### Show Page
-    const showFormCode = await generateShowForm(
-      modelTree,
-      createRedirectForm,
-      enums
-    );
+    const showFormCode = await generateShowForm(modelTree, createRedirectForm);
     addStringBetweenComments(
       baseModelDirectory,
       showFormCode,
@@ -856,16 +708,14 @@ export async function generateAppDirectoryFromModelTree(
       modelTree,
       createRedirectForm
     );
-    // console.log({ childModelLinkList });
     addStringBetweenComments(
       baseModelDirectory,
       childModelLinkList,
       "{/* @nexquik listChildren start */}",
       "{/* @nexquik listChildren stop */}"
     );
-    // // ############### Create Page
-    // console.log({ createRedirectForm, baseRoute });
 
+    // ############### Create Page
     // If many to many, must do a connect
     const createFormCode = await generateCreateForm(
       modelTree,
@@ -903,7 +753,6 @@ export async function generateAppDirectoryFromModelTree(
       "{/* @nexquik createLink stop */}"
     );
     const prismaInput = generateConvertToPrismaInputCode(modelTree);
-    // console.log("NIKKI", { prismaInput });
     addStringBetweenComments(
       baseModelDirectory,
       prismaInput,
@@ -921,7 +770,6 @@ export async function generateAppDirectoryFromModelTree(
       parentSlugs,
       manyToManyConnect
     );
-    // console.log("NIKKI", { prismaCreateInput });
     addStringBetweenComments(
       baseModelDirectory,
       prismaCreateInput,
@@ -934,16 +782,14 @@ export async function generateAppDirectoryFromModelTree(
       uniqueDynamicSlugs,
       modelUniqueIdentifierField
     );
-    // console.log({ whereClause, route });
     addStringBetweenComments(
-      // thisDynamicDirectory,
       baseModelDirectory,
       whereClause,
       "//@nexquik prismaWhereInput start",
       "//@nexquik prismaWhereInput stop"
     );
 
-    // // ############### Edit Page
+    // ############### Edit Page
     const editFormCode = await generateEditForm(
       modelTree,
       createRedirectForm,
@@ -964,7 +810,6 @@ export async function generateAppDirectoryFromModelTree(
     const editRedirect = await generateRedirect(
       `\`${createRedirectForm}/${redirectStr2}\``
     );
-    // console.log({ createRedirectForm, redirectStr2, editRedirect });
     addStringBetweenComments(
       baseModelDirectory,
       editRedirect,
@@ -972,7 +817,7 @@ export async function generateAppDirectoryFromModelTree(
       "//@nexquik editRedirect stop"
     );
 
-    // // ############### Extras
+    // ############### Extras
     const revalidatePath = await generateRevalidatePath(
       `${createRedirectForm}`
     );
@@ -983,10 +828,6 @@ export async function generateAppDirectoryFromModelTree(
       "//@nexquik revalidatePath stop"
     );
 
-    // console.log({
-    //   initial: createRedirectForm,
-    //   popped: popStringEnd(`${createRedirectForm}`, "/"),
-    // });
     const backLink = await generateLink(
       popStringEnd(popStringEnd(`${createRedirectForm}`, "/"), "/"),
       "Back"
@@ -1006,42 +847,12 @@ export async function generateAppDirectoryFromModelTree(
       "{/* @nexquik backToCurrentLink stop */}"
     );
 
-    // // Replace all placeholder model names
+    // Replace all placeholder model names
     findAndReplaceInFiles(
       baseModelDirectory,
       "nexquikTemplateModel",
       modelTree.modelName
     );
-
-    // // ############### Create Routes
-    // // Create
-
-    // // Edit
-
-    // let splitRoute = "";
-    // const slugss = getDynamicSlugs(
-    //   modelName,
-    //   modelTree.uniqueIdentifierField.map((f) => f.name)
-    // );
-    // slugss.forEach((s) => {
-    //   splitRoute += `[${s}]`;
-    // });
-    // console.log({ slugss, splitRoute });
-
-    // routes.push({
-    //   segment: `${route}${splitRoute}/edit`,
-    //   model: modelName,
-    //   operation: "Edit",
-    //   description: `Edit a ${modelName} by ID`,
-    // });
-
-    // // Show
-    // routes.push({
-    //   segment: `${route}${splitRoute}`,
-    //   model: modelName,
-    //   operation: "Show",
-    //   description: `Get details of a ${modelName} by ID`,
-    // });
 
     for (const child of modelTree.children) {
       await generateRoutes(child, {
@@ -1065,44 +876,31 @@ export function generateConvertToPrismaCreateInputCode(
   parentSlugs: string[],
   manyToManyConnect: string
 ): string {
-  const uniques = modelTree.model.fields;
-  // console.log({ uniques });
   // If model has a parent, get the parent accessor
   let relationFieldsToParent: string[] = [];
   let fieldType = "";
   if (modelTree.parent) {
     // Get the field on the current model that is the id referencing the parent
-    modelTree.model.fields.forEach((mf, index) => {
+    modelTree.model.fields.forEach((mf) => {
       if (mf.type === modelTree.parent?.name) {
         if (mf.relationFromFields?.length && mf.relationFromFields.length > 0) {
           relationFieldsToParent = mf.relationFromFields;
         }
       }
     });
-    // console.log({ relationFieldsToParent });
 
     // Get the field type on the current model that is the id referencing the parent
     fieldType =
       modelTree.model.fields.find((f) =>
         relationFieldsToParent.find((a) => a === f.name)
       )?.type || "";
-    // console.log({ fieldType });
   }
 
   const fieldsToConvert: Partial<DMMF.Field>[] = modelTree.model.fields
     .filter((field) => {
-      if (field.name === "id") {
-        const fieldRenderable = isFieldRenderable(field);
-        // console.log("HERE IN NAME", {
-        //   bool: field.isId !== true || field.hasDefaultValue == false,
-        //   field,
-        //   fieldRenderable,
-        // });
-      }
       return field.isId !== true || field.hasDefaultValue == false;
     })
     .filter((field) => isFieldRenderable(field));
-  // console.log({ fieldsToConvert });
 
   const convertToPrismaInputLines = fieldsToConvert.map(
     ({ name, type, kind }) => {
@@ -1127,21 +925,7 @@ export function generateConvertToPrismaCreateInputCode(
 
   // Convert the parent accessor  differently
   if (relationFieldsToParent && fieldType && modelTree.parent?.name) {
-    // let parentIdentifierField = "";
-    const parentIdentifierFields =
-      modelTree.model.fields.find((field) =>
-        field.relationFromFields?.includes(relationFieldsToParent[0])
-      )?.relationToFields || [];
-    // if (parentIdentifierFields && parentIdentifierFields.length > 0) {
-    //   parentIdentifierField = parentIdentifierFields[0];
-    // }
-    // const parentSlugs = getDynamicSlugs(
-    //   modelTree.parent?.name,
-    //   parentIdentifierFields
-    // );
     relationFieldsToParent.forEach((s, index) => {
-      // console.log("in slugs", { relationFieldsToParent });
-      // const relationTo =
       let typecastValue = `params.${parentSlugs[index]}`;
       if (fieldType === "Int" || fieldType === "Float") {
         typecastValue = `Number(${typecastValue})`;
@@ -1157,11 +941,9 @@ export function generateConvertToPrismaCreateInputCode(
   }
 
   // Convert fields pointing to other relations differently
-  modelTree.model.fields.map((field, index) => {
+  modelTree.model.fields.map((field) => {
     if (field.kind === "object") {
       const relationFrom = field.relationFromFields && field.relationFromFields;
-      // console.log({ field }, { relationFrom });
-
       const referencedModelName = field.type;
 
       if (referencedModelName === modelTree.parent?.name) {
@@ -1190,38 +972,12 @@ export function generateConvertToPrismaCreateInputCode(
     }
   });
   convertToPrismaInputLines.push(manyToManyConnect);
-  // console.log({ convertToPrismaInputLines });
   return `{
   ${convertToPrismaInputLines.join("\n")}
     }`;
 }
 
-export function generateConvertToPrismaInputCode(
-  modelTree: ModelTree,
-  withParent: boolean = false
-): string {
-  // If model has a parent, get the parent accessor
-  let relationFieldsToParent: string[] = [];
-  let fieldType = "";
-  if (modelTree.parent) {
-    // Get the field on the current model that is the id referencing the parent
-    modelTree.model.fields.forEach((mf, index) => {
-      if (mf.type === modelTree.parent?.name) {
-        if (mf.relationFromFields?.length && mf.relationFromFields.length > 0) {
-          relationFieldsToParent = mf.relationFromFields;
-        }
-      }
-    });
-    // console.log({ relationFieldsToParent });
-
-    // Get the field type on the current model that is the id referencing the parent
-    fieldType =
-      modelTree.model.fields.find((f) =>
-        relationFieldsToParent.find((a) => a === f.name)
-      )?.type || "";
-    // console.log({ fieldType });
-  }
-
+export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
   const fieldsToConvert: Partial<DMMF.Field>[] = modelTree.model.fields
     .filter(({ isId }) => !isId)
     .filter((field) => isFieldRenderable(field));
@@ -1246,45 +1002,10 @@ export function generateConvertToPrismaInputCode(
     }
   );
 
-  // Convert the parent accessor  differently
-  if (relationFieldsToParent && fieldType && modelTree.parent?.name) {
-    // let parentIdentifierField = "";
-    const parentIdentifierFields =
-      modelTree.model.fields.find((field) =>
-        field.relationFromFields?.includes(relationFieldsToParent[0])
-      )?.relationToFields || [];
-    // if (parentIdentifierFields && parentIdentifierFields.length > 0) {
-    //   parentIdentifierField = parentIdentifierFields[0];
-    // }
-    // const parentSlugs = getDynamicSlugs(
-    //   modelTree.parent?.name,
-    //   parentIdentifierFields
-    // );
-    // parentSlugs.forEach((s, index) => {
-    //   console.log("in slugs", { parentIdentifierFields });
-    //   // const relationTo =
-    //   let typecastValue = `params.${s}`;
-    //   if (fieldType === "Int" || fieldType === "Float") {
-    //     typecastValue = `Number(${typecastValue})`;
-    //   } else if (fieldType === "Boolean") {
-    //     typecastValue = `Boolean(${typecastValue})`;
-    //   } else if (fieldType === "DateTime") {
-    //     typecastValue = `new Date(String(${typecastValue}))`;
-    //   } else {
-    //     typecastValue = `String(${typecastValue})`;
-    //   }
-    //   convertToPrismaInputLines.push(
-    //     `    ${parentIdentifierFields[index]}: ${typecastValue},`
-    //   );
-    // });
-  }
-
   // Convert fields pointing to other relations differently
-  modelTree.model.fields.map((field, index) => {
+  modelTree.model.fields.map((field) => {
     if (field.kind === "object") {
       const relationFrom = field.relationFromFields && field.relationFromFields;
-      // console.log({ field }, { relationFrom });
-
       const referencedModelName = field.type;
 
       if (referencedModelName === modelTree.parent?.name) {
@@ -1313,14 +1034,12 @@ export function generateConvertToPrismaInputCode(
     }
   });
 
-  // console.log({ convertToPrismaInputLines });
   return `{
   ${convertToPrismaInputLines.join("\n")}
     }`;
 }
 
 export function generateWhereParentClause(
-  // isManyToMany: boolean = false,
   inputObject: string | undefined,
   fieldAccessValue: string | undefined,
   parentIdentifierFieldName: string | undefined,
@@ -1328,13 +1047,6 @@ export function generateWhereParentClause(
   parentReferenceField: string | undefined,
   manyToManyWhere: string
 ): string {
-  // console.log({
-  //   inputObject,
-  //   fieldAccessValue,
-  //   parentIdentifierFieldName,
-  //   parentIdentifierFieldType,
-  //   parentReferenceField,
-  // });
   if (manyToManyWhere == "") {
     if (
       inputObject &&
@@ -1366,22 +1078,13 @@ export function generateWhereParentClause(
 export function generateWhereClause(
   inputObject: string | undefined,
   uniqueDynamicSlugs: string[],
-  // identifierFieldName: string | undefined,
-  // identifierFieldType: string | undefined,
   modelUniqueIdFields: {
     name: string;
     type: string;
   }[]
 ): string {
-  // console.log("WESLEY", { uniqueDynamicSlugs, modelUniqueIdFields });
   let returnClause = "";
-  if (
-    inputObject &&
-    // identifierFieldName &&
-    // identifierFieldType &&
-    modelUniqueIdFields
-  ) {
-    // where id1: params.bookingid1
+  if (inputObject && modelUniqueIdFields) {
     if (modelUniqueIdFields.length > 1) {
       returnClause +=
         "{" + modelUniqueIdFields.map((f) => f.name).join("_") + ":{";
@@ -1423,7 +1126,6 @@ export function generateDeleteClause(
     type: string;
   }[]
 ): string {
-  // console.log("deleteClause", { uniqueIdentifierFields });
   if (uniqueIdentifierFields.length === 1) {
     const singleIdField = uniqueIdentifierFields[0];
     let typecastValue = `formData.get('${singleIdField.name}')`;
@@ -1436,19 +1138,6 @@ export function generateDeleteClause(
     }
     return `{ ${singleIdField.name}: ${typecastValue} },`;
   } else if (uniqueIdentifierFields.length >= 2) {
-    // let andClause = "{ AND: [";
-    // uniqueIdentifierFields.forEach((f) => {
-    //   let typecastValue = `formData.get('${f.name}')`;
-    //   if (f.type === "Int" || f.type === "Float") {
-    //     typecastValue = `Number(${typecastValue})`;
-    //   } else if (f.type === "Boolean") {
-    //     typecastValue = `Boolean(${typecastValue})`;
-    //   }
-    //   andClause += `{ ${f.name}: ${typecastValue} },`;
-    // });
-    // andClause += "]}";
-    // return andClause;
-
     let andClause = "{" + uniqueIdentifierFields.map((f) => f.name).join("_");
     andClause += ":{";
     uniqueIdentifierFields.forEach((f) => {
@@ -1463,9 +1152,7 @@ export function generateDeleteClause(
       andClause += `${f.name}: ${typecastValue},`;
     });
     andClause += "}}";
-    // console.log({ andClause });
     return andClause;
-    // const prismaIdentifier = `${f.name}`
   }
   return "";
 }
@@ -1516,17 +1203,6 @@ export function generateFormFields(
       }
 
       let returnValue = "";
-      if (field.name === "id") {
-        // console.log("$$$$$$$$$$$$$$$$$$$$$$$\n", {
-        //   field,
-        //   isRender: isFieldRenderable(field),
-        //   bool: field.isId == false || field.hasDefaultValue === false,
-        //   full:
-        //     isFieldRenderable(field) &&
-        //     (field.isId == false || field.hasDefaultValue === false),
-        // });
-      }
-
       if (
         isFieldRenderable(field) &&
         (field.isId == false || field.hasDefaultValue === false)
@@ -1534,7 +1210,6 @@ export function generateFormFields(
         returnValue = `<label>${field.name}</label>\n
         <input type="${inputType}" name="${field.name}" ${required}/>`;
       }
-      // console.log({ returnValue });
 
       return returnValue;
     })

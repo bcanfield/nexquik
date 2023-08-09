@@ -17,9 +17,7 @@ export function getCompositeIdField(model: DMMF.Model): DMMF.PrimaryKey | null {
 export function getCompositeKeyFields(
   model: ModelTree
 ): { fieldName: string; fieldType: string }[] | null {
-  console.log("BRANDIN get composite key field");
   const compositeKeyFields: { fieldName: string; fieldType: string }[] = [];
-  console.log("BRANDIN MODEL", model.model);
 
   for (const field of model.model.fields) {
     if (field.kind === "object" && !field.isList && field.relationFromFields) {
@@ -51,15 +49,15 @@ export function getCompositeKeyFields(
 
 export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
   const models = dataModel.models;
-  console.log("Creating model tree");
-  console.log({ models });
+  // console.log("Creating model tree");
+  // console.log({ models });
 
   // Create a map of models for efficient lookup
   const modelMap: Record<string, DMMF.Model> = {};
   for (const model of models) {
     modelMap[model.name] = model;
   }
-  console.log({ modelMap });
+  // console.log({ modelMap });
 
   const visitedModels: Set<string> = new Set();
   const modelTrees: ModelTree[] = [];
@@ -72,7 +70,7 @@ export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
     // If we detect a circular relationship, just stop digging down into child nodes
     if (visitedModels.has(model.name)) {
       // throw new Error(`Circular relationship detected in model: ${model.name}`);
-      console.log(`Circular relationship detected in model: ${model.name}`);
+      // console.log(`Circular relationship detected in model: ${model.name}`);
       return;
     }
 
@@ -100,22 +98,16 @@ export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
       // Check for composite id field
       const compositePrimaryKey = getCompositeIdField(model);
       if (compositePrimaryKey) {
-        console.log(
-          chalk.yellow(
-            `Nexquik does not yet support composite field types. Model: ${model.name}`
-          )
-        );
         // For each field in fields, find the actual field
         const actualFields = model.fields
           .filter((modelField) =>
             compositePrimaryKey.fields.includes(modelField.name)
           )
           .map((f) => ({ name: f.name, type: f.type }));
-        console.log({ actualFields });
         uniqueIdFieldReturn = actualFields;
       } else {
         console.log(
-          chalk.yellow(
+          chalk.red(
             `Nexquik could not fund a unique ID field for Model: ${model.name}`
           )
         );
