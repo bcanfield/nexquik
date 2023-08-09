@@ -256,8 +256,7 @@ async function generateListForm(
 
 export async function generate(
   prismaSchemaPath: string,
-  outputDirectory: string,
-  prismaImport: string
+  outputDirectory: string
 ) {
   // Read the Prisma schema file
   console.log(chalk.blue("Locating Prisma Schema File"));
@@ -279,19 +278,13 @@ export async function generate(
   const dmmf = await getDMMF({ datamodel: prismaSchema });
 
   console.log(chalk.blue("Creating Tree"));
+
+  // Create model tree and verify there is at least one valid model
   const modelTree = createModelTree(dmmf.datamodel);
   if (modelTree.length === 0) {
     console.log(chalk.red("Nexquik Error: No valid models detected in schema"));
     throw new Error("Nexquik Error: No valid models detected in schema");
-    return;
   }
-  // Replace prisma client import
-  addStringBetweenComments(
-    path.join(__dirname, "templateRoot", "app"),
-    `import prisma from "${prismaImport}";`,
-    "//@nexquik prismaClientImport start",
-    "//@nexquik prismaClientImport stop"
-  );
 
   // Copy all files from the root dir except for app. (package.json, next.config, etc)
   copyDirectory(
