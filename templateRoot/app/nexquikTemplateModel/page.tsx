@@ -4,7 +4,11 @@ import Link from "next/link";
 import { prisma } from "utils/db";
 //@nexquik prismaClientImport stop
 
-export default async function ListNexquikTemplateModels({ params }) {
+export default async function ListNexquikTemplateModels({
+  params,
+}: {
+  params: any;
+}) {
   const nexquikTemplateModel = await prisma.nexquikTemplateModel
     .findMany
     //@nexquik prismaWhereParentClause start

@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "preinstall": "npm install ../",
     "dev": "prisma migrate reset --force && prisma db push --accept-data-loss && next dev",
     "build": "next build",
     "start": "next start",
