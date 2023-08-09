@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "prisma migrate reset --force && prisma db push --accept-data-loss && next dev",
+    "dev": "prisma db push --accept-data-loss && next dev",
+    "reset": "prisma migrate reset --force",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
