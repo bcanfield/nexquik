@@ -5,36 +5,8 @@ import path from "path";
 const nexquikMain = "dist/index.js";
 const testOutputDirectory = path.join("__tests__", "testOutputDirectory");
 const prismaSchemaDirectory = "prisma";
+const prismaMain = "node_modules/prisma/build/index.js";
 
-function buildDirectoryStructure(
-  directoryPath: string,
-  indentation: string = ""
-): string {
-  let result = "";
-
-  const files = readdirSync(directoryPath);
-
-  files.forEach((file) => {
-    const filePath = path.join(directoryPath, file);
-    const stats = statSync(filePath);
-
-    if (stats.isDirectory()) {
-      const subDirectoryPath = path.join(directoryPath, file);
-      const subDirectoryResult = buildDirectoryStructure(
-        subDirectoryPath,
-        `${indentation}  `
-      );
-      result += `${indentation}${file}/\n${subDirectoryResult}`;
-    }
-  });
-
-  return result;
-}
-
-function prettyPrintDirectory(directoryPath: string): void {
-  const directoryStructure = buildDirectoryStructure(directoryPath, "");
-  console.log(directoryStructure);
-}
 const isDirectoryNotEmpty = (path: string) => {
   try {
     const files = readdirSync(path);
@@ -61,12 +33,27 @@ test.each(readdirSync(prismaSchemaDirectory))(
       )} -out ${testOutputDirectory}`
     );
     console.log(`Schema Test: ${schemaPath}`);
-    prettyPrintDirectory(testOutputDirectory);
-    expect(
-      isDirectoryNotEmpty(testOutputDirectory) &&
-        !res.toString().includes("Nexquik Error")
-    ).toBeTruthy;
-
-    child_process.execSync(`rm -rf ${testOutputDirectory}`);
+    expect(isDirectoryNotEmpty(testOutputDirectory)).toBeTruthy();
+    try {
+      // Run npm install
+      child_process.execSync("npm install --quiet", {
+        cwd: testOutputDirectory,
+      });
+      // Run prisma generate
+      child_process.execSync(`node ${prismaMain} generate`, {
+        stdio: "inherit",
+        cwd: testOutputDirectory,
+      });
+      // Run type check
+      child_process.execSync("npm run typecheck", {
+        stdio: "inherit",
+        cwd: testOutputDirectory,
+      });
+    } catch (error) {
+      console.error("TypeScript compilation error:", error.message);
+      throw error;
+    } finally {
+      child_process.execSync(`rm -rf ${testOutputDirectory}`);
+    }
   }
 );

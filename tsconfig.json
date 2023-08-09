@@ -8,7 +8,6 @@
     "sourceMap": true,
     "esModuleInterop": true,
     "moduleResolution": "node",
-    "watch": false,
     "types": ["node"],
     "plugins": [
       {
@@ -20,7 +19,8 @@
     "prisnextApp/*",
     "lib/app/*",
     "dist/*",
-    "templateApp/*",
+    "templateRoot/*",
+    "devNexquikApp/*",
     "nexquikApp/*",
     "__tests__",
     "dev/*"
