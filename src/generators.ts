@@ -425,20 +425,22 @@ export async function generateShowForm(
 function generateRouteList(routes: RouteObject[]) {
   const routeLinks = [];
   for (const route of routes) {
+    console.log({ route });
     routeLinks.push(
       `<tr className="item-row">
+      <td>${route.model}</td>
       <td>${
         route.segment.includes("[")
           ? route.segment
           : `<a href="${route.segment}">${route.segment}</a>`
       }</td>
-      <td>${route.operation} ${route.model}</td>
+      <td>${route.operation}</td>
       <td>${route.description}</td>
       </tr>`
     );
   }
   return `<table className="item-list">  <tbody><tr className="header-row">
-
+  <th>Model</th>
   <th>Route</th>
   <th>Operation</th>
   <th>Description</th>
@@ -476,12 +478,52 @@ export async function generateAppDirectoryFromModelTree(
     //   parentRoute.uniqueIdentifierField.map((f) => f.name)
     // );
     let route = parentRoute.name;
+    console.log({ route });
+
     // if (parentRoute.name !== "/") {
     //   parentUniqueSlugs.forEach((parentSlug) => {
     //     route += `/[${parentSlug}]/`;
     //   });
     // }
-    route += modelName.charAt(0).toLowerCase() + modelName.slice(1);
+    route += modelName.charAt(0).toLowerCase() + modelName.slice(1) + "/";
+    routes.push({
+      segment: `${route}create`,
+      model: modelName,
+      operation: "Create",
+      description: `Create a ${modelName}`,
+    });
+    // List
+    routes.push({
+      segment: route,
+      model: modelName,
+      operation: "List",
+      description: `Get a list of ${modelName}s`,
+    });
+    let splitRoute = "";
+    const slugss = getDynamicSlugs(
+      modelName,
+      modelTree.uniqueIdentifierField.map((f) => f.name)
+    );
+    slugss.forEach((s) => {
+      splitRoute += `[${s}]`;
+    });
+    console.log({ slugss, splitRoute });
+
+    routes.push({
+      segment: `${route}${splitRoute}/edit`,
+      model: modelName,
+      operation: "Edit",
+      description: `Edit a ${modelName} by ID`,
+    });
+
+    // Show
+    routes.push({
+      segment: `${route}${splitRoute}`,
+      model: modelName,
+      operation: "Show",
+      description: `Get details of a ${modelName} by ID`,
+    });
+
     const baseRoute = route;
     const createRedirectForm = convertRouteToRedirectUrl(baseRoute);
     console.log("()()()()()()", { createRedirectForm });
@@ -520,7 +562,7 @@ export async function generateAppDirectoryFromModelTree(
       modelUniqueIdentifierField.map((f) => f.name)
     );
     slugsForThisModel.forEach((parentSlug) => {
-      route += `/[${parentSlug}]/`;
+      route += `[${parentSlug}]/`;
     });
     console.log("Creating dynamic directory for model", {
       modelName,
@@ -906,45 +948,33 @@ export async function generateAppDirectoryFromModelTree(
 
     // // ############### Create Routes
     // // Create
-    routes.push({
-      segment: `${route}/create`,
-      model: modelName,
-      operation: "Create",
-      description: `Create a ${modelName}`,
-    });
 
     // // Edit
 
-    let splitRoute = "";
-    const slugss = getDynamicSlugs(
-      modelName,
-      modelTree.uniqueIdentifierField.map((f) => f.name)
-    );
-    slugss.forEach((s) => {
-      splitRoute += `/[${s}]`;
-    });
-    routes.push({
-      segment: `${route}${splitRoute}/edit`,
-      model: modelName,
-      operation: "Edit",
-      description: `Edit a ${modelName} by ID`,
-    });
+    // let splitRoute = "";
+    // const slugss = getDynamicSlugs(
+    //   modelName,
+    //   modelTree.uniqueIdentifierField.map((f) => f.name)
+    // );
+    // slugss.forEach((s) => {
+    //   splitRoute += `[${s}]`;
+    // });
+    // console.log({ slugss, splitRoute });
 
-    // Show
-    routes.push({
-      segment: `${route}${splitRoute}`,
-      model: modelName,
-      operation: "Show",
-      description: `Get details of a ${modelName} by ID`,
-    });
+    // routes.push({
+    //   segment: `${route}${splitRoute}/edit`,
+    //   model: modelName,
+    //   operation: "Edit",
+    //   description: `Edit a ${modelName} by ID`,
+    // });
 
-    // List
-    routes.push({
-      segment: route,
-      model: modelName,
-      operation: "List",
-      description: `Get a list of ${modelName}s`,
-    });
+    // // Show
+    // routes.push({
+    //   segment: `${route}${splitRoute}`,
+    //   model: modelName,
+    //   operation: "Show",
+    //   description: `Get details of a ${modelName} by ID`,
+    // });
 
     for (const child of modelTree.children) {
       await generateRoutes(child, {
