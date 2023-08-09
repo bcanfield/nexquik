@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -10,12 +13,12 @@ generator client {
 model Product {
   id    String @id
   name  String
-  foo   Foo    @relation(fields: [fooId], references: [id], onDelete: Cascade)
+  foo   Foo    @relation(fields: [fooId], references: [id])
   fooId String
 }
 
 model Foo {
-  id      String    @id @default(cuid())
+  id      String    @id
   bar     String
   Product Product[]
 }
