@@ -88,7 +88,7 @@ test.each(readdirSync(prismaSchemaDirectory))(
       // Handle the error as needed
       throw error; // Rethrow the error to fail the test
     } finally {
-      // child_process.execSync(`rm -rf ${testOutputDirectory}`);
+      child_process.execSync(`rm -rf ${testOutputDirectory}`);
     }
   }
 );

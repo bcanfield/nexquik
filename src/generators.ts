@@ -316,9 +316,12 @@ export async function generate(
     "schema.prisma"
   );
 
-  console.log("list destination", await listFilesInDirectory(outputDirectory));
+  // console.log("list destination", await listFilesInDirectory(outputDirectory));
 
-  // console.log("TOP LEVEL MODEL TREE", { modelTree });
+  console.log(
+    "TOP LEVEL MODEL TREE\n",
+    modelTree.map((t) => t.modelName)
+  );
   const routes = await generateAppDirectoryFromModelTree(
     modelTree,
     appDirectory,
@@ -502,33 +505,21 @@ export async function generateAppDirectoryFromModelTree(
       uniqueIdentifierField: { name: string; type: string }[];
     }
   ) {
-    console.log({ enums });
-
     // console.log({ outputDirectory });
     const modelName = modelTree.modelName;
 
     // Get the current mode'ls array of prisma unique id fields
     const modelUniqueIdentifierField = modelTree.uniqueIdentifierField;
-    // console.log(
-    //   `MODEL NAME: ${modelName}\n Unique id field: ${modelUniqueIdentifierField.map(
-    //     (f) => f.name
-    //   )}\n\n #####CHILDREN: ${modelTree.children.map((c) => c.modelName)}`
-    // );
 
-    // Get the unique slugs of the parent model (combines modelname and id field to ensure uniqueness (i.e. bookingid1))
-    // const parentUniqueSlugs = getDynamicSlugs(
-    //   modelTree.parent?.name,
-    //   parentRoute.uniqueIdentifierField.map((f) => f.name)
-    // );
     let route = parentRoute.name;
-    // console.log({ route });
+    console.log({ brandin: route });
 
     if (route === "/") {
       // Copy over the root dir to this dir
       copyDirectory(
         path.join(__dirname, "templateRoot", "app"),
         outputDirectory,
-        true,
+        false,
         "nexquikTemplateModel"
       );
     }
@@ -589,7 +580,7 @@ export async function generateAppDirectoryFromModelTree(
     let currentBasePath = "";
     for (const part of baseParts) {
       currentBasePath = path.join(currentBasePath, part);
-      // console.log("CREATING", currentBasePath);
+      console.log("CREATING", currentBasePath);
       if (!fs.existsSync(currentBasePath)) {
         fs.mkdirSync(currentBasePath);
       }
