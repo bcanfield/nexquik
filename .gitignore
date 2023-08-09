@@ -7,3 +7,5 @@ dev/
 # TypeScript cache
 *.tsbuildinfo\
 nexquik.tgz
+
+__tests__/testOutputDirectory/
