@@ -41,10 +41,7 @@ export async function run() {
           `\nParams:`
         )}\n-----\nPrisma Schema location: ${chalk.yellow.bold(
           `${options.Schema}`
-        )}\nOutput location: ${chalk.yellow.bold(
-          `${options.Out}`
-        )}\nPrisma Import: ${chalk.yellow.bold(
-          `${options.PrismaImport}\n`
+        )}\nOutput location: ${chalk.yellow.bold(`${options.Out}`)}
         )}-----\n`
       );
       await generate(options.Schema, options.Out);

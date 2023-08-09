@@ -391,25 +391,55 @@ function generateRouteList(routes: RouteObject[]) {
   const routeLinks = [];
   for (const route of routes) {
     routeLinks.push(
-      `<tr className="item-row">
-      <td>${route.model}</td>
-      <td>${
-        route.segment.includes("[")
-          ? route.segment
-          : `<a href="${route.segment}">${route.segment}</a>`
-      }</td>
-      <td>${route.operation}</td>
-      <td>${route.description}</td>
-      </tr>`
+      `
+      <tr>
+      <td
+        translate="no"
+        className="py-2 pr-2 font-mono font-medium text-sm leading-6 text-sky-500 whitespace-nowrap dark:text-sky-400"
+      >
+        ${route.model}
+      </td>
+      <td
+        translate="no"
+        className="py-2 pl-2 font-mono text-sm leading-6 text-indigo-600 whitespace-pre dark:text-indigo-300 hidden sm:table-cell sm:pr-2"
+      >
+      ${route.operation}
+      </td>
+    </tr>
+    
+      `
     );
   }
-  return `<table className="item-list">  <tbody><tr className="header-row">
-  <th>Model</th>
-  <th>Route</th>
-  <th>Operation</th>
-  <th>Description</th>
-</tr>${routeLinks.join("\n")}           </tbody> </table>
-  `;
+
+  return `
+
+<table className="w-full text-left border-collapse">
+<thead>
+  <tr>
+    <th className="sticky z-10 top-0 text-sm leading-6 font-semibold text-slate-700 bg-white p-0 dark:bg-slate-900 dark:text-slate-300">
+      <div className="py-2 pr-2 border-b border-slate-200 dark:border-slate-400/20">
+        Model
+      </div>
+    </th>
+    <th className="sticky z-10 top-0 text-sm leading-6 font-semibold text-slate-700 bg-white p-0 dark:bg-slate-900 dark:text-slate-300 hidden sm:table-cell">
+      <div className="py-2 pl-2 border-b border-slate-200 dark:border-slate-400/20 pr-2">
+        Operation
+      </div>
+    </th>
+    <th className="sticky z-10 top-0 text-sm leading-6 font-semibold text-slate-700 bg-white p-0 dark:bg-slate-900 dark:text-slate-300">
+      <div className="py-2 pl-2 border-b border-slate-200 dark:border-slate-400/20">
+        <span className="sr-only">Preview</span>&nbsp;
+      </div>
+    </th>
+  </tr>
+</thead>
+
+<tbody className="align-baseline">
+${routeLinks.join("\n")} 
+</tbody>
+</table>
+
+`;
 }
 
 export async function generateAppDirectoryFromModelTree(
