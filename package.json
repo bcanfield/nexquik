@@ -18,7 +18,7 @@
     "dev:3": "npm pack --silent",
     "dev:4": "mv \"$(ls *.tgz)\" \"nexquik.tgz\"",
     "dev:5": "npm i && npm i ./nexquik.tgz ",
-    "dev:6": "nexquik -out ./devNexquikApp -schema ./prisma/simple-1-n.prisma",
+    "dev:6": "nexquik -out ./devNexquikApp -schema ./prisma/composite-pk.prisma",
     "dev:7": "cd devNexquikApp && npm i && npm run dev",
     "test": "jest --silent=false",
     "clean": "rimraf dist/",

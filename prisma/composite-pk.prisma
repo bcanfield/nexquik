@@ -2,12 +2,23 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 datasource db {
-    provider = "sqlite"
+    provider = "postgresql"
     url      = env("DATABASE_URL")
 }
 
 generator client {
     provider = "prisma-client-js"
+}
+
+model Parent {
+    id3        Int
+    id4        Int
+    name       String
+    bookings   Booking @relation(fields: [bookingId1, bookingId2], references: [id1, id2], onDelete: Cascade)
+    bookingId1 Int
+    bookingId2 Int
+
+    @@id([id3, id4], map: "PK_0c1ca63368e3f0a8ea8ce9eee5c")
 }
 
 model Booking {
@@ -16,6 +27,7 @@ model Booking {
     inviteeEmail String
     startDateUTC DateTime
     cancelCode   String
+    Parent       Parent[]
 
-    @@id([id1, id2])
+    @@id([id1, id2], map: "PK_0c1cc63368e3f0a8ea8ce9eee5c")
 }
