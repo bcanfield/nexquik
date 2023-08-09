@@ -5,6 +5,10 @@ import { redirect } from "next/navigation";
 import { prisma } from "utils/db";
 //@nexquik prismaClientImport stop
 
+//@nexquik prismaEnumImport start
+import { Enum } from "@prisma/client";
+//@nexquik prismaEnumImport stop
+
 export default async function CreateNexquikTemplateModel({
   params,
 }: {

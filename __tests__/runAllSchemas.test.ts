@@ -5,6 +5,7 @@ import path from "path";
 const nexquikMain = "dist/index.js";
 const testOutputDirectory = path.join("__tests__", "testOutputDirectory");
 const prismaSchemaDirectory = "prisma";
+const prismaMain = "node_modules/prisma/build/index.js";
 
 function buildDirectoryStructure(
   directoryPath: string,
@@ -74,6 +75,10 @@ test.each(readdirSync(prismaSchemaDirectory))(
       child_process.execSync("npm install --quiet", {
         cwd: testOutputDirectory,
       }); // Run npm install
+      child_process.execSync(`node ${prismaMain} generate`, {
+        stdio: "inherit",
+        cwd: testOutputDirectory,
+      }); // Run prisma generate
       child_process.execSync("npm run typecheck", {
         stdio: "inherit",
         cwd: testOutputDirectory,
@@ -83,7 +88,7 @@ test.each(readdirSync(prismaSchemaDirectory))(
       // Handle the error as needed
       throw error; // Rethrow the error to fail the test
     } finally {
-      child_process.execSync(`rm -rf ${testOutputDirectory}`);
+      // child_process.execSync(`rm -rf ${testOutputDirectory}`);
     }
   }
 );

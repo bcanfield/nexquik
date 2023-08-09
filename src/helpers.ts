@@ -5,6 +5,30 @@ import { RouteObject } from "./generators";
 import { ESLint } from "eslint";
 import chalk from "chalk";
 
+export function copyAndRenameFile(
+  sourceFilePath: string,
+  destinationDirectory: string,
+  newFileName: string
+) {
+  const sourceFileName = path.basename(sourceFilePath);
+  const destinationFilePath = path.join(destinationDirectory, newFileName);
+
+  try {
+    // Check if the destination file exists
+    if (fs.existsSync(destinationFilePath)) {
+      // Delete the existing file
+      fs.unlinkSync(destinationFilePath);
+    }
+
+    // Copy the source file to the destination
+    fs.copyFileSync(sourceFilePath, destinationFilePath);
+
+    console.log(`File copied and renamed: ${sourceFileName} -> ${newFileName}`);
+  } catch (error) {
+    console.error(`An error occurred: ${error}`);
+  }
+}
+
 export async function listFilesInDirectory(
   directoryPath: string
 ): Promise<string[]> {

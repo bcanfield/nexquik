@@ -6,7 +6,9 @@ import path from "path";
 import { promisify } from "util";
 import {
   convertRouteToRedirectUrl,
+  copyAndRenameFile,
   copyDirectory,
+  copyFileToDirectory,
   findAndReplaceInFiles,
   getDynamicSlugs,
   listFilesInDirectory,
@@ -275,6 +277,7 @@ export async function generate(
   const appDirectory = path.join(outputDirectory, "app");
   fs.mkdirSync(appDirectory);
 
+  // Copy over user's prisma file
   // Main section to build the app from the modelTree
   console.log(chalk.blue("Reading Prisma Schema"));
   const dmmf = await getDMMF({ datamodel: prismaSchema });
@@ -306,6 +309,13 @@ export async function generate(
     true,
     "app"
   );
+  // copyFileToDirectory(prismaSchemaPath, path.join(outputDirectory, "prisma"));
+  copyAndRenameFile(
+    prismaSchemaPath,
+    path.join(outputDirectory, "prisma"),
+    "schema.prisma"
+  );
+
   console.log("list destination", await listFilesInDirectory(outputDirectory));
 
   // console.log("TOP LEVEL MODEL TREE", { modelTree });
@@ -390,7 +400,20 @@ export async function generateShowForm(
         //         ${enumValues.map((v) => `<option value="${v}">${v}</option>`)}
         // </select>`;
         // }
-        return `  <input hidden type="${field.type}" name="${field?.name}" defaultValue={nexquikTemplateModel?.${field?.name}} />`;
+        let typecastValue = `nexquikTemplateModel?.${field?.name}`;
+        if (field?.type === "Int" || field?.type === "Float") {
+          typecastValue = `Number(${typecastValue})`;
+        } else {
+          typecastValue = `String(${typecastValue})`;
+        }
+        // else if (field?.type === "Boolean") {
+        //   typecastValue = `Boolean(${typecastValue})`;
+        // } else if (field?.type === "String") {
+        //   typecastValue = `String(${typecastValue})`;
+        // } else if (field?.type === "DateTime") {
+        //   typecastValue = `String(${typecastValue})`;
+        // }
+        return `  <input hidden type="${field.type}" name="${field?.name}" defaultValue={${typecastValue}} />`;
       })
       .join("\n")}
 
@@ -479,6 +502,8 @@ export async function generateAppDirectoryFromModelTree(
       uniqueIdentifierField: { name: string; type: string }[];
     }
   ) {
+    console.log({ enums });
+
     // console.log({ outputDirectory });
     const modelName = modelTree.modelName;
 
@@ -805,6 +830,18 @@ export async function generateAppDirectoryFromModelTree(
     //     )
     //   : "()";
     // console.log({ whereparentClause });
+
+    const enumImport = Object.keys(enums)
+      .map((e) => `import { ${e} } from "@prisma/client";`)
+      .join("\n");
+
+    addStringBetweenComments(
+      baseModelDirectory,
+      enumImport,
+      "//@nexquik prismaEnumImport start",
+      "//@nexquik prismaEnumImport stop"
+    );
+
     addStringBetweenComments(
       baseModelDirectory,
       whereparentClause,
@@ -1076,20 +1113,26 @@ export function generateConvertToPrismaCreateInputCode(
     .filter((field) => isFieldRenderable(field));
   // console.log({ fieldsToConvert });
 
-  const convertToPrismaInputLines = fieldsToConvert.map(({ name, type }) => {
-    let typecastValue = `formData.get('${name}')`;
-    if (type === "Int" || type === "Float") {
-      typecastValue = `Number(${typecastValue})`;
-    } else if (type === "Boolean") {
-      typecastValue = `Boolean(${typecastValue})`;
-    } else if (type === "DateTime") {
-      typecastValue = `new Date(String(${typecastValue}))`;
-    } else {
-      typecastValue = `String(${typecastValue})`;
-    }
+  const convertToPrismaInputLines = fieldsToConvert.map(
+    ({ name, type, kind }) => {
+      let typecastValue = `formData.get('${name}')`;
+      if (kind === "enum") {
+        typecastValue += ` as ${type}`;
+      } else {
+        if (type === "Int" || type === "Float") {
+          typecastValue = `Number(${typecastValue})`;
+        } else if (type === "Boolean") {
+          typecastValue = `Boolean(${typecastValue})`;
+        } else if (type === "DateTime") {
+          typecastValue = `new Date(String(${typecastValue}))`;
+        } else {
+          typecastValue = `String(${typecastValue})`;
+        }
+      }
 
-    return `    ${name}: ${typecastValue},`;
-  });
+      return `    ${name}: ${typecastValue},`;
+    }
+  );
 
   // Convert the parent accessor  differently
   if (relationFieldsToParent && fieldType && modelTree.parent?.name) {
@@ -1192,20 +1235,25 @@ export function generateConvertToPrismaInputCode(
     .filter(({ isId }) => !isId)
     .filter((field) => isFieldRenderable(field));
 
-  const convertToPrismaInputLines = fieldsToConvert.map(({ name, type }) => {
-    let typecastValue = `formData.get('${name}')`;
-    if (type === "Int" || type === "Float") {
-      typecastValue = `Number(${typecastValue})`;
-    } else if (type === "Boolean") {
-      typecastValue = `Boolean(${typecastValue})`;
-    } else if (type === "DateTime") {
-      typecastValue = `new Date(String(${typecastValue}))`;
-    } else {
-      typecastValue = `String(${typecastValue})`;
+  const convertToPrismaInputLines = fieldsToConvert.map(
+    ({ name, type, kind }) => {
+      let typecastValue = `formData.get('${name}')`;
+      if (kind === "enum") {
+        typecastValue += ` as ${type}`;
+      } else {
+        if (type === "Int" || type === "Float") {
+          typecastValue = `Number(${typecastValue})`;
+        } else if (type === "Boolean") {
+          typecastValue = `Boolean(${typecastValue})`;
+        } else if (type === "DateTime") {
+          typecastValue = `new Date(String(${typecastValue}))`;
+        } else {
+          typecastValue = `String(${typecastValue})`;
+        }
+      }
+      return `    ${name}: ${typecastValue},`;
     }
-
-    return `    ${name}: ${typecastValue},`;
-  });
+  );
 
   // Convert the parent accessor  differently
   if (relationFieldsToParent && fieldType && modelTree.parent?.name) {
@@ -1524,9 +1572,11 @@ export function generateFormFieldsWithDefaults(
       const inputType = prismaFieldToInputType[field.type] || "text";
       const defaultValue = field.isId
         ? `{nexquikTemplateModel?.${field.name} || 'N/A'}`
+        : field.type === "Number"
+        ? `{Number(nexquikTemplateModel?.${field.name})}`
         : field.type === "DateTime"
         ? `{nexquikTemplateModel?.${field.name}.toISOString().slice(0, 16)}`
-        : `{nexquikTemplateModel?.${field.name}}`;
+        : `{String(nexquikTemplateModel?.${field.name})}`;
       const disabled = field.isId ? "disabled" : "";
       const required = field.isRequired ? "required" : "";
 
