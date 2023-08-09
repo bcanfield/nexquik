@@ -1,12 +1,17 @@
 #! /usr/bin/env node
 import { DMMF } from "@prisma/generator-helper";
+import chalk from "chalk";
 
 export interface ModelTree {
   modelName: string;
   parent?: DMMF.Model;
   model: DMMF.Model;
   children: ModelTree[];
-  uniqueIdentifierField?: DMMF.Field;
+  uniqueIdentifierField: { name: string; type: string }[];
+}
+
+export function getCompositeIdField(model: DMMF.Model): DMMF.PrimaryKey | null {
+  return model.primaryKey;
 }
 
 export function getCompositeKeyFields(
@@ -44,12 +49,15 @@ export function getCompositeKeyFields(
 
 export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
   const models = dataModel.models;
+  // console.log("Creating model tree");
+  // console.log({ models });
 
   // Create a map of models for efficient lookup
   const modelMap: Record<string, DMMF.Model> = {};
   for (const model of models) {
     modelMap[model.name] = model;
   }
+  // console.log({ modelMap });
 
   const visitedModels: Set<string> = new Set();
   const modelTrees: ModelTree[] = [];
@@ -62,7 +70,7 @@ export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
     // If we detect a circular relationship, just stop digging down into child nodes
     if (visitedModels.has(model.name)) {
       // throw new Error(`Circular relationship detected in model: ${model.name}`);
-      console.log(`Circular relationship detected in model: ${model.name}`);
+      // console.log(`Circular relationship detected in model: ${model.name}`);
       return;
     }
 
@@ -84,17 +92,44 @@ export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
     }
 
     visitedModels.delete(model.name);
-    const uniqueIdField = model.fields.find((field) => field.isId === true);
+    const fullUniqueIdField = model.fields.find((field) => field.isId === true);
+    let uniqueIdFieldReturn: { name: string; type: string }[] = [];
+    if (!fullUniqueIdField) {
+      // Check for composite id field
+      const compositePrimaryKey = getCompositeIdField(model);
+      if (compositePrimaryKey) {
+        // For each field in fields, find the actual field
+        const actualFields = model.fields
+          .filter((modelField) =>
+            compositePrimaryKey.fields.includes(modelField.name)
+          )
+          .map((f) => ({ name: f.name, type: f.type }));
+        uniqueIdFieldReturn = actualFields;
+      } else {
+        console.log(
+          chalk.red(
+            `Nexquik could not fund a unique ID field for Model: ${model.name}`
+          )
+        );
+        return;
+      }
+    } else {
+      uniqueIdFieldReturn.push({
+        name: fullUniqueIdField.name,
+        type: fullUniqueIdField.type,
+      });
+    }
     return {
       modelName: model.name,
       model: model,
       parent: parent,
-      uniqueIdentifierField: uniqueIdField,
+      uniqueIdentifierField: uniqueIdFieldReturn,
       children,
     };
   }
 
   for (const model of models) {
+    // Only include models that dont have required parent
     if (
       !model.fields.some(
         (field) => field.kind === "object" && field.isRequired && !field.isList

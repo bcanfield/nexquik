@@ -4,5 +4,5 @@ prisma/
 .github/
 __tests__/
 *.md
-templateApp/
 dev/
+devNexquikApp/
