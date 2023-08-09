@@ -6,6 +6,10 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
+generator client {
+    provider = "prisma-client-js"
+}
+
 model Booking {
     id           Int      @id @default(autoincrement())
     inviteeEmail String

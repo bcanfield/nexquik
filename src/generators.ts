@@ -295,10 +295,10 @@ export async function generate(
     "//@nexquik prismaClientImport stop"
   );
 
-  console.log(
-    "list source",
-    await listFilesInDirectory(path.join(__dirname, "templateRoot"))
-  );
+  // console.log(
+  //   "list source",
+  //   await listFilesInDirectory(path.join(__dirname, "templateRoot"))
+  // );
   // Copy all files from the root dir
   copyDirectory(
     path.join(__dirname, "templateRoot"),

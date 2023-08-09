@@ -3,6 +3,10 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
+generator client {
+    provider = "prisma-client-js"
+}
+
 // ユーザーデータ管理用
 model User {
     // ID
