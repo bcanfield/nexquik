@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "preinstall": "npm install ../",
-    "dev": "prisma db push && next dev",
+    "dev": "prisma migrate reset --force && prisma db push --accept-data-loss && next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
