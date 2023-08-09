@@ -5,6 +5,31 @@ import { RouteObject } from "./generators";
 import { ESLint } from "eslint";
 import chalk from "chalk";
 
+export async function listFilesInDirectory(
+  directoryPath: string
+): Promise<string[]> {
+  const files: string[] = [];
+
+  async function traverseDirectory(currentPath: string): Promise<void> {
+    const entries = await fs.promises.readdir(currentPath, {
+      withFileTypes: true,
+    });
+
+    for (const entry of entries) {
+      const fullPath = path.join(currentPath, entry.name);
+
+      if (entry.isFile()) {
+        files.push(fullPath);
+      } else if (entry.isDirectory()) {
+        await traverseDirectory(fullPath);
+      }
+    }
+  }
+
+  await traverseDirectory(directoryPath);
+  return files;
+}
+
 export const copyDirectoryContents = async (
   sourceDirectory: string,
   destinationDirectory: string
@@ -44,40 +69,43 @@ export function copyDirectory(
   skipChildDir?: string
 ): void {
   console.log(
-    chalk.yellowBright(`Copying directory: ${sourceDir} to ${destinationDir} `)
+    chalk.yellowBright(`Copying directory: ${sourceDir} to ${destinationDir}`)
   );
-  if (toReplace && fs.existsSync(destinationDir)) {
-    fs.rmSync(destinationDir, { recursive: true });
-  }
 
-  // Create destination directory if it doesn't exist
-  if (!fs.existsSync(destinationDir)) {
-    fs.mkdirSync(destinationDir);
-  }
-
-  // Read the contents of the source directory
-  const files = fs.readdirSync(sourceDir);
-
-  files.forEach((file) => {
-    if (file === skipChildDir) {
-      // Skip copying the specified child directory
-      return;
+  try {
+    if (toReplace && fs.existsSync(destinationDir)) {
+      fs.rmSync(destinationDir, { recursive: true });
     }
 
-    const sourceFile = path.join(sourceDir, file);
-    const destinationFile = path.join(destinationDir, file);
+    if (!fs.existsSync(destinationDir)) {
+      fs.mkdirSync(destinationDir);
+    }
 
-    // Check if the file is a directory
-    if (fs.statSync(sourceFile).isDirectory()) {
-      // Recursively copy subdirectories
-      copyDirectory(sourceFile, destinationFile, toReplace, skipChildDir);
-    } else {
-      // Copy file if it doesn't exist in the destination directory
-      if (!fs.existsSync(destinationFile)) {
-        fs.copyFileSync(sourceFile, destinationFile);
+    const files = fs.readdirSync(sourceDir, { withFileTypes: true });
+    console.log(files.map((f) => f.name));
+    files.forEach((entry) => {
+      const file = entry.name;
+
+      if (file === skipChildDir) {
+        return;
       }
-    }
-  });
+
+      const sourceFile = path.join(sourceDir, file);
+      const destinationFile = path.join(destinationDir, file);
+
+      if (entry.isDirectory()) {
+        copyDirectory(sourceFile, destinationFile, toReplace, skipChildDir);
+      } else {
+        if (!fs.existsSync(destinationFile)) {
+          fs.copyFileSync(sourceFile, destinationFile);
+        }
+      }
+    });
+
+    console.log(chalk.green("Directory copied successfully."));
+  } catch (error) {
+    console.error(chalk.red("An error occurred:", error));
+  }
 }
 export const formatNextJsFilesRecursively = async (directory: string) => {
   // Get a list of all files and directories in the current directory
@@ -166,7 +194,9 @@ export async function formatDirectory(directoryPath: string): Promise<void> {
     },
   });
 
-  const files = await getFilePaths(directoryPath);
+  const files = (await getFilePaths(directoryPath)).filter((filePath: string) =>
+    filePath.endsWith(".tsx")
+  );
 
   const results = await eslint.lintFiles(files);
   await ESLint.outputFixes(results);

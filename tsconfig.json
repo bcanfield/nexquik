@@ -19,7 +19,8 @@
     "prisnextApp/*",
     "lib/app/*",
     "dist/*",
-    "templateApp/*",
+    "templateRoot/*",
+    "devNexquikApp/*",
     "nexquikApp/*",
     "__tests__",
     "dev/*"

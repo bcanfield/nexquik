@@ -7,9 +7,9 @@ import { promisify } from "util";
 import {
   convertRouteToRedirectUrl,
   copyDirectory,
-  copyFileToDirectory,
   findAndReplaceInFiles,
   getDynamicSlugs,
+  listFilesInDirectory,
   popStringEnd,
 } from "./helpers";
 import {
@@ -271,6 +271,9 @@ export async function generate(
 
   // Create the directory
   fs.mkdirSync(outputDirectory);
+  // Create the app directory
+  const appDirectory = path.join(outputDirectory, "app");
+  fs.mkdirSync(appDirectory);
 
   // Main section to build the app from the modelTree
   console.log(chalk.blue("Reading Prisma Schema"));
@@ -286,15 +289,29 @@ export async function generate(
   console.log(chalk.blue("Generating App Directory"));
   // Replace prisma client import
   addStringBetweenComments(
-    path.join(__dirname, "templateApp"),
+    path.join(__dirname, "templateRoot", "app"),
     `import prisma from "${prismaImport}";`,
     "//@nexquik prismaClientImport start",
     "//@nexquik prismaClientImport stop"
   );
-  console.log("TOP LEVEL MODEL TREE", { modelTree });
+
+  console.log(
+    "list source",
+    await listFilesInDirectory(path.join(__dirname, "templateRoot"))
+  );
+  // Copy all files from the root dir
+  copyDirectory(
+    path.join(__dirname, "templateRoot"),
+    outputDirectory,
+    true,
+    "app"
+  );
+  console.log("list destination", await listFilesInDirectory(outputDirectory));
+
+  // console.log("TOP LEVEL MODEL TREE", { modelTree });
   const routes = await generateAppDirectoryFromModelTree(
     modelTree,
-    outputDirectory,
+    appDirectory,
     enums
   );
   // console.log({ routes });
@@ -305,28 +322,28 @@ export async function generate(
   console.log(chalk.blue("Finishing Up"));
   // Copy over the files in the root dir
   addStringBetweenComments(
-    path.join(__dirname, "templateApp"),
+    appDirectory,
     routeList,
     "{/* @nexquik routeList start */}",
     "{/* @nexquik routeList stop */}"
   );
-  const rootPageName = "page.tsx";
-  copyFileToDirectory(
-    path.join(__dirname, "templateApp", rootPageName),
-    outputDirectory
-  );
+  // const rootPageName = "page.tsx";
+  // copyFileToDirectory(
+  //   path.join(__dirname, "templateRoot", "app", rootPageName),
+  //   outputDirectory
+  // );
 
-  const globalStylesFileName = "globals.css";
-  copyFileToDirectory(
-    path.join(__dirname, "templateApp", globalStylesFileName),
-    outputDirectory
-  );
+  // const globalStylesFileName = "globals.css";
+  // copyFileToDirectory(
+  //   path.join(__dirname, "templateRoot", "app", globalStylesFileName),
+  //   outputDirectory
+  // );
 
-  const rootLayoutFileName = "layout.tsx";
-  copyFileToDirectory(
-    path.join(__dirname, "templateApp", rootLayoutFileName),
-    outputDirectory
-  );
+  // const rootLayoutFileName = "layout.tsx";
+  // copyFileToDirectory(
+  //   path.join(__dirname, "templateRoot", "app", rootLayoutFileName),
+  //   outputDirectory
+  // );
   return;
 }
 
@@ -425,7 +442,7 @@ export async function generateShowForm(
 function generateRouteList(routes: RouteObject[]) {
   const routeLinks = [];
   for (const route of routes) {
-    console.log({ route });
+    // console.log({ route });
     routeLinks.push(
       `<tr className="item-row">
       <td>${route.model}</td>
@@ -462,15 +479,16 @@ export async function generateAppDirectoryFromModelTree(
       uniqueIdentifierField: { name: string; type: string }[];
     }
   ) {
+    // console.log({ outputDirectory });
     const modelName = modelTree.modelName;
 
     // Get the current mode'ls array of prisma unique id fields
     const modelUniqueIdentifierField = modelTree.uniqueIdentifierField;
-    console.log(
-      `MODEL NAME: ${modelName}\n Unique id field: ${modelUniqueIdentifierField.map(
-        (f) => f.name
-      )}\n\n #####CHILDREN: ${modelTree.children.map((c) => c.modelName)}`
-    );
+    // console.log(
+    //   `MODEL NAME: ${modelName}\n Unique id field: ${modelUniqueIdentifierField.map(
+    //     (f) => f.name
+    //   )}\n\n #####CHILDREN: ${modelTree.children.map((c) => c.modelName)}`
+    // );
 
     // Get the unique slugs of the parent model (combines modelname and id field to ensure uniqueness (i.e. bookingid1))
     // const parentUniqueSlugs = getDynamicSlugs(
@@ -478,8 +496,17 @@ export async function generateAppDirectoryFromModelTree(
     //   parentRoute.uniqueIdentifierField.map((f) => f.name)
     // );
     let route = parentRoute.name;
-    console.log({ route });
+    // console.log({ route });
 
+    if (route === "/") {
+      // Copy over the root dir to this dir
+      copyDirectory(
+        path.join(__dirname, "templateRoot", "app"),
+        outputDirectory,
+        true,
+        "nexquikTemplateModel"
+      );
+    }
     // if (parentRoute.name !== "/") {
     //   parentUniqueSlugs.forEach((parentSlug) => {
     //     route += `/[${parentSlug}]/`;
@@ -507,7 +534,7 @@ export async function generateAppDirectoryFromModelTree(
     slugss.forEach((s) => {
       splitRoute += `[${s}]`;
     });
-    console.log({ slugss, splitRoute });
+    // console.log({ slugss, splitRoute });
 
     routes.push({
       segment: `${route}${splitRoute}/edit`,
@@ -526,28 +553,28 @@ export async function generateAppDirectoryFromModelTree(
 
     const baseRoute = route;
     const createRedirectForm = convertRouteToRedirectUrl(baseRoute);
-    console.log("()()()()()()", { createRedirectForm });
+    // console.log("()()()()()()", { createRedirectForm });
 
     // Create base directory for model
     const baseModelDirectory = path.join(outputDirectory, route);
     const baseParts = baseModelDirectory
       .split(path.sep)
       .filter((item) => item !== "");
-    console.log({ baseParts });
+    // console.log({ baseParts });
     let currentBasePath = "";
     for (const part of baseParts) {
       currentBasePath = path.join(currentBasePath, part);
-      console.log("CREATING", currentBasePath);
+      // console.log("CREATING", currentBasePath);
       if (!fs.existsSync(currentBasePath)) {
         fs.mkdirSync(currentBasePath);
       }
     }
-    console.log({ baseModelDirectory });
+    // console.log({ baseModelDirectory });
 
     if (baseModelDirectory !== "app/") {
       // Copy base directory files from template
       copyDirectory(
-        path.join(__dirname, "templateApp", "nexquikTemplateModel"),
+        path.join(__dirname, "templateRoot", "app", "nexquikTemplateModel"),
         baseModelDirectory,
         true,
         "[id]"
@@ -564,24 +591,24 @@ export async function generateAppDirectoryFromModelTree(
     slugsForThisModel.forEach((parentSlug) => {
       route += `[${parentSlug}]/`;
     });
-    console.log("Creating dynamic directory for model", {
-      modelName,
-      route,
-    });
+    // console.log("Creating dynamic directory for model", {
+    //   modelName,
+    //   route,
+    // });
     // const parentSlugRoute = route;
     const dynamicOutputDirectory = path.join(outputDirectory, route);
-    console.log("Creating base directory for model", {
-      modelName,
-      route,
-    });
+    // console.log("Creating base directory for model", {
+    //   modelName,
+    //   route,
+    // });
     const parts = dynamicOutputDirectory
       .split(path.sep)
       .filter((item) => item !== "");
-    console.log({ parts });
+    // console.log({ parts });
     let currentPath = "";
     for (const part of parts) {
       currentPath = path.join(currentPath, part);
-      console.log("CREATING", currentPath);
+      // console.log("CREATING", currentPath);
       if (!fs.existsSync(currentPath)) {
         fs.mkdirSync(currentPath);
       }
@@ -589,7 +616,13 @@ export async function generateAppDirectoryFromModelTree(
 
     // Copy template dynamic directory into new dynamic directory
     copyDirectory(
-      path.join(__dirname, "templateApp", "nexquikTemplateModel", "[id]"),
+      path.join(
+        __dirname,
+        "templateRoot",
+        "app",
+        "nexquikTemplateModel",
+        "[id]"
+      ),
       dynamicOutputDirectory,
       true
     );
@@ -715,6 +748,8 @@ export async function generateAppDirectoryFromModelTree(
         typecastValue = `Number(${typecastValue})`;
       } else if (parentIdField?.type === "Boolean") {
         typecastValue = `Boolean(${typecastValue})`;
+      } else if (parentIdField?.type === "String") {
+        typecastValue = `String(${typecastValue})`;
       }
       manyToManyWhere = `
     where: {
@@ -736,13 +771,13 @@ export async function generateAppDirectoryFromModelTree(
     },
     `;
     }
-    console.log({
-      name: modelTree.modelName,
-      fields: modelTree.model.fields,
-      parent: modelTree.parent,
-      parentFields: modelTree.parent?.fields,
-      manyToManyWhere,
-    });
+    // console.log({
+    //   name: modelTree.modelName,
+    //   fields: modelTree.model.fields,
+    //   parent: modelTree.parent,
+    //   parentFields: modelTree.parent?.fields,
+    //   manyToManyWhere,
+    // });
     // Does the current model have a many to many relation ship to its parent
     // Get the current model's parent
     // Find that field in the current model by type
@@ -920,10 +955,10 @@ export async function generateAppDirectoryFromModelTree(
       "//@nexquik revalidatePath stop"
     );
 
-    console.log({
-      initial: createRedirectForm,
-      popped: popStringEnd(`${createRedirectForm}`, "/"),
-    });
+    // console.log({
+    //   initial: createRedirectForm,
+    //   popped: popStringEnd(`${createRedirectForm}`, "/"),
+    // });
     const backLink = await generateLink(
       popStringEnd(popStringEnd(`${createRedirectForm}`, "/"), "/"),
       "Back"
@@ -1277,6 +1312,8 @@ export function generateWhereParentClause(
         typecastValue = `Number(${typecastValue})`;
       } else if (parentIdentifierFieldType === "Boolean") {
         typecastValue = `Boolean(${typecastValue})`;
+      } else if (parentIdentifierFieldType === "String") {
+        typecastValue = `String(${typecastValue})`;
       }
       return `({ where: { ${parentReferenceField}: {${parentIdentifierFieldName}: {equals: ${typecastValue}} } } })`;
     } else {
@@ -1315,6 +1352,8 @@ export function generateWhereClause(
           typecastValue = `Number(${typecastValue})`;
         } else if (f.type === "Boolean") {
           typecastValue = `Boolean(${typecastValue})`;
+        } else if (f.type === "String") {
+          typecastValue = `String(${typecastValue})`;
         }
 
         returnClause += `${f.name}: ${typecastValue} ,`;
@@ -1327,6 +1366,8 @@ export function generateWhereClause(
         typecastValue = `Number(${typecastValue})`;
       } else if (type === "Boolean") {
         typecastValue = `Boolean(${typecastValue})`;
+      } else if (type === "String") {
+        typecastValue = `String(${typecastValue})`;
       }
 
       return `{ ${name}: ${typecastValue} },`;
@@ -1351,6 +1392,8 @@ export function generateDeleteClause(
       typecastValue = `Number(${typecastValue})`;
     } else if (singleIdField.type === "Boolean") {
       typecastValue = `Boolean(${typecastValue})`;
+    } else if (singleIdField.type === "String") {
+      typecastValue = `String(${typecastValue})`;
     }
     return `{ ${singleIdField.name}: ${typecastValue} },`;
   } else if (uniqueIdentifierFields.length >= 2) {
@@ -1375,6 +1418,8 @@ export function generateDeleteClause(
         typecastValue = `Number(${typecastValue})`;
       } else if (f.type === "Boolean") {
         typecastValue = `Boolean(${typecastValue})`;
+      } else if (f.type === "String") {
+        typecastValue = `String(${typecastValue})`;
       }
       andClause += `${f.name}: ${typecastValue},`;
     });
