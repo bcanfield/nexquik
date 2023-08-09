@@ -15,14 +15,5 @@
       }
     ]
   },
-  "exclude": [
-    "prisnextApp/*",
-    "lib/app/*",
-    "dist/*",
-    "templateRoot/*",
-    "devNexquikApp/*",
-    "nexquikApp/*",
-    "__tests__",
-    "dev/*"
-  ]
+  "exclude": ["dist/*", "templateRoot/*", "devNexquikApp/*", "__tests__"]
 }
