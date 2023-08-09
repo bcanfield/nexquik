@@ -920,8 +920,12 @@ export async function generateAppDirectoryFromModelTree(
       "//@nexquik revalidatePath stop"
     );
 
+    console.log({
+      initial: createRedirectForm,
+      popped: popStringEnd(`${createRedirectForm}`, "/"),
+    });
     const backLink = await generateLink(
-      popStringEnd(`${createRedirectForm}`, "/"),
+      popStringEnd(popStringEnd(`${createRedirectForm}`, "/"), "/"),
       "Back"
     );
     addStringBetweenComments(
