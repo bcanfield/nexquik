@@ -80,7 +80,6 @@ async function generateCreateForm(
   enums: Record<string, string[]>
 ): Promise<string> {
   const formFields = generateFormFields(modelTree, enums);
-  console.log({ formFields });
   const reactComponentTemplate = `
       <form action={addNexquikTemplateModel}>
         ${formFields}
@@ -186,7 +185,6 @@ async function generateChildrenList(
 </Link>`;
     childrenLinks.push(childLink);
   });
-  console.log({ childrenLinks });
   return childrenLinks.join("\n");
 }
 async function generateListForm(
@@ -197,16 +195,10 @@ async function generateListForm(
     type: string;
   }[]
 ): Promise<string> {
-  const uniqueField = modelTree.model.fields.find(
-    (tableField) => tableField.isId
-  );
   let linkHref = routeUrl;
   uniqueFields.forEach((f) => {
     linkHref += "/" + "${" + "nexquikTemplateModel." + f.name + "}";
   });
-
-  const uniqueFieldInputType =
-    (uniqueField?.type && prismaFieldToInputType[uniqueField.type]) || "text";
 
   let uniqueFormInputs = "";
   uniqueFields.forEach((u) => {
@@ -352,12 +344,12 @@ export async function generateShowForm(
     modelTree.model.fields,
     enums
   );
-
+  // console.log({ formFields });
   const uniqueFields = modelTree.uniqueIdentifierField;
   const nonUniqueFields = modelTree.model.fields.filter(
     (i) => !uniqueFields.find((j) => j.name === i.name)
   );
-  console.log(" show form unique", { uniqueFields, nonUniqueFields });
+  // console.log(" show form unique", { uniqueFields, nonUniqueFields });
   // Define the React component template as a string
 
   let linkRoute = routeUrl;
@@ -372,6 +364,15 @@ export async function generateShowForm(
         if (!isFieldRenderable(field)) {
           return "";
         }
+        // if (field.kind === "enum") {
+        //   const enumValues = enums[field.type];
+        //   return `<label>${field.name}</label>\n
+        //         <select name="${field.name}" id="${
+        //     field.name
+        //   }" defaultValue={nexquikTemplateModel?.${field.name}}>
+        //         ${enumValues.map((v) => `<option value="${v}">${v}</option>`)}
+        // </select>`;
+        // }
         return `  <input hidden type="${field.type}" name="${field?.name}" defaultValue={nexquikTemplateModel?.${field?.name}} />`;
       })
       .join("\n")}
@@ -643,6 +644,68 @@ export async function generateAppDirectoryFromModelTree(
       slug: getDynamicSlugs(modelTree.modelName, [p])[0],
     }));
     // console.log({ parentObjects });
+
+    // In parent, loop through fields and find field of 'type' current model
+    let isManyToMany = false;
+    let referenceFieldNameToParent = "";
+    let parentIdField = modelTree.parent?.fields.find((f) => f.isId);
+    const relationNameToParent = modelTree.parent?.fields.find(
+      (a) => a.type === modelTree.modelName
+    )?.relationName;
+    if (relationNameToParent) {
+      const referenceFieldToParent = modelTree.model.fields.find(
+        (f) => f.relationName === relationNameToParent
+      );
+      if (referenceFieldToParent) {
+        referenceFieldNameToParent = referenceFieldToParent.name;
+      }
+      if (referenceFieldToParent?.isList) {
+        isManyToMany = true;
+      }
+    }
+    let manyToManyWhere = "";
+    let manyToManyConnect = "";
+    if (isManyToMany && parentIdField) {
+      let typecastValue = `params.${getDynamicSlugs(modelTree.parent?.name, [
+        parentIdField.name,
+      ])}`;
+      if (parentIdField?.type === "Int" || parentIdField?.type === "Float") {
+        typecastValue = `Number(${typecastValue})`;
+      } else if (parentIdField?.type === "Boolean") {
+        typecastValue = `Boolean(${typecastValue})`;
+      }
+      manyToManyWhere = `
+    where: {
+      ${referenceFieldNameToParent}: {
+        some: {
+          ${parentIdField?.name}: {
+            equals: ${typecastValue}
+          }
+        }
+      }
+    }
+    `;
+
+      manyToManyConnect = `
+      ${referenceFieldNameToParent}: {
+      connect: {
+        ${parentIdField?.name}: ${typecastValue},
+      },
+    },
+    `;
+    }
+    console.log({
+      name: modelTree.modelName,
+      fields: modelTree.model.fields,
+      parent: modelTree.parent,
+      parentFields: modelTree.parent?.fields,
+      manyToManyWhere,
+    });
+    // Does the current model have a many to many relation ship to its parent
+    // Get the current model's parent
+    // Find that field in the current model by type
+    // if it is list, its a many to many
+    // const aCurrentParent = modelTree.parent.
     const whereparentClause = modelTree.parent
       ? generateWhereParentClause(
           "params",
@@ -650,7 +713,8 @@ export async function generateAppDirectoryFromModelTree(
           modelTree.model.fields.find((field) => field.isId)?.name ||
             parentIdentifierField,
           modelTree.model.fields.find((field) => field.isId)?.type || fieldType,
-          getParentReferenceField(modelTree)
+          getParentReferenceField(modelTree),
+          manyToManyWhere
         )
       : "()";
     // const whereparentClause = modelTree.parent
@@ -695,7 +759,9 @@ export async function generateAppDirectoryFromModelTree(
       "{/* @nexquik listChildren stop */}"
     );
     // // ############### Create Page
-    console.log({ createRedirectForm, baseRoute });
+    // console.log({ createRedirectForm, baseRoute });
+
+    // If many to many, must do a connect
     const createFormCode = await generateCreateForm(
       modelTree,
       createRedirectForm,
@@ -732,7 +798,7 @@ export async function generateAppDirectoryFromModelTree(
       "{/* @nexquik createLink stop */}"
     );
     const prismaInput = generateConvertToPrismaInputCode(modelTree);
-    console.log("NIKKI", { prismaInput });
+    // console.log("NIKKI", { prismaInput });
     addStringBetweenComments(
       baseModelDirectory,
       prismaInput,
@@ -747,9 +813,10 @@ export async function generateAppDirectoryFromModelTree(
 
     const prismaCreateInput = generateConvertToPrismaCreateInputCode(
       modelTree,
-      parentSlugs
+      parentSlugs,
+      manyToManyConnect
     );
-    console.log("NIKKI", { prismaCreateInput });
+    // console.log("NIKKI", { prismaCreateInput });
     addStringBetweenComments(
       baseModelDirectory,
       prismaCreateInput,
@@ -792,7 +859,7 @@ export async function generateAppDirectoryFromModelTree(
     const editRedirect = await generateRedirect(
       `\`${createRedirectForm}/${redirectStr2}\``
     );
-    console.log({ createRedirectForm, redirectStr2, editRedirect });
+    // console.log({ createRedirectForm, redirectStr2, editRedirect });
     addStringBetweenComments(
       baseModelDirectory,
       editRedirect,
@@ -898,10 +965,11 @@ export async function generateAppDirectoryFromModelTree(
 
 export function generateConvertToPrismaCreateInputCode(
   modelTree: ModelTree,
-  parentSlugs: string[]
+  parentSlugs: string[],
+  manyToManyConnect: string
 ): string {
   const uniques = modelTree.model.fields;
-  console.log({ uniques });
+  // console.log({ uniques });
   // If model has a parent, get the parent accessor
   let relationFieldsToParent: string[] = [];
   let fieldType = "";
@@ -914,30 +982,30 @@ export function generateConvertToPrismaCreateInputCode(
         }
       }
     });
-    console.log({ relationFieldsToParent });
+    // console.log({ relationFieldsToParent });
 
     // Get the field type on the current model that is the id referencing the parent
     fieldType =
       modelTree.model.fields.find((f) =>
         relationFieldsToParent.find((a) => a === f.name)
       )?.type || "";
-    console.log({ fieldType });
+    // console.log({ fieldType });
   }
 
   const fieldsToConvert: Partial<DMMF.Field>[] = modelTree.model.fields
     .filter((field) => {
       if (field.name === "id") {
         const fieldRenderable = isFieldRenderable(field);
-        console.log("HERE IN NAME", {
-          bool: field.isId !== true || field.hasDefaultValue == false,
-          field,
-          fieldRenderable,
-        });
+        // console.log("HERE IN NAME", {
+        //   bool: field.isId !== true || field.hasDefaultValue == false,
+        //   field,
+        //   fieldRenderable,
+        // });
       }
       return field.isId !== true || field.hasDefaultValue == false;
     })
     .filter((field) => isFieldRenderable(field));
-  console.log({ fieldsToConvert });
+  // console.log({ fieldsToConvert });
 
   const convertToPrismaInputLines = fieldsToConvert.map(({ name, type }) => {
     let typecastValue = `formData.get('${name}')`;
@@ -969,7 +1037,7 @@ export function generateConvertToPrismaCreateInputCode(
     //   parentIdentifierFields
     // );
     relationFieldsToParent.forEach((s, index) => {
-      console.log("in slugs", { relationFieldsToParent });
+      // console.log("in slugs", { relationFieldsToParent });
       // const relationTo =
       let typecastValue = `params.${parentSlugs[index]}`;
       if (fieldType === "Int" || fieldType === "Float") {
@@ -989,7 +1057,7 @@ export function generateConvertToPrismaCreateInputCode(
   modelTree.model.fields.map((field, index) => {
     if (field.kind === "object") {
       const relationFrom = field.relationFromFields && field.relationFromFields;
-      console.log({ field }, { relationFrom });
+      // console.log({ field }, { relationFrom });
 
       const referencedModelName = field.type;
 
@@ -1018,8 +1086,8 @@ export function generateConvertToPrismaCreateInputCode(
       }
     }
   });
-
-  console.log({ convertToPrismaInputLines });
+  convertToPrismaInputLines.push(manyToManyConnect);
+  // console.log({ convertToPrismaInputLines });
   return `{
   ${convertToPrismaInputLines.join("\n")}
     }`;
@@ -1041,14 +1109,14 @@ export function generateConvertToPrismaInputCode(
         }
       }
     });
-    console.log({ relationFieldsToParent });
+    // console.log({ relationFieldsToParent });
 
     // Get the field type on the current model that is the id referencing the parent
     fieldType =
       modelTree.model.fields.find((f) =>
         relationFieldsToParent.find((a) => a === f.name)
       )?.type || "";
-    console.log({ fieldType });
+    // console.log({ fieldType });
   }
 
   const fieldsToConvert: Partial<DMMF.Field>[] = modelTree.model.fields
@@ -1107,7 +1175,7 @@ export function generateConvertToPrismaInputCode(
   modelTree.model.fields.map((field, index) => {
     if (field.kind === "object") {
       const relationFrom = field.relationFromFields && field.relationFromFields;
-      console.log({ field }, { relationFrom });
+      // console.log({ field }, { relationFrom });
 
       const referencedModelName = field.type;
 
@@ -1137,45 +1205,51 @@ export function generateConvertToPrismaInputCode(
     }
   });
 
-  console.log({ convertToPrismaInputLines });
+  // console.log({ convertToPrismaInputLines });
   return `{
   ${convertToPrismaInputLines.join("\n")}
     }`;
 }
 
 export function generateWhereParentClause(
+  // isManyToMany: boolean = false,
   inputObject: string | undefined,
   fieldAccessValue: string | undefined,
   parentIdentifierFieldName: string | undefined,
   parentIdentifierFieldType: string | undefined,
-  parentReferenceField: string | undefined
+  parentReferenceField: string | undefined,
+  manyToManyWhere: string
 ): string {
-  console.log({
-    inputObject,
-    fieldAccessValue,
-    parentIdentifierFieldName,
-    parentIdentifierFieldType,
-    parentReferenceField,
-  });
-  if (
-    inputObject &&
-    fieldAccessValue &&
-    parentIdentifierFieldName &&
-    parentIdentifierFieldType &&
-    parentReferenceField
-  ) {
-    let typecastValue = `${inputObject}.${fieldAccessValue}`;
+  // console.log({
+  //   inputObject,
+  //   fieldAccessValue,
+  //   parentIdentifierFieldName,
+  //   parentIdentifierFieldType,
+  //   parentReferenceField,
+  // });
+  if (manyToManyWhere == "") {
     if (
-      parentIdentifierFieldType === "Int" ||
-      parentIdentifierFieldType === "Float"
+      inputObject &&
+      fieldAccessValue &&
+      parentIdentifierFieldName &&
+      parentIdentifierFieldType &&
+      parentReferenceField
     ) {
-      typecastValue = `Number(${typecastValue})`;
-    } else if (parentIdentifierFieldType === "Boolean") {
-      typecastValue = `Boolean(${typecastValue})`;
+      let typecastValue = `${inputObject}.${fieldAccessValue}`;
+      if (
+        parentIdentifierFieldType === "Int" ||
+        parentIdentifierFieldType === "Float"
+      ) {
+        typecastValue = `Number(${typecastValue})`;
+      } else if (parentIdentifierFieldType === "Boolean") {
+        typecastValue = `Boolean(${typecastValue})`;
+      }
+      return `({ where: { ${parentReferenceField}: {${parentIdentifierFieldName}: {equals: ${typecastValue}} } } })`;
+    } else {
+      return "";
     }
-    return `({ where: { ${parentReferenceField}: {${parentIdentifierFieldName}: {equals: ${typecastValue}} } } })`;
   } else {
-    return "";
+    return `({ ${manyToManyWhere} })`;
   }
 }
 
@@ -1235,7 +1309,7 @@ export function generateDeleteClause(
     type: string;
   }[]
 ): string {
-  console.log("deleteClause", { uniqueIdentifierFields });
+  // console.log("deleteClause", { uniqueIdentifierFields });
   if (uniqueIdentifierFields.length === 1) {
     const singleIdField = uniqueIdentifierFields[0];
     let typecastValue = `formData.get('${singleIdField.name}')`;
@@ -1271,7 +1345,7 @@ export function generateDeleteClause(
       andClause += `${f.name}: ${typecastValue},`;
     });
     andClause += "}}";
-    console.log({ andClause });
+    // console.log({ andClause });
     return andClause;
     // const prismaIdentifier = `${f.name}`
   }
@@ -1325,14 +1399,14 @@ export function generateFormFields(
 
       let returnValue = "";
       if (field.name === "id") {
-        console.log("$$$$$$$$$$$$$$$$$$$$$$$\n", {
-          field,
-          isRender: isFieldRenderable(field),
-          bool: field.isId == false || field.hasDefaultValue === false,
-          full:
-            isFieldRenderable(field) &&
-            (field.isId == false || field.hasDefaultValue === false),
-        });
+        // console.log("$$$$$$$$$$$$$$$$$$$$$$$\n", {
+        //   field,
+        //   isRender: isFieldRenderable(field),
+        //   bool: field.isId == false || field.hasDefaultValue === false,
+        //   full:
+        //     isFieldRenderable(field) &&
+        //     (field.isId == false || field.hasDefaultValue === false),
+        // });
       }
 
       if (
@@ -1342,7 +1416,7 @@ export function generateFormFields(
         returnValue = `<label>${field.name}</label>\n
         <input type="${inputType}" name="${field.name}" ${required}/>`;
       }
-      console.log({ returnValue });
+      // console.log({ returnValue });
 
       return returnValue;
     })
