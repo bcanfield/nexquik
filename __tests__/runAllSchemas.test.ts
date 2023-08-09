@@ -31,10 +31,6 @@ function buildDirectoryStructure(
   return result;
 }
 
-function prettyPrintDirectory(directoryPath: string): void {
-  const directoryStructure = buildDirectoryStructure(directoryPath, "");
-  console.log(directoryStructure);
-}
 const isDirectoryNotEmpty = (path: string) => {
   try {
     const files = readdirSync(path);
@@ -61,9 +57,33 @@ test.each(readdirSync(prismaSchemaDirectory))(
       )} -out ${testOutputDirectory}`
     );
     console.log(`Schema Test: ${schemaPath}`);
-    prettyPrintDirectory(testOutputDirectory);
+    // prettyPrintDirectory(testOutputDirectory);
     expect(isDirectoryNotEmpty(testOutputDirectory)).toBeTruthy();
-
-    child_process.execSync(`rm -rf ${testOutputDirectory}`);
+    // res = child_process.execSync(
+    //   `cd ${testOutputDirectory} && npm i && npx tsc`
+    // );
+    // child_process.execSync(`rm -rf ${testOutputDirectory}`);
+    try {
+      // console.log("In here:", res);
+      // res = child_process.execSync(
+      //   `cd ${testOutputDirectory} && npm i && npx tsc`
+      // );
+      // res = child_process.execSync(
+      //   `cd ${testOutputDirectory} && npm i && npx tsc`
+      // );
+      child_process.execSync("npm install --quiet", {
+        cwd: testOutputDirectory,
+      }); // Run npm install
+      child_process.execSync("npm run typecheck", {
+        stdio: "inherit",
+        cwd: testOutputDirectory,
+      }); // Run type check
+    } catch (error) {
+      console.error("TypeScript compilation error:", error.message);
+      // Handle the error as needed
+      throw error; // Rethrow the error to fail the test
+    } finally {
+      child_process.execSync(`rm -rf ${testOutputDirectory}`);
+    }
   }
 );
