@@ -1,9 +1,7 @@
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-//@nexquik prismaClientImport start
-import { prisma } from "utils/db";
-//@nexquik prismaClientImport stop
+import prisma from "@/lib/prisma";
 
 //@nexquik prismaEnumImport start
 import { Enum } from "@prisma/client";
