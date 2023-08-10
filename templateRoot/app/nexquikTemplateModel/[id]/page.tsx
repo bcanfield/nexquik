@@ -31,8 +31,14 @@ export default async function ShowNexquikTemplateModel({
     //@nexquik listRedirect stop
   }
   return (
-    <div className="main">
-      <h1 className="title"> View NexquikTemplateModel</h1>
+    <div className="mt-10 max-w-4xl">
+      <header id="header" className="relative z-20">
+        <div className="flex items-center">
+          <h1 className="inline-block text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight dark:text-slate-200">
+            View NexquikTemplateModel
+          </h1>
+        </div>
+      </header>{" "}
       {/* @nexquik showForm start */}
       <form>
         <input
@@ -61,15 +67,11 @@ export default async function ShowNexquikTemplateModel({
         </ul>
       </form>
       {/* @nexquik showForm stop */}
-      <div className="button-group">
-        {/* @nexquik listChildren start */}
-        {/* @nexquik listChildren stop */}
-      </div>
-
-      <div className="button-group">
-        {/* @nexquik backToCurrentLink start */}
-        <Link href={`/nexquikTemplateModel/create`}>Back</Link>
-        {/* @nexquik backToCurrentLink stop */}
+      <div className="mt-8">
+        <div className="flex space-x-4">
+          {/* @nexquik listChildren start */}
+          {/* @nexquik listChildren stop */}
+        </div>
       </div>
     </div>
   );

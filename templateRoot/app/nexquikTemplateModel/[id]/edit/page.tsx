@@ -36,8 +36,14 @@ export default async function EditNexquikTemplateModel({
   }
 
   return (
-    <div className="main">
-      <h1> Edit NexquikTemplateModel</h1>
+    <div className="mt-10 max-w-4xl">
+      <header id="header" className="relative z-20">
+        <div className="flex items-center">
+          <h1 className="inline-block text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight dark:text-slate-200">
+            Edit NexquikTemplateModel
+          </h1>
+        </div>
+      </header>{" "}
       {/* @nexquik editForm start */}
       <form action={editNexquikTemplateModel}>
         <label>name</label>

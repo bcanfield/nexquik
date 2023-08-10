@@ -188,10 +188,11 @@ export default function RootLayout({
         </div>
 
         {/* End Side Nav */}
-        {/* CHILDREN START */}
 
         <div className="lg:pl-[19.5rem]">
-          <div className="max-w-3xl mx-auto pt-10 xl:max-w-none">
+          <div className="max-w-3xl pt-10 xl:max-w-none">
+            {/* CHILDREN START */}
+
             {children}
             {/* CHILDREN END */}
           </div>

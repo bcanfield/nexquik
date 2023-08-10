@@ -34,8 +34,14 @@ export default async function CreateNexquikTemplateModel({
   }
 
   return (
-    <div className="main">
-      <h1 className="title"> Create NexquikTemplateModel</h1>
+    <div className="mt-10 max-w-4xl">
+      <header id="header" className="relative z-20">
+        <div className="flex items-center">
+          <h1 className="inline-block text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight dark:text-slate-200">
+            Create NexquikTemplateModel
+          </h1>
+        </div>
+      </header>
       {/* @nexquik createForm start */}
       <form action={addNexquikTemplateModel}>
         <label>name</label>
