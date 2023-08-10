@@ -82,14 +82,15 @@ async function generateCreateForm(
 ): Promise<string> {
   const formFields = generateFormFields(modelTree, enums);
   const reactComponentTemplate = `
-      <form action={addNexquikTemplateModel}>
+      <form className="space-y-4" action={addNexquikTemplateModel}>
         ${formFields}
-        <div className="button-group">
-        <button type="submit" className="create-button">
+        <div className="flex space-x-4">
+        <button type="submit"                   className="bg-sky-600 text-white px-4 py-2 rounded-lg hover:bg-sky-600 transition-colors"
+        >
             Create NexquikTemplateModel
         </button>
-        <Link href={\`${routeUrl}\`} className="cancel-link">
-            Cancel
+        <Link href={\`${routeUrl}\`} className="bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors" passHref>
+        Cancel
         </Link>
     </div>      
     </form>     
@@ -111,7 +112,7 @@ async function generateLink(
 ): Promise<string> {
   const linkString = linkUrl ? `\`${linkUrl}\`` : "'/'";
   const reactComponentTemplate = `
-  <Link href={${linkString}} className="base-link">
+  <Link href={${linkString}} className="bg-sky-500 text-white px-4 py-2 rounded-lg hover:bg-sky-600 transition-colors">
   ${linkText}
 </Link>  `;
   return reactComponentTemplate;
@@ -138,11 +139,11 @@ async function generateEditForm(
   );
   // Define the React component template as a string
   const reactComponentTemplate = `
-    <form action={editNexquikTemplateModel}>
-        ${formFields}
-        <div className="button-group">
-        <button className="create-button" type="submit">Update NexquikTemplateModel</button>
-        <Link href={\`${routeUrl}\`} className="cancel-link">
+  <form className="space-y-4" action={editNexquikTemplateModel}>
+  ${formFields}
+  <div className="flex space-x-4">
+        <button  className="bg-sky-500 text-white px-4 py-2 rounded-lg hover:bg-sky-600 transition-colors" type="submit">Update NexquikTemplateModel</button>
+        <Link href={\`${routeUrl}\`} className="bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors" passHref>
             Cancel
         </Link>
         </div>
@@ -174,7 +175,7 @@ async function generateChildrenList(
   );
   const childrenLinks: string[] = [];
   modelTree.children.forEach((c) => {
-    let childLink = `<Link className="base-link view-link" href={\`${routeUrl}/`;
+    let childLink = `<div className="w-1/3"> <Link className="bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors block w-full text-center" href={\`${routeUrl}/`;
     slug.forEach((s) => {
       childLink += `\${params.${s}}/`;
     });
@@ -183,7 +184,7 @@ async function generateChildrenList(
       c.modelName.charAt(0).toLowerCase() + c.modelName.slice(1)
     }\`}>
   ${c.modelName} List
-</Link>`;
+</Link></div>`;
     childrenLinks.push(childLink);
   });
   return childrenLinks.join("\n");
@@ -210,37 +211,39 @@ async function generateListForm(
 
   // Define the React component template as a string
   const reactComponentTemplate = `
-  <table className="item-list">
-  <tbody>
-  <tr className="header-row">
+  <table className="w-full text-left border-collapse">
+  <thead>
+
+  <tr>
   ${modelTree.model.fields
     .map((field) => {
       if (isFieldRenderable(field)) {
-        return `<th> ${field.name} </th>`;
+        return `<th className="sticky z-10 top-0 text-sm leading-6 font-semibold text-slate-700 bg-white p-0 dark:bg-slate-900 dark:text-slate-300"> ${field.name} </th>`;
       }
     })
     .join("\n")}
   </tr>
+  </thead>
+  <tbody>
 
     {nexquikTemplateModel?.map((nexquikTemplateModel, index) => (
-      <tr key={index} className="item-row">
+      <tr key={index}>
       
       ${modelTree.model.fields
         .map((field) => {
           if (isFieldRenderable(field)) {
-            return `<td> {\`\${nexquikTemplateModel.${field.name}}\`} </td>`;
+            return `<td  translate="no"
+            className="py-2 pr-2 font-mono font-medium text-sm leading-6 text-sky-500 whitespace-nowrap dark:text-sky-400"> {\`\${nexquikTemplateModel.${field.name}}\`} </td>`;
           }
         })
         .join("\n")}
 
       <td className="action-cell">
-      <form>
+      <form className="flex space-x-2">
       ${uniqueFormInputs}
-  <div className="action-buttons">
-          <Link href={\`${linkHref}\`} className="action-link view-link">View</Link>
-                  <Link href={\`${linkHref}/edit\`} className="action-link edit-link">Edit</Link>
-                  <button formAction={deleteNexquikTemplateModel} className="action-link delete-link">Delete</button>
-                  </div>
+          <Link href={\`${linkHref}\`} className="text-blue-500 hover:text-blue-600 transition-colors">View</Link>
+                  <Link href={\`${linkHref}/edit\`} className="text-green-500 hover:text-green-600 transition-colors">Edit</Link>
+                  <button formAction={deleteNexquikTemplateModel} className="text-red-500 hover:text-red-600 transition-colors">Delete</button>
                   </form>
 
                   </td>
@@ -339,7 +342,7 @@ export async function generateShowForm(
     linkRoute += `/\${nexquikTemplateModel?.${f?.name}}`;
   });
   const reactComponentTemplate = `
-    <form>
+    <form className="space-y-4">
     ${modelTree.model.fields
       .map((field) => {
         if (!isFieldRenderable(field)) {
@@ -357,30 +360,34 @@ export async function generateShowForm(
 
 
   
-    <div className="button-group">
+     
 
-
-    <Link className="action-link edit-link" href={\`${linkRoute}/edit\`}>Edit</Link>
-
-  
-    <button className="action-link delete-link" formAction={deleteNexquikTemplateModel}>Delete</button>
-    </div>
-
-    <div className="container view-item">
+    <div className="mt-8">
 
     ${modelTree.model.fields
       .map((field) => {
         if (!isFieldRenderable(field)) {
           return "";
         }
-        return `<div className="pair">
-      <span className="key">${field.name}</span>
-      <span className="value">{\`\${nexquikTemplateModel?.${field.name}}\`}</span>
+        return `<div className="grid grid-cols-2 gap-1">
+      <span className="text-slate-500 dark:text-slate-400 font-medium">${field.name}</span>
+      <span className="text-slate-700 dark:text-slate-300">{\`\${nexquikTemplateModel?.${field.name}}\`}</span>
   </div>`;
       })
       .join("\n")}
     </div>
+    <div className="flex space-x-4">
 
+
+    <Link     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+
+    passHref href={\`${linkRoute}/edit\`}>Edit</Link>
+
+  
+    <button     className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+
+    formAction={deleteNexquikTemplateModel}>Delete</button>
+    </div>
     </form>
   `;
 
@@ -1193,9 +1200,15 @@ export function generateFormFields(
       // Enum
       if (field.kind === "enum") {
         const enumValues = enums[field.type];
-        return `<label>${field.name}</label>\n
+        return `<label className="block text-slate-500 dark:text-slate-400">${
+          field.name
+        }</label>\n
 
-        <select name="${field.name}" id="${field.name}">
+        <select name="${
+          field.name
+        }" className="block w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400" id="${
+          field.name
+        }">
         ${enumValues.map((v) => `<option value="${v}">${v}</option>`)}
 </select>`;
       }
@@ -1217,8 +1230,9 @@ export function generateFormFields(
           if (fieldType2) {
             const inputType2 = prismaFieldToInputType[fieldType2] || "text";
 
-            return `<label>${relationFrom}</label>\n
-            <input type="${inputType2}" name="${relationFrom}" ${required}/>`;
+            return `<div><label className="block text-slate-500 dark:text-slate-400">${relationFrom}</label>\n
+            <input type="${inputType2}" name="${relationFrom}"                   className="block w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400"
+            ${required}/></div>`;
           } else {
             return "";
           }
@@ -1230,8 +1244,8 @@ export function generateFormFields(
         isFieldRenderable(field) &&
         (field.isId == false || field.hasDefaultValue === false)
       ) {
-        returnValue = `<label>${field.name}</label>\n
-        <input type="${inputType}" name="${field.name}" ${required}/>`;
+        returnValue = `<label className="block text-slate-500 dark:text-slate-400">${field.name}</label>\n
+        <input type="${inputType}" name="${field.name}" className="block w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400" ${required}/>`;
       }
 
       return returnValue;
@@ -1251,10 +1265,14 @@ export function generateFormFieldsWithDefaults(
       // Enum
       if (field.kind === "enum") {
         const enumValues = enums[field.type];
-        return `<label>${field.name}</label>\n
-              <select name="${field.name}" id="${
+        return `<label className="block text-slate-500 dark:text-slate-400">${
           field.name
-        }" defaultValue={nexquikTemplateModel?.${field.name}}>
+        }</label>\n
+              <select className="block w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400" name="${
+                field.name
+              }" id="${field.name}" defaultValue={nexquikTemplateModel?.${
+          field.name
+        }}>
               ${enumValues.map((v) => `<option value="${v}">${v}</option>`)}
       </select>`;
       }
@@ -1269,7 +1287,7 @@ export function generateFormFieldsWithDefaults(
       const disabled = field.isId ? "disabled" : "";
       const required = field.isRequired ? "required" : "";
 
-      return `<label>${field.name}</label>\n<input type="${inputType}" name="${field.name}" defaultValue=${defaultValue}  ${disabled} ${required}/>`;
+      return `<label className="block text-slate-500 dark:text-slate-400">${field.name}</label>\n<input className="block w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400" type="${inputType}" name="${field.name}" defaultValue=${defaultValue}  ${disabled} ${required}/>`;
     })
     .join("\n");
 }

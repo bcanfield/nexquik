@@ -26,9 +26,15 @@ export default async function ListNexquikTemplateModels({
     //@nexquik revalidatePath stop
   }
   return (
-    <div className="main">
-      <h1> NexquikTemplateModel List</h1>
-      <div className="button-group">
+    <div className="mt-10 max-w-4xl">
+      <header id="header" className="relative z-20">
+        <div className="flex items-center">
+          <h1 className="inline-block text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight dark:text-slate-200">
+            NexquikTemplateModel List
+          </h1>
+        </div>
+      </header>
+      <div className="flex justify-end mt-4">
         {/* @nexquik createLink start */}
         <Link href={`/nexquikTemplateModel/create`}>
           Create New NexquikTemplateModel
@@ -64,7 +70,7 @@ export default async function ListNexquikTemplateModels({
         ))}
       </ul>
       {/* @nexquik listForm stop */}
-      <div className="button-group">
+      <div className="mt-8">
         {/* @nexquik backLink start */}
         <Link href={`/nexquikTemplateModel/create`}>Back</Link>
         {/* @nexquik backLink stop */}
