@@ -14,9 +14,13 @@ export default function RootLayout({
           <div className="max-w-8xl mx-auto">
             <div className="py-4 border-b border-slate-900/10 lg:px-8 lg:border-0 dark:border-slate-300/10 mx-4 lg:mx-0">
               <div className="relative flex items-center">
-                <h1 className="text-3xl sm:text-3xl font-extrabold text-slate-900 tracking-tight dark:text-slate-200">
+                <Link
+                  className="text-3xl sm:text-3xl font-extrabold text-slate-900 tracking-tight dark:text-slate-200"
+                  href="/"
+                >
                   Nexquik
-                </h1>
+                </Link>
+
                 <div className="relative hidden lg:flex items-center ml-auto">
                   <nav className="text-sm leading-6 font-semibold text-slate-700 dark:text-slate-200">
                     <ul className="flex space-x-8">
@@ -129,9 +133,11 @@ export default function RootLayout({
               <ul>
                 <li className="mt-12 lg:mt-8">
                   <h5 className="mb-8 lg:mb-3 font-semibold text-slate-900 dark:text-slate-200">
-                    Spacing
+                    Routes
                   </h5>
                   <ul className="space-y-6 lg:space-y-2 border-l border-slate-100 dark:border-slate-800">
+                    {/* //@nexquik routeSidebar start */}
+
                     <li>
                       <a
                         className="block border-l pl-4 -ml-px border-transparent hover:border-slate-400 dark:hover:border-slate-500 text-slate-700 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300"
@@ -180,6 +186,7 @@ export default function RootLayout({
                         Padding
                       </a>
                     </li>
+                    {/* //@nexquik routeSidebar stop */}
                   </ul>
                 </li>
               </ul>
