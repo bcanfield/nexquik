@@ -20,6 +20,32 @@ import {
 
 const readFileAsync = promisify(fs.readFile);
 
+interface RouteSegment {
+  segment: string;
+  fullRoute: string;
+}
+
+function splitTheRoute(route: string): RouteSegment[] {
+  const segments = route.split("/");
+  let currentRoute = "";
+
+  const returnSegs = segments.flatMap((segment) => {
+    let newSegment = segment;
+    if (segment) {
+      if (segment.includes("[")) {
+        currentRoute += "/$" + segment.replace(/\[(.*?)\]/g, "{params.$1}");
+        newSegment = segment.replace(/\[(.*?)\]/g, "{params.$1}");
+      } else {
+        currentRoute += `/${segment}`;
+      }
+      return { segment: newSegment, fullRoute: currentRoute };
+    }
+    return [];
+  });
+  return returnSegs;
+  // .filter(Boolean);
+}
+
 export const prismaFieldToInputType: Record<string, string> = {
   Int: "number",
   Float: "number",
@@ -694,14 +720,22 @@ export async function generateAppDirectoryFromModelTree(
     `;
     }
 
-    // Where parent clause
+    // Unique field on parent, that points to this model
+    const parentReferenceField = getParentReferenceField(modelTree);
+    const relationsToParent = modelTree.model.fields.find(
+      (f) => f.name === parentReferenceField
+    )?.relationToFields;
+
+    const parentReferenceFieldType = modelTree.parent?.fields.find(
+      (f) => relationsToParent && relationsToParent[0] === f.name
+    )?.type;
+
     const whereparentClause = modelTree.parent
       ? generateWhereParentClause(
           "params",
           getDynamicSlugs(modelTree.parent.name, [parentIdentifierField])[0],
-          modelTree.model.fields.find((field) => field.isId)?.name ||
-            parentIdentifierField,
-          modelTree.model.fields.find((field) => field.isId)?.type || fieldType,
+          relationsToParent ? relationsToParent[0] : parentIdentifierField,
+          parentReferenceFieldType || fieldType,
           getParentReferenceField(modelTree),
           manyToManyWhere
         )
@@ -745,7 +779,6 @@ export async function generateAppDirectoryFromModelTree(
       "{/* @nexquik listChildren stop */}"
     );
 
-    // ############### Create Page
     // If many to many, must do a connect
     const createFormCode = await generateCreateForm(
       modelTree,
@@ -875,6 +908,37 @@ export async function generateAppDirectoryFromModelTree(
       backToCurrent,
       "{/* @nexquik backToCurrentLink start */}",
       "{/* @nexquik backToCurrentLink stop */}"
+    );
+
+    let routeCrumbs = "";
+    splitTheRoute(route).forEach(({ segment, fullRoute }) => {
+      if (segment.includes("[")) {
+        routeCrumbs += `<span>${segment}</span>`;
+      } else {
+      }
+      routeCrumbs += ` <Link
+        href={\`${fullRoute}\`}
+        className="hover:text-gray-700 dark:hover:text-gray-300"
+      >
+        ${segment}
+      </Link>`;
+      routeCrumbs += "/";
+    });
+    const breadCrumb = `
+      <nav>
+        <ol className="list-reset flex text-gray-500 dark:text-gray-400 text-sm">
+
+       ${routeCrumbs}
+
+        </ol>
+      </nav>
+
+      `;
+    addStringBetweenComments(
+      baseModelDirectory,
+      breadCrumb,
+      "{/* @nexquik breadcrumb start */}",
+      "{/* @nexquik breadcrumb stop */}"
     );
 
     // Replace all placeholder model names
@@ -1097,6 +1161,12 @@ export function generateWhereParentClause(
   parentReferenceField: string | undefined,
   manyToManyWhere: string
 ): string {
+  // console.log({
+  //   fieldAccessValue,
+  //   parentIdentifierFieldName,
+  //   parentIdentifierFieldType,
+  //   parentReferenceField,
+  // });
   if (manyToManyWhere == "") {
     if (
       inputObject &&
