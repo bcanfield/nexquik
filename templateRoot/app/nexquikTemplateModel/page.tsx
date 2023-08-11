@@ -27,8 +27,8 @@ export default async function ListNexquikTemplateModels({
   }
   return (
     <div className="mt-10 max-w-4xl">
-      {/* @nexquik breadcrumb start */}
-      {/* @nexquik breadcrumb stop */}
+      {/* @nexquik listBreadcrumb start */}
+      {/* @nexquik listBreadcrumb stop */}
       <header id="header" className="relative z-20">
         <div className="flex items-center">
           <h1 className="inline-block text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight dark:text-slate-200">

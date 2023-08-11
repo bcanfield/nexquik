@@ -26,7 +26,8 @@ interface RouteSegment {
 }
 
 function splitTheRoute(route: string): RouteSegment[] {
-  const segments = route.split("/");
+  const segments = route.split("/").filter((r) => r != "");
+  console.log({ segments });
   let currentRoute = "";
 
   const returnSegs = segments.flatMap((segment) => {
@@ -44,6 +45,39 @@ function splitTheRoute(route: string): RouteSegment[] {
   });
   return returnSegs;
   // .filter(Boolean);
+}
+function generateBreadCrumb(route: string) {
+  let routeCrumbs = "";
+  splitTheRoute(route).forEach(({ segment, fullRoute }) => {
+    routeCrumbs += `
+      
+       <li>
+          <div class="flex items-center">
+            <svg class="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+            </svg>
+            <Link href={\`${fullRoute}\`} class="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">${segment}</Link>
+          </div>
+        </li>`;
+  });
+  const breadCrumb = `
+    <nav class="flex" aria-label="Breadcrumb">
+    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+    <li class="inline-flex items-center">
+    <Link href="/" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
+      <svg class="w-3 h-3 mr-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+        <path d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z"/>
+      </svg>
+      Home
+    </Link>
+  </li>
+       ${routeCrumbs}
+
+        </ol>
+      </nav>
+
+      `;
+  return breadCrumb;
 }
 
 export const prismaFieldToInputType: Record<string, string> = {
@@ -572,6 +606,24 @@ export async function generateAppDirectoryFromModelTree(
       );
     }
 
+    const createBreadCrumb = generateBreadCrumb(route + "/create");
+
+    addStringBetweenComments(
+      path.join(baseModelDirectory),
+      createBreadCrumb,
+      "{/* @nexquik createBreadcrumb start */}",
+      "{/* @nexquik createBreadcrumb stop */}"
+    );
+
+    const listBreadCrumb = generateBreadCrumb(route);
+
+    addStringBetweenComments(
+      baseModelDirectory,
+      listBreadCrumb,
+      "{/* @nexquik listBreadcrumb start */}",
+      "{/* @nexquik listBreadcrumb stop */}"
+    );
+
     // Create dynamic directories
     const slugsForThisModel = getDynamicSlugs(
       modelTree.modelName,
@@ -910,44 +962,23 @@ export async function generateAppDirectoryFromModelTree(
       "{/* @nexquik backToCurrentLink stop */}"
     );
 
-    let routeCrumbs = "";
-    splitTheRoute(route).forEach(({ segment, fullRoute }) => {
-      routeCrumbs += `
-      
-       <li>
-          <div class="flex items-center">
-            <svg class="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
-            </svg>
-            <Link href={\`${fullRoute}\`} class="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">${segment}</Link>
-          </div>
-        </li>`;
-    });
-    const breadCrumb = `
-    <nav class="flex" aria-label="Breadcrumb">
-    <ol class="inline-flex items-center space-x-1 md:space-x-3">
-    <li class="inline-flex items-center">
-    <Link href="/" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
-      <svg class="w-3 h-3 mr-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-        <path d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z"/>
-      </svg>
-      Home
-    </Link>
-  </li>
-       ${routeCrumbs}
-
-        </ol>
-      </nav>
-
-      `;
+    const baseBreadCrumb = generateBreadCrumb(route);
 
     addStringBetweenComments(
       baseModelDirectory,
-      breadCrumb,
+      baseBreadCrumb,
       "{/* @nexquik breadcrumb start */}",
       "{/* @nexquik breadcrumb stop */}"
     );
 
+    const editBreadCrumb = generateBreadCrumb(route + "/edit");
+
+    addStringBetweenComments(
+      path.join(baseModelDirectory),
+      editBreadCrumb,
+      "{/* @nexquik editBreadCrumb start */}",
+      "{/* @nexquik editBreadCrumb stop */}"
+    );
     // Replace all placeholder model names
     findAndReplaceInFiles(
       baseModelDirectory,

@@ -35,8 +35,8 @@ export default async function CreateNexquikTemplateModel({
 
   return (
     <div className="mt-10 max-w-4xl">
-      {/* @nexquik breadcrumb start */}
-      {/* @nexquik breadcrumb stop */}
+      {/* @nexquik createBreadcrumb start */}
+      {/* @nexquik createBreadcrumb stop */}
 
       <header id="header" className="relative z-20">
         <div className="flex items-center">
