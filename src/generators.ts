@@ -255,7 +255,8 @@ async function generateListForm(
   uniqueFields: {
     name: string;
     type: string;
-  }[]
+  }[],
+  idFields: string[]
 ): Promise<string> {
   let linkHref = routeUrl;
   uniqueFields.forEach((f) => {
@@ -275,30 +276,27 @@ async function generateListForm(
   <thead>
 
   <tr>
-  ${modelTree.model.fields
+  ${idFields
     .map((field) => {
-      if (isFieldRenderable(field)) {
-        return `<th className="sticky z-10 top-0 text-sm leading-6 font-semibold text-slate-700 bg-white p-0 dark:bg-slate-900 dark:text-slate-300"> ${field.name} </th>`;
-      }
+      return `<th className="sticky z-10 top-0 text-sm leading-6 font-semibold text-slate-700 bg-white p-0 dark:bg-slate-900 dark:text-slate-300"> <div className="py-2 pr-2 border-b border-slate-200 dark:border-slate-400/20">${field} </div> </th>`;
     })
     .join("\n")}
+    <th className="sticky z-10 top-0 text-sm leading-6 font-semibold text-slate-700 bg-white p-0 dark:bg-slate-900 dark:text-slate-300"> <div className="py-2 pr-2 border-b border-slate-200 dark:border-slate-400/20">Actions </div> </th>
   </tr>
   </thead>
-  <tbody>
+  <tbody className="align-baseline">
 
     {nexquikTemplateModel?.map((nexquikTemplateModel, index) => (
       <tr key={index}>
       
-      ${modelTree.model.fields
+      ${idFields
         .map((field) => {
-          if (isFieldRenderable(field)) {
-            return `<td  translate="no"
-            className="py-2 pr-2 font-mono font-medium text-sm leading-6 text-sky-500 whitespace-nowrap dark:text-sky-400"> {\`\${nexquikTemplateModel.${field.name}}\`} </td>`;
-          }
+          return `<td  translate="no"
+            className="py-2 pr-2 font-mono font-medium text-sm leading-6 text-sky-500 whitespace-nowrap dark:text-sky-400"> {\`\${nexquikTemplateModel.${field}}\`} </td>`;
         })
         .join("\n")}
 
-      <td className="action-cell">
+      <td className="py-2 pr-2 font-mono font-medium text-sm leading-6 text-sky-500 whitespace-nowrap dark:text-sky-400">
       <form className="flex space-x-2">
       ${uniqueFormInputs}
           <Link href={\`${linkHref}\`} className="text-blue-500 hover:text-blue-600 transition-colors">View</Link>
@@ -662,11 +660,23 @@ export async function generateAppDirectoryFromModelTree(
       modelUniqueIdentifierField.map((f) => f.name)
     );
 
+    const idFields = modelTree.uniqueIdentifierField;
+    console.log({ idFields });
+    let select = "";
+    if (idFields.length > 0) {
+      select += "{select:{";
+      idFields.forEach(({ name, type }) => {
+        select += `${name}: true,`;
+      });
+      select += "}}";
+    }
+
     // ############### List Page
     const listFormCode = await generateListForm(
       modelTree,
       createRedirectForm,
-      modelUniqueIdentifierField
+      modelUniqueIdentifierField,
+      idFields.map((f) => f.name)
     );
     addStringBetweenComments(
       baseModelDirectory,
@@ -789,10 +799,10 @@ export async function generateAppDirectoryFromModelTree(
           relationsToParent ? relationsToParent[0] : parentIdentifierField,
           parentReferenceFieldType || fieldType,
           getParentReferenceField(modelTree),
-          manyToManyWhere
+          manyToManyWhere,
+          select
         )
-      : "()";
-
+      : `(${select})`;
     // Enum import for create and edit pages
     const enumImport = Object.keys(enums)
       .map((e) => `import { ${e} } from "@prisma/client";`)
@@ -1200,14 +1210,9 @@ export function generateWhereParentClause(
   parentIdentifierFieldName: string | undefined,
   parentIdentifierFieldType: string | undefined,
   parentReferenceField: string | undefined,
-  manyToManyWhere: string
+  manyToManyWhere: string,
+  selectClause: string
 ): string {
-  // console.log({
-  //   fieldAccessValue,
-  //   parentIdentifierFieldName,
-  //   parentIdentifierFieldType,
-  //   parentReferenceField,
-  // });
   if (manyToManyWhere == "") {
     if (
       inputObject &&
@@ -1227,12 +1232,12 @@ export function generateWhereParentClause(
       } else if (parentIdentifierFieldType === "String") {
         typecastValue = `String(${typecastValue})`;
       }
-      return `({ where: { ${parentReferenceField}: {${parentIdentifierFieldName}: {equals: ${typecastValue}} } } })`;
+      return `({ where: { ${parentReferenceField}: {${parentIdentifierFieldName}: {equals: ${typecastValue}} }, },  }, ${selectClause})`;
     } else {
-      return "";
+      return `${selectClause}`;
     }
   } else {
-    return `({ ${manyToManyWhere} })`;
+    return `({ ${manyToManyWhere} }, ${selectClause})`;
   }
 }
 
