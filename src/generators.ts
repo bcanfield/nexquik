@@ -1430,7 +1430,7 @@ export function generateFormFieldsWithDefaults(
       return `<label className="block text-slate-500 dark:text-slate-400">${
         field.name
       } ${required && "*"}</label>\n<input    
-       className="block border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400 px-4 py-1 ${widthStyle}" type="${inputType}" name="${
+       className="block border border-slate-300 px-2 py-1 dark:border-slate-600 rounded-lg focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400 ${widthStyle}" type="${inputType}" name="${
         field.name
       }" defaultValue=${defaultValue}  ${disabled} ${required}/>`;
     })
