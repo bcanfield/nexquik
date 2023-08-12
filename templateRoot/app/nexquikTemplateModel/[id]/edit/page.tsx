@@ -36,10 +36,10 @@ export default async function EditNexquikTemplateModel({
   }
 
   return (
-    <div className="mt-10 max-w-4xl">
+    <div className=" max-w-4xl">
       {/* @nexquik editBreadCrumb start */}
       {/* @nexquik editBreadCrumb stop */}
-      <header id="header" className="relative z-20">
+      <header id="header" className="relative z-2 mt-5">
         <div className="flex items-center">
           <h1 className="inline-block text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight dark:text-slate-200">
             Edit NexquikTemplateModel

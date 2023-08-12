@@ -26,10 +26,10 @@ export default async function ListNexquikTemplateModels({
     //@nexquik revalidatePath stop
   }
   return (
-    <div className="mt-10 max-w-4xl">
+    <div className=" max-w-4xl">
       {/* @nexquik listBreadcrumb start */}
       {/* @nexquik listBreadcrumb stop */}
-      <header id="header" className="relative z-20">
+      <header id="header" className="relative z-20 mt-5">
         <div className="flex items-center">
           <h1 className="inline-block text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight dark:text-slate-200">
             NexquikTemplateModel List
@@ -58,7 +58,10 @@ export default async function ListNexquikTemplateModels({
               <p>name: {nexquikTemplateModel.name}</p>
               <p>lat: {nexquikTemplateModel.lat}</p>
               <p>lng: {nexquikTemplateModel.lat}</p>
-              <Link href={`/nexquikTemplateModel/${nexquikTemplateModel.id}`}>
+              <Link
+                class="px-3 py-2 text-xs font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                href={`/nexquikTemplateModel/${nexquikTemplateModel.id}`}
+              >
                 View
               </Link>
               <Link
@@ -72,11 +75,6 @@ export default async function ListNexquikTemplateModels({
         ))}
       </ul>
       {/* @nexquik listForm stop */}
-      <div className="mt-8">
-        {/* @nexquik backLink start */}
-        <Link href={`/nexquikTemplateModel/create`}>Back</Link>
-        {/* @nexquik backLink stop */}
-      </div>
     </div>
   );
 }
