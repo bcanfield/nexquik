@@ -446,29 +446,53 @@ export async function generate(
     console.log(`Model: ${model}`);
     const lowerCase = model.charAt(0).toLowerCase() + model.slice(1);
     routeSidebar += `<li className="mt-4">
-<h5 className="pl-2 mb-8 lg:mb-1 font-semibold text-slate-900 dark:text-slate-200">
+<h5 className="pl-2 mb-8 lg:mb-1 font-semibold text-slate-700 dark:text-slate-400">
                         ${model}
                       </h5>
-                      <ul className="space-y-6 lg:space-y-2 border-l border-slate-100 dark:border-slate-800">
-<li>
-<a
-className="block border-l pl-4 -ml-px border-transparent hover:border-slate-400 dark:hover:border-slate-500 text-slate-700 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300"
-href="/${lowerCase}/create"
->
-Create
-</a>
-</li>
-<li>
-<a
-className="block border-l pl-4 -ml-px border-transparent hover:border-slate-400 dark:hover:border-slate-500 text-slate-700 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300"
-href="/${lowerCase}"
->
-List
-</a>
-</li>
 
-                      
-</ul>
+
+
+                      <div class="flex pl-4 items-center">
+                      <div class="flex items-center space-x-2">
+
+                      <a href="/${lowerCase}/create">
+                      <svg
+                      class="w-[14px] h-[14px] dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-600"
+                      aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      fill="none"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        stroke="currentColor"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M10 5.757v8.486M5.757 10h8.486M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                      />
+                    </svg>
+                      </a>
+
+                      <a href="/${lowerCase}">
+                      <svg
+                      class="w-[14px] h-[14px] dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-600"
+                      aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 17 10"
+                    >
+                      <path
+                        stroke="currentColor"
+                        stroke-linecap="round"
+                        stroke-width="2"
+                        d="M6 1h10M6 5h10M6 9h10M1.49 1h.01m-.01 4h.01m-.01 4h.01"
+                      />
+                    </svg>
+                    </a>
+                      </div>
+                      </div>
 
 </li>
 
