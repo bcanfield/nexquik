@@ -150,65 +150,13 @@ export default function RootLayout({
                   className="pt-16 px-1 pl-3 lg:pl-0 lg:pt-2 font-normal text-base lg:text-sm pb-10 lg:pb-20 sticky?lg:h-(screen-18)"
                 >
                   <ul className="mb-0 list-unstyled">
-                    <li className="mt-8">
-                      <h5 className="pl-4 mb-8 lg:mb-3 font-semibold text-slate-900 dark:text-slate-200">
-                        Routes
-                      </h5>
-
-                      <ul className="space-y-6 lg:space-y-2 border-l border-slate-100 dark:border-slate-800">
-                        {/* //@nexquik routeSidebar start */}
-
-                        <li>
-                          <a
-                            className="block border-l pl-4 -ml-px border-transparent hover:border-slate-400 dark:hover:border-slate-500 text-slate-700 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300"
-                            href="/docs/padding"
-                          >
-                            Padding
-                          </a>
-                        </li>
-                        <li>
-                          <a
-                            className="block border-l pl-4 -ml-px border-transparent hover:border-slate-400 dark:hover:border-slate-500 text-slate-700 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300"
-                            href="/docs/padding"
-                          >
-                            Padding
-                          </a>
-                        </li>
-                        <li>
-                          <a
-                            className="block border-l pl-4 -ml-px border-transparent hover:border-slate-400 dark:hover:border-slate-500 text-slate-700 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300"
-                            href="/docs/padding"
-                          >
-                            Padding
-                          </a>
-                        </li>
-                        <li>
-                          <a
-                            className="block border-l pl-4 -ml-px border-transparent hover:border-slate-400 dark:hover:border-slate-500 text-slate-700 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300"
-                            href="/docs/padding"
-                          >
-                            Padding
-                          </a>
-                        </li>
-                        <li>
-                          <a
-                            className="block border-l pl-4 -ml-px border-transparent hover:border-slate-400 dark:hover:border-slate-500 text-slate-700 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300"
-                            href="/docs/padding"
-                          >
-                            Padding
-                          </a>
-                        </li>
-                        <li>
-                          <a
-                            className="block border-l pl-4 -ml-px border-transparent hover:border-slate-400 dark:hover:border-slate-500 text-slate-700 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300"
-                            href="/docs/padding"
-                          >
-                            Padding
-                          </a>
-                        </li>
-                        {/* //@nexquik routeSidebar stop */}
-                      </ul>
+                    <li className="border-b border-slate-200 dark:border-slate-400/20 mt-2">
+                      <h4 className="pl-2 mb-8 lg:mb-1 font-semibold text-slate-900 dark:text-slate-200">
+                        Operations
+                      </h4>
                     </li>
+                    {/* //@nexquik routeSidebar start */}
+                    {/* //@nexquik routeSidebar stop */}
                   </ul>
                 </nav>
               </div>
