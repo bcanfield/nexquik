@@ -151,9 +151,9 @@ export default function RootLayout({
                 >
                   <ul className="mb-0 list-unstyled">
                     <li className="border-b border-slate-200 dark:border-slate-400/20 mt-2">
-                      <h4 className="pl-2 mb-8 lg:mb-1 font-semibold text-slate-900 dark:text-slate-200">
-                        Operations
-                      </h4>
+                      <h2 className="pl-2 mb-8 lg:mb-1 font-semibold text-lg text-slate-900 dark:text-slate-200">
+                        Models
+                      </h2>
                     </li>
                     {/* //@nexquik routeSidebar start */}
                     {/* //@nexquik routeSidebar stop */}
