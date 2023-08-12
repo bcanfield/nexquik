@@ -1,13 +1,21 @@
 import "./globals.css";
 import Link from "next/link";
+import { Roboto } from "next/font/google";
 
+const roboto = Roboto({
+  weight: "400",
+  subsets: ["latin"],
+  display: "swap",
+});
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html className="dark [--scroll-mt:9.875rem] lg:[--scroll-mt:6.3125rem] js-focus-visible">
+    <html
+      className={`${roboto.className} dark [--scroll-mt:9.875rem] lg:[--scroll-mt:6.3125rem] js-focus-visible`}
+    >
       <body className="antialiased text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900">
         {/* Navbar */}
         <div className="sticky top-0 z-40 w-full backdrop-blur flex-none transition-colors duration-500 lg:z-50 lg:border-b lg:border-slate-900/10 dark:border-slate-50/[0.06] bg-white supports-backdrop-blur:bg-white/95 dark:bg-slate-900/75">

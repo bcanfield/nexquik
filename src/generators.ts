@@ -243,20 +243,46 @@ async function generateChildrenList(
     modelTree.uniqueIdentifierField.map((f) => f.name)
   );
   const childrenLinks: string[] = [];
+
+  // if (childrenLinks.length > 0) {
+  const childList = `  <table className="w-full text-left border-collapse mt-4">
+
+  <thead>
+
+  <tr>
+  <th className="sticky z-10 top-0 text-sm leading-6 font-semibold text-slate-700 bg-white p-0 dark:bg-slate-900 dark:text-slate-300"> <div className="py-2 pr-2 border-b border-slate-200 dark:border-slate-400/20">Children</div> </th>
+  </tr>
+  </thead>
+
+  <tbody className="align-baseline">
+
+  `;
   modelTree.children.forEach((c) => {
-    let childLink = `<div className="w-1/3"> <Link className="${grayButtonClass}" href={\`${routeUrl}/`;
+    let childLink = `
+    
+    <tr key={'${c.modelName}'}>
+    <td  translate="no"
+            className="py-2 pr-2 leading-6 ">
+    <Link
+      className="${grayButtonClass}"
+      href={\`${routeUrl}/`;
+
     slug.forEach((s) => {
       childLink += `\${params.${s}}/`;
     });
 
     childLink += `${
       c.modelName.charAt(0).toLowerCase() + c.modelName.slice(1)
-    }\`}>
-  ${c.modelName} List
-</Link></div>`;
+    }\`}  >
+    ${c.modelName}
+  </Link>
+  </td>
+</tr>`;
     childrenLinks.push(childLink);
   });
-  return childrenLinks.join("\n");
+  return childList + childrenLinks.join("\n") + "</tbody></table>";
+  // }
+  // return "";
 }
 async function generateListForm(
   modelTree: ModelTree,
@@ -400,7 +426,8 @@ export async function generate(
 
 export async function generateShowForm(
   modelTree: ModelTree,
-  routeUrl: string
+  routeUrl: string,
+  childModelLinkList: string
 ): Promise<string> {
   const uniqueFields = modelTree.uniqueIdentifierField;
 
@@ -409,6 +436,7 @@ export async function generateShowForm(
     linkRoute += `/\${nexquikTemplateModel?.${f?.name}}`;
   });
   const reactComponentTemplate = `
+  
     <form className="space-y-4">
     ${modelTree.model.fields
       .map((field) => {
@@ -429,23 +457,54 @@ export async function generateShowForm(
   
      
 
-    <div className="mt-8">
+  <table className="w-full text-left border-collapse">
+<thead>
+  <tr>
+  
+    <th className="sticky z-10 top-0 text-sm leading-6 font-semibold text-slate-700 bg-white p-0 dark:bg-slate-900 dark:text-slate-300"> <div className="py-2 pr-2 border-b border-slate-200 dark:border-slate-400/20">Field </div> </th>
+        <th className="sticky z-10 top-0 text-sm leading-6 font-semibold text-slate-700 bg-white p-0 dark:bg-slate-900 dark:text-slate-300"> <div className="py-2 pr-2 border-b border-slate-200 dark:border-slate-400/20">Value </div> </th>
+
+  </tr>
+  </thead>
+
+
+
+    <tbody className="align-baseline">
 
     ${modelTree.model.fields
       .map((field) => {
         if (!isFieldRenderable(field)) {
           return "";
         }
-        return `<div className="grid grid-cols-2 gap-1">
-      <span className="text-slate-500 dark:text-slate-400 font-medium">${field.name}</span>
-      <span className="text-slate-700 dark:text-slate-300">{\`\${nexquikTemplateModel?.${field.name}}\`}</span>
-  </div>`;
+        return `
+        
+              <tr key={'${field.name}'}>
+<td  translate="no"
+            className="py-2 pr-2 font-mono font-medium text-sm leading-6 text-sky-700 whitespace-nowrap dark:text-sky-400"> ${field.name} </td>
+<td  translate="no"
+            className="py-2 pr-2 font-mono font-medium text-sm leading-6 text-slate-700 whitespace-nowrap dark:text-slate-400"> {\`\${nexquikTemplateModel?.${field.name}}\`} </td>
+
+
+              </tr>  
+  
+  
+  
+  
+  `;
       })
       .join("\n")}
-    </div>
+
+
+        </tbody>
+
+
+
+
+
+
+    
+    </table>
     <div className="flex space-x-4">
-
-
     <Link     className="${blueButtonClass}"
 
     passHref href={\`${linkRoute}/edit\`}>Edit</Link>
@@ -454,8 +513,12 @@ export async function generateShowForm(
     <button     className="${redButtonClass}"
 
     formAction={deleteNexquikTemplateModel}>Delete</button>
+
     </div>
+
     </form>
+    ${childModelLinkList}
+
   `;
 
   return reactComponentTemplate;
@@ -670,7 +733,6 @@ export async function generateAppDirectoryFromModelTree(
     );
 
     const idFields = modelTree.uniqueIdentifierField;
-    console.log({ idFields });
     let select = "";
     if (idFields.length > 0) {
       select += "{select:{";
@@ -832,23 +894,29 @@ export async function generateAppDirectoryFromModelTree(
     );
 
     // ############### Show Page
-    const showFormCode = await generateShowForm(modelTree, createRedirectForm);
+    const childModelLinkList = await generateChildrenList(
+      modelTree,
+      createRedirectForm
+    );
+    const showFormCode = await generateShowForm(
+      modelTree,
+      createRedirectForm,
+      childModelLinkList
+    );
+
     addStringBetweenComments(
       baseModelDirectory,
       showFormCode,
       "{/* @nexquik showForm start */}",
       "{/* @nexquik showForm stop */}"
     );
-    const childModelLinkList = await generateChildrenList(
-      modelTree,
-      createRedirectForm
-    );
-    addStringBetweenComments(
-      baseModelDirectory,
-      childModelLinkList,
-      "{/* @nexquik listChildren start */}",
-      "{/* @nexquik listChildren stop */}"
-    );
+
+    // addStringBetweenComments(
+    //   baseModelDirectory,
+    //   childModelLinkList,
+    //   "{/* @nexquik listChildren start */}",
+    //   "{/* @nexquik listChildren stop */}"
+    // );
 
     // If many to many, must do a connect
     const createFormCode = await generateCreateForm(
@@ -973,13 +1041,13 @@ export async function generateAppDirectoryFromModelTree(
       "{/* @nexquik backLink stop */}"
     );
 
-    const backToCurrent = await generateLink(`${createRedirectForm}`, "Back");
-    addStringBetweenComments(
-      baseModelDirectory,
-      backToCurrent,
-      "{/* @nexquik backToCurrentLink start */}",
-      "{/* @nexquik backToCurrentLink stop */}"
-    );
+    // const backToCurrent = await generateLink(`${createRedirectForm}`, "Back");
+    // addStringBetweenComments(
+    //   baseModelDirectory,
+    //   backToCurrent,
+    //   "{/* @nexquik backToCurrentLink start */}",
+    //   "{/* @nexquik backToCurrentLink stop */}"
+    // );
 
     const baseBreadCrumb = generateBreadCrumb(route);
 
