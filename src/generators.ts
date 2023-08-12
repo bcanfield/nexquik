@@ -413,13 +413,88 @@ export async function generate(
   );
 
   console.log(chalk.blue("Generating Route List"));
-  const routeList = generateRouteList(routes);
+
+  // const modelHashMap: {
+  //   [model: string]: Partial<RouteObject>[];
+  // } = {};
+
+  // console.log({routes})
+  // modelTree.forEach((modelTree) => {
+  //   const { model, segment, operation, description } = route;
+
+  //   if (!modelHashMap[model]) {
+  //     modelHashMap[model] = [];
+  //   }
+
+  //   modelHashMap[model].push({ segment, operation, description });
+  // });
+
+  // Home route list
+  const modelNames = modelTree.map((m) => m.model.name);
+
+  const routeList = generateRouteList(modelTree.map((m) => m.model.name));
   addStringBetweenComments(
     appDirectory,
     routeList,
     "{/* @nexquik routeList start */}",
     "{/* @nexquik routeList stop */}"
   );
+
+  // Route sidebar
+  let routeSidebar = "";
+  for (const model of modelNames) {
+    console.log(`Model: ${model}`);
+    const lowerCase = model.charAt(0).toLowerCase() + model.slice(1);
+    routeSidebar += `<li className="mt-4">
+<h5 className="pl-2 mb-8 lg:mb-1 font-semibold text-slate-900 dark:text-slate-200">
+                        ${model}
+                      </h5>
+                      <ul className="space-y-6 lg:space-y-2 border-l border-slate-100 dark:border-slate-800">
+<li>
+<a
+className="block border-l pl-4 -ml-px border-transparent hover:border-slate-400 dark:hover:border-slate-500 text-slate-700 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300"
+href="/${lowerCase}/create"
+>
+Create
+</a>
+</li>
+<li>
+<a
+className="block border-l pl-4 -ml-px border-transparent hover:border-slate-400 dark:hover:border-slate-500 text-slate-700 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300"
+href="/${lowerCase}"
+>
+List
+</a>
+</li>
+
+                      
+</ul>
+
+</li>
+
+`;
+  }
+
+  //   const routesListItems = routes
+  //     .filter((r) => !r.segment.includes("["))
+  //     .map(
+  //       (r) => `<li>
+  //   <a
+  //     className="block border-l pl-4 -ml-px border-transparent hover:border-slate-400 dark:hover:border-slate-500 text-slate-700 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300"
+  //     href="${r.segment}"
+  //   >
+  //     ${r.model} - ${r.operation}
+  //   </a>
+  // </li>`
+  //     )
+  //     .join("\n");
+  addStringBetweenComments(
+    outputDirectory,
+    routeSidebar,
+    "{/* //@nexquik routeSidebar start */}",
+    "{/* //@nexquik routeSidebar stop */}"
+  );
+
   console.log(chalk.blue("Finishing Up"));
   return;
 }
@@ -524,28 +599,37 @@ export async function generateShowForm(
   return reactComponentTemplate;
 }
 
-function generateRouteList(routes: RouteObject[]) {
+function generateRouteList(modelNames: string[]) {
   const routeLinks = [];
-  for (const route of routes) {
-    routeLinks.push(
-      `
-      <tr>
-      <td
-        translate="no"
-        className="py-2 pr-2 font-mono font-medium text-sm leading-6 text-sky-500 whitespace-nowrap dark:text-sky-400"
-      >
-        ${route.model}
-      </td>
-      <td
-        translate="no"
-        className="py-2 pl-2 font-mono text-sm leading-6 text-indigo-600 whitespace-pre dark:text-indigo-300 sm:table-cell sm:pr-2"
-      >
-      ${route.operation}
-      </td>
-    </tr>
+  for (const model of modelNames) {
+    console.log(`Model: ${model}`);
+    const lowerCase = model.charAt(0).toLowerCase() + model.slice(1);
+    // const routeObjects = modelHashMap[model];
+    routeLinks.push(`<tr>
+    <td
+      translate="no"
+      className="py-2 pr-2 font-mono font-medium text-sm leading-6 text-sky-500 whitespace-nowrap dark:text-sky-400"
+    >
+      ${model}
+    </td>
     
-      `
-    );
+    <td
+      translate="no"
+      className="py-2 pr-2 font-mono font-medium text-sm leading-6 hover:border-slate-400 whitespace-nowrap "
+    >
+    <a className="dark:hover:border-slate-500 text-slate-700 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300" href="/${lowerCase}/create">
+      Create 
+      </a>
+      <a className="text-sky-500  dark:text-sky-400">
+      {' '} / {' '}
+      </a>
+      <a className="dark:hover:border-slate-500 text-slate-700 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300" href="/${lowerCase}">
+      List 
+      </a>
+    </td>
+  
+    </tr>
+    `);
   }
 
   return `
@@ -554,20 +638,16 @@ function generateRouteList(routes: RouteObject[]) {
   <thead>
   <tr>
     <th className="sticky z-10 top-0 text-sm leading-6 font-semibold text-slate-700 bg-white p-0 dark:bg-slate-900 dark:text-slate-300">
-      <div className="py-2 pr-2 border-b border-slate-200 dark:border-slate-400/20">
+      <div className="py-2 border-b border-slate-200 dark:border-slate-400/20">
         Model
       </div>
     </th>
     <th className="sticky z-10 top-0 text-sm leading-6 font-semibold text-slate-700 bg-white p-0 dark:bg-slate-900 dark:text-slate-300 sm:table-cell">
       <div className="py-2 pl-2 border-b border-slate-200 dark:border-slate-400/20 pr-2">
-        Operation
+        Operations
       </div>
     </th>
-    <th className="sticky z-10 top-0 text-sm leading-6 font-semibold text-slate-700 bg-white p-0 dark:bg-slate-900 dark:text-slate-300">
-      <div className="py-2 pl-2 border-b border-slate-200 dark:border-slate-400/20">
-        <span className="sr-only">Preview</span>&nbsp;
-      </div>
-    </th>
+
   </tr>
 </thead>
 
@@ -736,7 +816,7 @@ export async function generateAppDirectoryFromModelTree(
     let select = "";
     if (idFields.length > 0) {
       select += "{select:{";
-      idFields.forEach(({ name, type }) => {
+      idFields.forEach(({ name }) => {
         select += `${name}: true,`;
       });
       select += "}}";
@@ -1088,25 +1168,6 @@ export async function generateAppDirectoryFromModelTree(
     });
   }
 
-  const routesListItems = routes
-    .filter((r) => !r.segment.includes("["))
-    .map(
-      (r) => `<li>
-  <a
-    className="block border-l pl-4 -ml-px border-transparent hover:border-slate-400 dark:hover:border-slate-500 text-slate-700 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300"
-    href="${r.segment}"
-  >
-    ${r.model} - ${r.operation}
-  </a>
-</li>`
-    )
-    .join("\n");
-  addStringBetweenComments(
-    outputDirectory,
-    routesListItems,
-    "{/* //@nexquik routeSidebar start */}",
-    "{/* //@nexquik routeSidebar stop */}"
-  );
   return routes;
 }
 

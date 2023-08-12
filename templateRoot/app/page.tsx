@@ -11,12 +11,12 @@ export default async function Home() {
             </p>
             <div className="flex items-center">
               <h1 className="inline-block text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight dark:text-slate-200">
-                Defined Routes
+                Models
               </h1>
             </div>
           </div>
           <p className="mt-2 text-lg text-slate-700 dark:text-slate-400">
-            Here are the defined routes for your application
+            Here are the top-level models for your application.
           </p>
         </header>
         <div className="w-full overflow-x-auto border-solid border-2 border-black-500">
