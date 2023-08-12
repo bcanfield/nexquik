@@ -18,6 +18,14 @@ import {
   getParentReferenceField,
 } from "./modelTree";
 
+const redButtonClass =
+  "rounded-lg text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 font-medium  text-sm px-2 py-1 text-center dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900";
+const blueButtonClass =
+  "rounded-lg text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium  text-sm px-2 py-1 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800";
+
+const grayButtonClass =
+  "rounded-lg text-white bg-slate-200 dark:bg-slate-600 hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-300 font-medium  text-sm px-2 py-1 text-center dark:bg-slate-600 dark:hover:bg-slate-500 dark:focus:ring-slate-800";
+
 const readFileAsync = promisify(fs.readFile);
 
 interface RouteSegment {
@@ -145,13 +153,14 @@ async function generateCreateForm(
       <form className="space-y-4" action={addNexquikTemplateModel}>
         ${formFields}
         <div className="flex space-x-4">
-        <button type="submit"                   className="bg-sky-600 text-white px-4 py-2 rounded-lg hover:bg-sky-600 transition-colors"
+        <Link href={\`${routeUrl}\`} className="${grayButtonClass}" passHref>
+        Cancel
+        </Link>
+        <button type="submit"                   className="${blueButtonClass}"
         >
             Create NexquikTemplateModel
         </button>
-        <Link href={\`${routeUrl}\`} className="bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors" passHref>
-        Cancel
-        </Link>
+       
     </div>      
     </form>     
   `;
@@ -172,7 +181,7 @@ async function generateLink(
 ): Promise<string> {
   const linkString = linkUrl ? `\`${linkUrl}\`` : "'/'";
   const reactComponentTemplate = `
-  <Link href={${linkString}} className="bg-sky-500 text-white px-4 py-2 rounded-lg hover:bg-sky-600 transition-colors">
+  <Link href={${linkString}} className="${blueButtonClass}">
   ${linkText}
 </Link>  `;
   return reactComponentTemplate;
@@ -202,8 +211,8 @@ async function generateEditForm(
   <form className="space-y-4" action={editNexquikTemplateModel}>
   ${formFields}
   <div className="flex space-x-4">
-        <button  className="bg-sky-500 text-white px-4 py-2 rounded-lg hover:bg-sky-600 transition-colors" type="submit">Update NexquikTemplateModel</button>
-        <Link href={\`${routeUrl}\`} className="bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors" passHref>
+        <button  className="${blueButtonClass}" type="submit">Update NexquikTemplateModel</button>
+        <Link href={\`${routeUrl}\`} className="${grayButtonClass}" passHref>
             Cancel
         </Link>
         </div>
@@ -235,7 +244,7 @@ async function generateChildrenList(
   );
   const childrenLinks: string[] = [];
   modelTree.children.forEach((c) => {
-    let childLink = `<div className="w-1/3"> <Link className="bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors block w-full text-center" href={\`${routeUrl}/`;
+    let childLink = `<div className="w-1/3"> <Link className="${grayButtonClass}" href={\`${routeUrl}/`;
     slug.forEach((s) => {
       childLink += `\${params.${s}}/`;
     });
@@ -299,9 +308,9 @@ async function generateListForm(
       <td className="py-2 pr-2 font-mono font-medium text-sm leading-6 text-sky-500 whitespace-nowrap dark:text-sky-400">
       <form className="flex space-x-2">
       ${uniqueFormInputs}
-          <Link href={\`${linkHref}\`} className="text-blue-500 hover:text-blue-600 transition-colors">View</Link>
-                  <Link href={\`${linkHref}/edit\`} className="text-green-500 hover:text-green-600 transition-colors">Edit</Link>
-                  <button formAction={deleteNexquikTemplateModel} className="text-red-500 hover:text-red-600 transition-colors">Delete</button>
+          <Link href={\`${linkHref}\`} className="${blueButtonClass}">View</Link>
+                  <Link href={\`${linkHref}/edit\`} className="${grayButtonClass}">Edit</Link>
+                  <button formAction={deleteNexquikTemplateModel} className="${redButtonClass}">Delete</button>
                   </form>
 
                   </td>
@@ -437,12 +446,12 @@ export async function generateShowForm(
     <div className="flex space-x-4">
 
 
-    <Link     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+    <Link     className="${blueButtonClass}"
 
     passHref href={\`${linkRoute}/edit\`}>Edit</Link>
 
   
-    <button     className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+    <button     className="${redButtonClass}"
 
     formAction={deleteNexquikTemplateModel}>Delete</button>
     </div>
