@@ -27,7 +27,7 @@ interface RouteSegment {
 
 function splitTheRoute(route: string): RouteSegment[] {
   const segments = route.split("/").filter((r) => r != "");
-  console.log({ segments });
+  // console.log({ segments });
   let currentRoute = "";
 
   const returnSegs = segments.flatMap((segment) => {
@@ -1049,14 +1049,15 @@ export function generateConvertToPrismaCreateInputCode(
   }
 
   const fieldsToConvert: Partial<DMMF.Field>[] = modelTree.model.fields
-    .filter((field) => {
-      return field.isId !== true || field.hasDefaultValue == false;
-    })
+    // .filter((field) => {
+    //   return field.isId !== true || field.hasDefaultValue == false;
+    // })
     .filter((field) => isFieldRenderable(field));
 
   const convertToPrismaInputLines = fieldsToConvert.map(
-    ({ name, type, kind }) => {
-      let typecastValue = `formData.get('${name}')`;
+    ({ name, type, kind, isRequired, hasDefaultValue }) => {
+      const nonTypeCastedValue = `formData.get('${name}')`;
+      let typecastValue = nonTypeCastedValue;
       if (kind === "enum") {
         typecastValue += ` as ${type}`;
       } else {
@@ -1070,7 +1071,9 @@ export function generateConvertToPrismaCreateInputCode(
           typecastValue = `String(${typecastValue})`;
         }
       }
-
+      if (hasDefaultValue || !isRequired) {
+        return ` ${name}: ${nonTypeCastedValue} ? ${typecastValue} : undefined,`;
+      }
       return `    ${name}: ${typecastValue},`;
     }
   );
@@ -1325,12 +1328,15 @@ export function generateFormFields(
 ): string {
   return modelTree.model.fields
     .map((field) => {
+      const required =
+        field.isRequired && !field.hasDefaultValue ? "required" : "";
+
       // Enum
       if (field.kind === "enum") {
         const enumValues = enums[field.type];
         return `<label className="block text-slate-500 dark:text-slate-400">${
           field.name
-        }</label>\n
+        } ${required && "*"} </label>\n
 
         <select name="${
           field.name
@@ -1342,7 +1348,6 @@ export function generateFormFields(
       }
 
       const inputType = prismaFieldToInputType[field.type] || "text";
-      const required = field.isRequired ? "required" : "";
 
       if (field.kind === "object") {
         const relationFrom =
@@ -1358,7 +1363,9 @@ export function generateFormFields(
           if (fieldType2) {
             const inputType2 = prismaFieldToInputType[fieldType2] || "text";
 
-            return `<div><label className="block text-slate-500 dark:text-slate-400">${relationFrom}</label>\n
+            return `<div><label className="block text-slate-500 dark:text-slate-400">${relationFrom} ${
+              required && "*"
+            }</label>\n
             <input type="${inputType2}" name="${relationFrom}"                   className="block w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400"
             ${required}/></div>`;
           } else {
@@ -1368,12 +1375,13 @@ export function generateFormFields(
       }
 
       let returnValue = "";
-      if (
-        isFieldRenderable(field) &&
-        (field.isId == false || field.hasDefaultValue === false)
-      ) {
-        returnValue = `<label className="block text-slate-500 dark:text-slate-400">${field.name}</label>\n
-        <input type="${inputType}" name="${field.name}" className="block w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400" ${required}/>`;
+      if (isFieldRenderable(field)) {
+        returnValue = `<label className="block text-slate-500 dark:text-slate-400">${
+          field.name
+        } ${required && "*"}</label>\n
+        <input type="${inputType}" name="${
+          field.name
+        }" className="block w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400" ${required}/>`;
       }
 
       return returnValue;
@@ -1390,17 +1398,20 @@ export function generateFormFieldsWithDefaults(
       if (!isFieldRenderable(field)) {
         return "";
       }
+      const required =
+        field.isRequired && !field.hasDefaultValue ? "required" : "";
+
       // Enum
       if (field.kind === "enum") {
         const enumValues = enums[field.type];
         return `<label className="block text-slate-500 dark:text-slate-400">${
           field.name
-        }</label>\n
+        } </label>\n
               <select className="block w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400" name="${
                 field.name
-              }" id="${field.name}" defaultValue={nexquikTemplateModel?.${
+              } ${required && "*"}" id="${
           field.name
-        }}>
+        }" defaultValue={nexquikTemplateModel?.${field.name}}>
               ${enumValues.map((v) => `<option value="${v}">${v}</option>`)}
       </select>`;
       }
@@ -1413,9 +1424,14 @@ export function generateFormFieldsWithDefaults(
         ? `{nexquikTemplateModel?.${field.name}.toISOString().slice(0, 16)}`
         : `{String(nexquikTemplateModel?.${field.name})}`;
       const disabled = field.isId ? "disabled" : "";
-      const required = field.isRequired ? "required" : "";
 
-      return `<label className="block text-slate-500 dark:text-slate-400">${field.name}</label>\n<input className="block w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400" type="${inputType}" name="${field.name}" defaultValue=${defaultValue}  ${disabled} ${required}/>`;
+      return `<label className="block text-slate-500 dark:text-slate-400">${
+        field.name
+      } ${
+        required && "*"
+      }</label>\n<input className="block w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400" type="${inputType}" name="${
+        field.name
+      }" defaultValue=${defaultValue}  ${disabled} ${required}/>`;
     })
     .join("\n");
 }
