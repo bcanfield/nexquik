@@ -1331,6 +1331,7 @@ export function generateFormFields(
       const required =
         field.isRequired && !field.hasDefaultValue ? "required" : "";
 
+      const widthStyle = field.type === "Boolean" ? "" : "w-full";
       // Enum
       if (field.kind === "enum") {
         const enumValues = enums[field.type];
@@ -1340,7 +1341,7 @@ export function generateFormFields(
 
         <select name="${
           field.name
-        }" className="block w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400" id="${
+        }" className="block w-full border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-1 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400" id="${
           field.name
         }">
         ${enumValues.map((v) => `<option value="${v}">${v}</option>`)}
@@ -1363,11 +1364,12 @@ export function generateFormFields(
           if (fieldType2) {
             const inputType2 = prismaFieldToInputType[fieldType2] || "text";
 
-            return `<div><label className="block text-slate-500 dark:text-slate-400">${relationFrom} ${
+            return `<label className="block text-slate-500 dark:text-slate-400">${relationFrom} ${
               required && "*"
             }</label>\n
-            <input type="${inputType2}" name="${relationFrom}"                   className="block w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400"
-            ${required}/></div>`;
+            <input type="${inputType2}" name="${relationFrom}"      
+            className="block border border-slate-300 px-2 py-1 dark:border-slate-600 rounded-lg focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400 ${widthStyle}"
+            ${required}/>`;
           } else {
             return "";
           }
@@ -1379,9 +1381,8 @@ export function generateFormFields(
         returnValue = `<label className="block text-slate-500 dark:text-slate-400">${
           field.name
         } ${required && "*"}</label>\n
-        <input type="${inputType}" name="${
-          field.name
-        }" className="block w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400" ${required}/>`;
+        <input type="${inputType}" name="${field.name}"    
+        className="block border border-slate-300 dark:border-slate-600 px-2 py-1 rounded-lg focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400 ${widthStyle}" ${required}/>`;
       }
 
       return returnValue;
@@ -1400,6 +1401,7 @@ export function generateFormFieldsWithDefaults(
       }
       const required =
         field.isRequired && !field.hasDefaultValue ? "required" : "";
+      const widthStyle = field.type === "Boolean" ? "" : "w-full";
 
       // Enum
       if (field.kind === "enum") {
@@ -1407,7 +1409,7 @@ export function generateFormFieldsWithDefaults(
         return `<label className="block text-slate-500 dark:text-slate-400">${
           field.name
         } </label>\n
-              <select className="block w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400" name="${
+              <select className="block w-full border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-1 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400" name="${
                 field.name
               } ${required && "*"}" id="${
           field.name
@@ -1427,9 +1429,8 @@ export function generateFormFieldsWithDefaults(
 
       return `<label className="block text-slate-500 dark:text-slate-400">${
         field.name
-      } ${
-        required && "*"
-      }</label>\n<input className="block w-full border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400" type="${inputType}" name="${
+      } ${required && "*"}</label>\n<input    
+       className="block border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400 px-4 py-1 ${widthStyle}" type="${inputType}" name="${
         field.name
       }" defaultValue=${defaultValue}  ${disabled} ${required}/>`;
     })
