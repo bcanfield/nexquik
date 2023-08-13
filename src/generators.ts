@@ -30,6 +30,11 @@ const grayButtonClass =
 const blueTextClass =
   "dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-600";
 
+const labelClass = "block text-slate-500 dark:text-slate-400 text-sm";
+const inputClass =
+  "block text-sm leading-6 text-slate-300 rounded-md ring-1 ring-slate-900/10 shadow-sm py-1.5 pl-2 pr-3 hover:ring-slate-300 dark:bg-slate-800 dark:highlight-white/5 dark:hover:bg-slate-700";
+const disabledInputClass =
+  "block text-sm leading-6 text-slate-400 rounded-md ring-1 ring-slate-900/10 shadow-sm py-1.5 pl-2 pr-3  dark:bg-slate-800 ";
 const darkTextClass = "text-slate-700 dark:text-slate-400";
 const lightTextClass = "text-slate-900 dark:text-slate-200";
 const readFileAsync = promisify(fs.readFile);
@@ -156,7 +161,7 @@ async function generateCreateForm(
 ): Promise<string> {
   const formFields = generateFormFields(modelTree, enums);
   const reactComponentTemplate = `
-      <form className="space-y-4" action={addNexquikTemplateModel}>
+      <form className="space-y-2" action={addNexquikTemplateModel}>
         ${formFields}
         <div className="flex space-x-4">
         <button type="submit"                   className="${blueButtonClass}"
@@ -211,7 +216,7 @@ async function generateEditForm(
   );
   // Define the React component template as a string
   const reactComponentTemplate = `
-  <form className="space-y-4" action={editNexquikTemplateModel}>
+  <form className="space-y-2" action={editNexquikTemplateModel}>
   ${formFields}
   <div className="flex space-x-4">
         <button  className="${blueButtonClass}" type="submit">Update NexquikTemplateModel</button>
@@ -546,7 +551,7 @@ export async function generateShowForm(
   });
   const reactComponentTemplate = `
   
-    <form className="space-y-4">
+    <form className="space-y-2">
     ${modelTree.model.fields
       .map((field) => {
         if (!isFieldRenderable(field)) {
@@ -1514,9 +1519,9 @@ export function generateFormFields(
       // Enum
       if (field.kind === "enum") {
         const enumValues = enums[field.type];
-        return `<label className="block text-slate-500 dark:text-slate-400">${
-          field.name
-        } ${required && "*"} </label>\n
+        return `<label className="${labelClass}">${field.name} ${
+          required && "*"
+        } </label>\n
 
         <select name="${
           field.name
@@ -1543,11 +1548,11 @@ export function generateFormFields(
           if (fieldType2) {
             const inputType2 = prismaFieldToInputType[fieldType2] || "text";
 
-            return `<label className="block text-slate-500 dark:text-slate-400">${relationFrom} ${
+            return `<label className="${labelClass}">${relationFrom} ${
               required && "*"
             }</label>\n
             <input type="${inputType2}" name="${relationFrom}"      
-            className="block border border-slate-300 px-2 py-1 dark:border-slate-600 rounded-lg focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400 ${widthStyle}"
+            className=" ${inputClass} ${widthStyle}"
             ${required}/>`;
           } else {
             return "";
@@ -1557,11 +1562,11 @@ export function generateFormFields(
 
       let returnValue = "";
       if (isFieldRenderable(field)) {
-        returnValue = `<label className="block text-slate-500 dark:text-slate-400">${
-          field.name
-        } ${required && "*"}</label>\n
+        returnValue = `<label className="${labelClass}">${field.name} ${
+          required && "*"
+        }</label>\n
         <input type="${inputType}" name="${field.name}"    
-        className="block border border-slate-300 dark:border-slate-600 px-2 py-1 rounded-lg focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400 ${widthStyle}" ${required}/>`;
+        className="${inputClass} ${widthStyle}" ${required}/>`;
       }
 
       return returnValue;
@@ -1585,14 +1590,12 @@ export function generateFormFieldsWithDefaults(
       // Enum
       if (field.kind === "enum") {
         const enumValues = enums[field.type];
-        return `<label className="block text-slate-500 dark:text-slate-400">${
+        return `<label className="${labelClass}">${field.name} </label>\n
+              <select className="${inputClass}" name="${field.name} ${
+          required && "*"
+        }" id="${field.name}" defaultValue={nexquikTemplateModel?.${
           field.name
-        } </label>\n
-              <select className="block w-full border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-1 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400" name="${
-                field.name
-              } ${required && "*"}" id="${
-          field.name
-        }" defaultValue={nexquikTemplateModel?.${field.name}}>
+        }}>
               ${enumValues.map((v) => `<option value="${v}">${v}</option>`)}
       </select>`;
       }
@@ -1606,12 +1609,12 @@ export function generateFormFieldsWithDefaults(
         : `{String(nexquikTemplateModel?.${field.name})}`;
       const disabled = field.isId ? "disabled" : "";
 
-      return `<label className="block text-slate-500 dark:text-slate-400">${
-        field.name
-      } ${required && "*"}</label>\n<input    
-       className="block border border-slate-300 px-2 py-1 dark:border-slate-600 rounded-lg focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400 ${widthStyle}" type="${inputType}" name="${
-        field.name
-      }"  ${
+      return `<label className="${labelClass}">${field.name} ${
+        required && "*"
+      }</label>\n<input    
+       className="${
+         disabled ? inputClass : disabledInputClass
+       } ${widthStyle}" type="${inputType}" name="${field.name}"  ${
         field.type === "Boolean"
           ? `defaultChecked={nexquikTemplateModel?.${field.name}}`
           : `defaultValue=${defaultValue}`
