@@ -31,7 +31,7 @@
     ],
     "ext": "ts,tsx,css,",
     "exec": "npm-run-all dev:*",
-    "delay": 1000
+    "delay": 3000
   },
   "author": "Brandin Canfield",
   "license": "MIT",
@@ -47,6 +47,7 @@
     "commander": "^11.0.0",
     "eslint": "^8.41.0",
     "figlet": "^1.6.0",
+    "fs-extra": "^11.1.1",
     "prettier": "^2.8.8",
     "ts-toolbelt": "^9.6.0"
   },
@@ -58,6 +59,7 @@
     "@semantic-release/git": "^10.0.1",
     "@types/eslint": "^8.40.0",
     "@types/figlet": "^1.5.6",
+    "@types/fs-extra": "^11.0.1",
     "@types/jest": "^29.5.1",
     "@types/node": "^20.2.5",
     "@types/prettier": "^2.7.2",

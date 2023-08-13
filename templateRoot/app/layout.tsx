@@ -1,6 +1,7 @@
 import "./globals.css";
 import Link from "next/link";
 import { Roboto } from "next/font/google";
+import Image from "next/image";
 
 const roboto = Roboto({
   weight: "400",
@@ -17,6 +18,21 @@ export default function RootLayout({
       className={`${roboto.className} dark [--scroll-mt:9.875rem] lg:[--scroll-mt:6.3125rem] js-focus-visible`}
     >
       <body className="antialiased text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900">
+        {/* Start Backdrop Blur */}
+
+        <div className="absolute z-20 top-0 inset-x-0 flex justify-center overflow-hidden pointer-events-none">
+          <div className="w-[108rem] flex-none flex justify-end">
+            <Image
+              src="/backdrop2.png"
+              width={500}
+              height={500}
+              className="w-[90rem] flex-none max-w-none hidden dark:block"
+              alt="Picture of the author"
+            />
+          </div>
+        </div>
+        {/* End Backdrop Blur */}
+
         {/* Navbar */}
         <div className="sticky top-0 z-40 w-full backdrop-blur flex-none transition-colors duration-500 lg:z-50 lg:border-b lg:border-slate-900/10 dark:border-slate-50/[0.06] bg-white supports-backdrop-blur:bg-white/95 dark:bg-slate-900/75">
           <div className="max-w-8xl mx-auto">
@@ -173,7 +189,7 @@ export default function RootLayout({
             >
               {/* CHILDREN START */}
 
-              {children}
+              <div className="flex w-full ">{children}</div>
               {/* CHILDREN END */}
             </main>
 

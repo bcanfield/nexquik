@@ -4,6 +4,7 @@ import prettier from "prettier";
 import { RouteObject } from "./generators";
 import { ESLint } from "eslint";
 import chalk from "chalk";
+import * as fse from "fs-extra";
 
 export function copyAndRenameFile(
   sourceFilePath: string,
@@ -81,7 +82,72 @@ export const copyDirectoryContents = async (
     }
   }
 };
+const waitForEvent = (emitter: any, event: any) =>
+  new Promise((resolve) => emitter.once(event, resolve));
 
+export async function copyPublicDirectory(
+  sourceDir: string,
+  destinationDir: string,
+  toReplace = false,
+  skipChildDir?: string
+) {
+  // console.log(
+  //   chalk.yellowBright(`Copying directory: ${sourceDir} to ${destinationDir}`)
+  // );
+
+  try {
+    if (toReplace && fs.existsSync(destinationDir)) {
+      fs.rmSync(destinationDir, { recursive: true });
+    }
+
+    if (!fs.existsSync(destinationDir)) {
+      fs.mkdirSync(destinationDir);
+    }
+
+    const files = fs.readdirSync(sourceDir, { withFileTypes: true });
+    // for (let index = 0; index < array.length; index++) {
+    //   const element = array[index];
+
+    // }
+
+    for (let index = 0; index < files.length; index++) {
+      const entry = files[index];
+
+      const file = entry.name;
+
+      if (file === skipChildDir) {
+        return;
+      }
+
+      const sourceFile = path.join(sourceDir, file);
+      const destinationFile = path.join(destinationDir, file);
+
+      if (entry.isDirectory()) {
+        copyDirectory(sourceFile, destinationFile, toReplace, skipChildDir);
+      } else {
+        if (!fs.existsSync(destinationFile)) {
+          // fse.copyFileSync(sourceFile, destinationFile);
+          const srcStream = fs.createReadStream(sourceFile);
+          await waitForEvent(srcStream, "ready");
+          const destStream = fs.createWriteStream(destinationFile);
+          await waitForEvent(destStream, "ready");
+          const handleError = (err: any) => {
+            throw new Error(err);
+          };
+          srcStream.on("error", handleError);
+          destStream.on("error", handleError);
+
+          srcStream.pipe(destStream);
+          await waitForEvent(srcStream, "end");
+        }
+      }
+    }
+  } catch (error) {
+    console.error(chalk.red("An error occurred:", error));
+  }
+}
+
+// copy files from one directory to another
 // copy files from one directory to another
 export function copyDirectory(
   sourceDir: string,
