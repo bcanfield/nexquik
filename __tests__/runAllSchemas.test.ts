@@ -53,7 +53,7 @@ test.each(readdirSync(prismaSchemaDirectory))(
       console.error("TypeScript compilation error:", error.message);
       throw error;
     } finally {
-      // child_process.execSync(`rm -rf ${testOutputDirectory}`);
+      child_process.execSync(`rm -rf ${testOutputDirectory}`);
     }
   }
 );
