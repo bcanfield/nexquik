@@ -848,11 +848,14 @@ export async function generateAppDirectoryFromModelTree(
     const idFields = modelTree.uniqueIdentifierField;
     let select = "";
     if (idFields.length > 0) {
-      select += "{select:{";
-      idFields.forEach(({ name }) => {
-        select += `${name}: true,`;
+      select += "select:{";
+      idFields.forEach(({ name }, index) => {
+        if (index > 0) {
+          select += ",";
+        }
+        select += `${name}: true`;
       });
-      select += "}}";
+      select += "}";
     }
 
     // ############### List Page
@@ -986,7 +989,7 @@ export async function generateAppDirectoryFromModelTree(
           manyToManyWhere,
           select
         )
-      : `(${select})`;
+      : `({${select}})`;
     // Enum import for create and edit pages
     const enumImport = Object.keys(enums)
       .map((e) => `import { ${e} } from "@prisma/client";`)
@@ -1403,12 +1406,12 @@ export function generateWhereParentClause(
       } else if (parentIdentifierFieldType === "String") {
         typecastValue = `String(${typecastValue})`;
       }
-      return `({ where: { ${parentReferenceField}: {${parentIdentifierFieldName}: {equals: ${typecastValue}} }, },  }, ${selectClause})`;
+      return `({ where: { ${parentReferenceField}: {${parentIdentifierFieldName}: {equals: ${typecastValue}} }, }, ${selectClause} },)`;
     } else {
-      return `${selectClause}`;
+      return `{${selectClause}}`;
     }
   } else {
-    return `({ ${manyToManyWhere} }, ${selectClause})`;
+    return `({ ${manyToManyWhere} , ${selectClause}}, )`;
   }
 }
 
