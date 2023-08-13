@@ -8,6 +8,7 @@ import {
   convertRouteToRedirectUrl,
   copyAndRenameFile,
   copyDirectory,
+  copyPublicDirectory,
   findAndReplaceInFiles,
   getDynamicSlugs,
   popStringEnd,
@@ -386,6 +387,14 @@ export async function generate(
   copyDirectory(
     path.join(__dirname, "templateRoot"),
     outputDirectory,
+    true,
+    "app"
+  );
+
+  // Try copying over public folder
+  copyPublicDirectory(
+    path.join(__dirname, "templateRoot", "public"),
+    path.join(outputDirectory, "public"),
     true,
     "app"
   );
