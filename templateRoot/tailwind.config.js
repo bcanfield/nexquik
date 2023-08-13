@@ -6,6 +6,9 @@ module.exports = {
       fontFamily: {
         sans: ["Roboto", "ui-sans-serif", "system-ui"],
       },
+      maxWidth: {
+        "8xl": "90rem",
+      },
     },
   },
   plugins: [],
