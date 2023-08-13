@@ -1611,7 +1611,11 @@ export function generateFormFieldsWithDefaults(
       } ${required && "*"}</label>\n<input    
        className="block border border-slate-300 px-2 py-1 dark:border-slate-600 rounded-lg focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400 ${widthStyle}" type="${inputType}" name="${
         field.name
-      }" defaultValue=${defaultValue}  ${disabled} ${required}/>`;
+      }"  ${
+        field.type === "Boolean"
+          ? `defaultChecked={nexquikTemplateModel?.${field.name}}`
+          : `defaultValue=${defaultValue}`
+      } ${disabled} ${required}/>`;
     })
     .join("\n");
 }
