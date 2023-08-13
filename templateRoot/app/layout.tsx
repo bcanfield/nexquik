@@ -156,7 +156,7 @@ export default function RootLayout({
           <div className="lg:flex">
             {/* Side Nav */}
 
-            <aside class="fixed inset-0 z-20 flex-none hidden h-full w-72 lg:static lg:h-auto lg:overflow-y-visible lg:pt-0 lg:w-48 lg:block">
+            <aside className="fixed inset-0 z-20 flex-none hidden h-full w-72 lg:static lg:h-auto lg:overflow-y-visible lg:pt-0 lg:w-48 lg:block">
               <div
                 id="navWrapper"
                 className="overflow-y-auto z-20 h-full bg-white scrolling-touch max-w-2xs lg:h-[calc(100vh-3rem)] lg:block lg:sticky top:24  dark:bg-gray-900 lg:mr-0 border-solid border-2 border-green-500"

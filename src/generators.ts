@@ -20,9 +20,9 @@ import {
 } from "./modelTree";
 
 const redButtonClass =
-  "rounded-lg text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 font-medium  text-sm px-2 py-1 text-center dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900";
+  "rounded-lg text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 font-medium  text-sm px-2 py-1 text-center dark:bg-red-800 dark:hover:bg-red-900 dark:focus:ring-red-950";
 const blueButtonClass =
-  "rounded-lg text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium  text-sm px-2 py-1 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800";
+  "rounded-lg text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium  text-sm px-2 py-1 text-center dark:bg-sky-700 dark:hover:bg-sky-800 dark:focus:ring-sky-900";
 
 const grayButtonClass =
   "rounded-lg text-white bg-slate-200 dark:bg-slate-600 hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-300 font-medium  text-sm px-2 py-1 text-center dark:bg-slate-600 dark:hover:bg-slate-500 dark:focus:ring-slate-800";
@@ -159,9 +159,10 @@ async function generateCreateForm(
       <form className="space-y-4" action={addNexquikTemplateModel}>
         ${formFields}
         <div className="flex space-x-4">
-        <Link href={\`${routeUrl}\`} className="${grayButtonClass}" passHref>
-        Cancel
-        </Link>
+        <button type="submit"                   className="${blueButtonClass}"
+        >
+            Create NexquikTemplateModel
+        </button>
        
     </div>      
     </form>     
@@ -252,7 +253,7 @@ async function generateChildrenList(
   <thead>
 
   <tr>
-  <th className="sticky z-10 top-0 text-sm leading-6 font-semibold text-slate-700 bg-white p-0 dark:bg-slate-900 dark:text-slate-300"> <div className="py-2 pr-2 border-b border-slate-200 dark:border-slate-400/20">Children</div> </th>
+  <th className="sticky z-10 top-0 text-sm leading-6 font-semibold  bg-white p-0 dark:bg-slate-900 ${darkTextClass}"> <div className="py-2 pr-2 border-b border-slate-200 dark:border-slate-400/20">Children</div> </th>
   </tr>
   </thead>
 
@@ -309,16 +310,16 @@ async function generateListForm(
 
   // Define the React component template as a string
   const reactComponentTemplate = `
-  <table className="w-full text-left border-collapse">
+  <table className="w-full text-left border-collapse mt-2">
   <thead>
 
   <tr>
   ${idFields
     .map((field) => {
-      return `<th className="sticky z-10 top-0 text-sm leading-6 font-semibold text-slate-700 bg-white p-0 dark:bg-slate-900 dark:text-slate-300"> <div className="py-2 pr-2 border-b border-slate-200 dark:border-slate-400/20">${field} </div> </th>`;
+      return `<th className="sticky z-10 top-0 text-sm leading-6 font-semibold  bg-white dark:bg-slate-900 p-0 ${darkTextClass}"> <div className="py-2 pr-2 border-b border-slate-200 dark:border-slate-400/20">${field} </div> </th>`;
     })
     .join("\n")}
-    <th className="sticky z-10 top-0 text-sm leading-6 font-semibold text-slate-700 bg-white p-0 dark:bg-slate-900 dark:text-slate-300"> <div className="py-2 pr-2 border-b border-slate-200 dark:border-slate-400/20">Actions </div> </th>
+    <th className="sticky z-10 top-0 text-sm leading-6 font-semibold bg-white p-0 dark:bg-slate-900 ${darkTextClass}"> <div className="py-2 pr-2 border-b border-slate-200 dark:border-slate-400/20">Actions </div> </th>
   </tr>
   </thead>
   <tbody className="align-baseline">
@@ -329,11 +330,11 @@ async function generateListForm(
       ${idFields
         .map((field) => {
           return `<td  translate="no"
-            className="py-2 pr-2  font-medium text-sm leading-6 text-sky-500 whitespace-nowrap dark:text-sky-400"> {\`\${nexquikTemplateModel.${field}}\`} </td>`;
+            className="py-2 pr-2  font-bold text-sm leading-6 whitespace-nowrap ${lightTextClass}"> {\`\${nexquikTemplateModel.${field}}\`} </td>`;
         })
         .join("\n")}
 
-      <td className="py-2 pr-2 font-medium text-sm leading-6 text-sky-500 whitespace-nowrap dark:text-sky-400">
+      <td className="py-2 pr-2 font-bold text-sm leading-6 text-sky-500 whitespace-nowrap ${lightTextClass}">
       <form className="flex space-x-2">
       ${uniqueFormInputs}
           <Link href={\`${linkHref}\`} className="${blueButtonClass}">View</Link>
@@ -569,8 +570,8 @@ export async function generateShowForm(
 <thead>
   <tr>
   
-    <th className="sticky z-10 top-0 text-sm leading-6 font-semibold text-slate-700 bg-white p-0 dark:bg-slate-900 dark:text-slate-300"> <div className="py-2 pr-2 border-b border-slate-200 dark:border-slate-400/20">Field </div> </th>
-        <th className="sticky z-10 top-0 text-sm leading-6 font-semibold text-slate-700 bg-white p-0 dark:bg-slate-900 dark:text-slate-300"> <div className="py-2 pr-2 border-b border-slate-200 dark:border-slate-400/20">Value </div> </th>
+    <th className="sticky z-10 top-0 text-sm leading-6 font-semibold  bg-white p-0 dark:bg-slate-900 ${darkTextClass}"> <div className="py-2 pr-2 border-b border-slate-200 dark:border-slate-400/20">Field </div> </th>
+        <th className="sticky z-10 top-0 text-sm leading-6 font-semibold bg-white p-0 dark:bg-slate-900 ${darkTextClass}"> <div className="py-2 pr-2 border-b border-slate-200 dark:border-slate-400/20">Value </div> </th>
 
   </tr>
   </thead>
@@ -588,7 +589,7 @@ export async function generateShowForm(
         
               <tr key={'${field.name}'}>
 <td  translate="no"
-            className="py-2 pr-2  font-medium text-sm leading-6 text-sky-700 whitespace-nowrap dark:text-sky-400"> ${field.name} </td>
+            className="py-2 pr-2  font-bold text-sm leading-6 whitespace-nowrap ${lightTextClass}"> ${field.name} </td>
 <td  translate="no"
             className="py-2 pr-2 font-medium text-sm leading-6 text-slate-700 whitespace-nowrap dark:text-slate-400"> {\`\${nexquikTemplateModel?.${field.name}}\`} </td>
 
@@ -635,7 +636,6 @@ export async function generateShowForm(
 function generateRouteList(modelNames: string[]) {
   const routeLinks = [];
   for (const model of modelNames) {
-    console.log(`Model: ${model}`);
     const lowerCase = model.charAt(0).toLowerCase() + model.slice(1);
     // const routeObjects = modelHashMap[model];
     routeLinks.push(`<tr>
