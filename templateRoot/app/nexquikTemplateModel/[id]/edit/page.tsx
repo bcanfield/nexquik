@@ -36,7 +36,7 @@ export default async function EditNexquikTemplateModel({
   }
 
   return (
-    <div className="flex-auto w-full min-w-0 pt-6 lg:px-8 lg:pt-8 pb:12 xl:pb-24 lg:pb-16 border-yellow-500">
+    <div className="flex-auto w-full min-w-0 pt-6 lg:px-8 lg:pt-8 pb:12 xl:pb-24 lg:pb-16 ">
       {/* @nexquik editBreadCrumb start */}
       {/* @nexquik editBreadCrumb stop */}
       <header id="header" className="relative z-2 mt-5">

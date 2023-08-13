@@ -34,7 +34,7 @@ export default async function CreateNexquikTemplateModel({
   }
 
   return (
-    <div className="flex-auto w-full min-w-0 pt-6 lg:px-8 lg:pt-8 pb:12 xl:pb-24 lg:pb-16 border-yellow-500">
+    <div className="flex-auto w-full min-w-0 pt-6 lg:px-8 lg:pt-8 pb:12 xl:pb-24 lg:pb-16 ">
       {/* @nexquik createBreadcrumb start */}
       {/* @nexquik createBreadcrumb stop */}
 
@@ -45,7 +45,7 @@ export default async function CreateNexquikTemplateModel({
           </h1>
         </div>
       </header>
-      <div className="w-full overflow-x-auto border-solid border-2 border-black-500 pt-2">
+      <div className="w-full overflow-x-auto  pt-2">
         {/* @nexquik createForm start */}
         <form action={addNexquikTemplateModel}>
           <label>name</label>

@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default async function Home() {
   return (
-    <div className="flex-auto w-full min-w-0 pt-6 lg:px-8 lg:pt-8 pb:12 xl:pb-24 lg:pb-16 border-yellow-500">
+    <div className="flex-auto w-full min-w-0 pt-6 lg:px-8 lg:pt-8 pb:12 xl:pb-24 lg:pb-16 ">
       <header id="header" className="relative z-20">
         <div>
           <p className="mb-2 text-sm leading-6 font-semibold text-slate-700  dark:text-slate-400 ">
@@ -20,7 +20,7 @@ export default async function Home() {
           </p>
         </div>
       </header>
-      <div className="w-full overflow-x-auto border-solid border-2 border-black-500 pt-2">
+      <div className="w-full overflow-x-auto  pt-2">
         {/* @nexquik routeList start */}
         <Link href={`/nexquikTemplateModel/create`}>Route</Link>
         {/* @nexquik routeList stop */}

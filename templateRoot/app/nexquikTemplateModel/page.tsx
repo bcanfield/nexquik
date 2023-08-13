@@ -26,7 +26,7 @@ export default async function ListNexquikTemplateModels({
     //@nexquik revalidatePath stop
   }
   return (
-    <div className="flex-auto w-full min-w-0 pt-6 lg:px-8 lg:pt-8 pb:12 xl:pb-24 lg:pb-16 border-yellow-500">
+    <div className="flex-auto w-full min-w-0 pt-6 lg:px-8 lg:pt-8 pb:12 xl:pb-24 lg:pb-16 ">
       {/* @nexquik listBreadcrumb start */}
       {/* @nexquik listBreadcrumb stop */}
       <header id="header" className="relative z-20 mt-5">
@@ -36,7 +36,7 @@ export default async function ListNexquikTemplateModels({
           </h1>
         </div>
       </header>
-      <div className="w-full overflow-x-auto border-solid border-2 border-black-500 pt-2">
+      <div className="w-full overflow-x-auto  pt-2">
         {/* @nexquik createLink start */}
         <Link href={`/nexquikTemplateModel/create`}>
           Create New NexquikTemplateModel
@@ -59,7 +59,7 @@ export default async function ListNexquikTemplateModels({
               <p>lat: {nexquikTemplateModel.lat}</p>
               <p>lng: {nexquikTemplateModel.lat}</p>
               <Link
-                class="px-3 py-2 text-xs font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                className="px-3 py-2 text-xs font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                 href={`/nexquikTemplateModel/${nexquikTemplateModel.id}`}
               >
                 View

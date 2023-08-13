@@ -34,7 +34,7 @@ export default function RootLayout({
         {/* End Backdrop Blur */}
 
         {/* Navbar */}
-        <div className="sticky top-0 z-40 w-full backdrop-blur flex-none transition-colors duration-500 lg:z-50 lg:border-b lg:border-slate-900/10 dark:border-slate-50/[0.06] bg-white supports-backdrop-blur:bg-white/95 dark:bg-slate-900/75">
+        <div className="sticky top-0 z-40 w-full backdrop-blur flex-none transition-colors duration-500 lg:z-50 lg:border-b lg:border-slate-900/10 dark:border-slate-50/[0.06] bg-white supports-backdrop-blur:bg-white/95 dark:bg-transparent">
           <div className="max-w-8xl mx-auto">
             <div className="py-4 border-b border-slate-900/10 lg:px-8 lg:border-0 dark:border-slate-300/10 mx-4 lg:mx-0">
               <div className="relative flex items-center">
@@ -152,22 +152,22 @@ export default function RootLayout({
         {/* End Navbar */}
         {/* Page Content Start*/}
 
-        <div className="w-full px-4 mx-auto max-w-8xl border-solid border-2 border-red-500">
+        <div className="w-full px-4 mx-auto max-w-8xl ">
           <div className="lg:flex">
             {/* Side Nav */}
 
-            <aside className="fixed inset-0 z-20 flex-none hidden h-full w-72 lg:static lg:h-auto lg:overflow-y-visible lg:pt-0 lg:w-48 lg:block">
+            <aside className="fixed inset-0 z-20 flex-none hidden h-full w-72 lg:static lg:h-auto lg:overflow-y-visible lg:pt-0 lg:w-[17rem] lg:block">
               <div
                 id="navWrapper"
-                className="overflow-y-auto z-20 h-full bg-white scrolling-touch max-w-2xs lg:h-[calc(100vh-3rem)] lg:block lg:sticky top:24  dark:bg-gray-900 lg:mr-0 border-solid border-2 border-green-500"
+                className="overflow-y-auto z-20 h-full bg-white scrolling-touch max-w-2xs lg:h-[calc(100vh-3rem)] lg:block lg:sticky top:24  dark:bg-slate-900 lg:mr-0 "
               >
                 <nav
                   id="nav"
                   className="pt-16 px-1 pl-3 lg:pl-0 lg:pt-2 font-normal text-base lg:text-sm pb-10 lg:pb-20 sticky?lg:h-(screen-18)"
                 >
                   <ul className="mb-0 list-unstyled">
-                    <li className="border-b border-slate-200 dark:border-slate-400/20 mt-2">
-                      <h2 className="pl-2 mb-8 lg:mb-1 font-semibold text-lg text-slate-900 dark:text-slate-200">
+                    <li className=" dark:border-slate-400/20 mt-8">
+                      <h2 className="pl-2 mb-4 lg:mb-1 font-semibold text-sm uppercase text-slate-900 dark:text-slate-200">
                         Models
                       </h2>
                     </li>
@@ -185,7 +185,7 @@ export default function RootLayout({
 
             <main
               id="content-wrapper"
-              className="flex-auto w-full min-w-0 lg:static lg:max-h-full lg:overflow-visible border-solid border-2 border-green-500"
+              className="flex-auto w-full min-w-0 lg:static lg:max-h-full lg:overflow-visible "
             >
               {/* CHILDREN START */}
 

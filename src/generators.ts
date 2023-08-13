@@ -66,20 +66,20 @@ function generateBreadCrumb(route: string) {
     routeCrumbs += `
       
        <li>
-          <div class="flex items-center">
-            <svg class="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+          <div className="flex items-center">
+            <svg className="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+              <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 9 4-4-4-4"/>
             </svg>
-            <Link href={\`${fullRoute}\`} class="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">${segment}</Link>
+            <Link href={\`${fullRoute}\`} className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">${segment}</Link>
           </div>
         </li>`;
   });
   const breadCrumb = `
-    <nav class="flex" aria-label="Breadcrumb">
-    <ol class="inline-flex items-center space-x-1 md:space-x-3">
-    <li class="inline-flex items-center">
-    <Link href="/" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
-      <svg class="w-3 h-3 mr-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+    <nav className="flex" aria-label="Breadcrumb">
+    <ol className="inline-flex items-center space-x-1 md:space-x-3">
+    <li className="inline-flex items-center">
+    <Link href="/" className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
+      <svg className="w-3 h-3 mr-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
         <path d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z"/>
       </svg>
       Home
@@ -462,12 +462,12 @@ export async function generate(
 
 
 
-                      <div class="flex pl-4 items-center">
-                      <div class="flex items-center space-x-2">
+                      <div className="flex pl-4 items-center">
+                      <div className="flex items-center space-x-2">
 
                       <a href="/${lowerCase}/create">
                       <svg
-                      class="w-[14px] h-[14px] ${blueTextClass}"
+                      className="w-[14px] h-[14px] ${blueTextClass}"
                       aria-hidden="true"
                       xmlns="http://www.w3.org/2000/svg"
                       width="20"
@@ -477,9 +477,9 @@ export async function generate(
                     >
                       <path
                         stroke="currentColor"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
                         d="M10 5.757v8.486M5.757 10h8.486M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
                       />
                     </svg>
@@ -487,7 +487,7 @@ export async function generate(
 
                       <a href="/${lowerCase}">
                       <svg
-                      class="w-[14px] h-[14px] ${blueTextClass}"
+                      className="w-[14px] h-[14px] ${blueTextClass}"
                       aria-hidden="true"
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -495,8 +495,8 @@ export async function generate(
                     >
                       <path
                         stroke="currentColor"
-                        stroke-linecap="round"
-                        stroke-width="2"
+                        strokeLinecap="round"
+                        strokeWidth="2"
                         d="M6 1h10M6 5h10M6 9h10M1.49 1h.01m-.01 4h.01m-.01 4h.01"
                       />
                     </svg>
@@ -667,7 +667,7 @@ function generateRouteList(modelNames: string[]) {
 
   return `
 
-  <table className="min-w-full text-left border-collapse border-solid border-2 border-pink-500">
+  <table className="min-w-full text-left border-collapse  ">
   <thead>
   <tr>
     <th className="sticky z-10 top-0 text-sm leading-6 font-semibold  bg-white p-0 dark:bg-slate-900 ${darkTextClass}">
