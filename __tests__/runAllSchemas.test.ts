@@ -5,7 +5,7 @@ import path from "path";
 const nexquikMain = "dist/index.js";
 const testOutputDirectory = path.join("__tests__", "testOutputDirectory");
 const prismaSchemaDirectory = "prisma";
-const prismaMain = "node_modules/prisma/build/index.js";
+const prismaMain = "./node_modules/prisma/build/index.js";
 
 const isDirectoryNotEmpty = (path: string) => {
   try {
@@ -53,7 +53,7 @@ test.each(readdirSync(prismaSchemaDirectory))(
       console.error("TypeScript compilation error:", error.message);
       throw error;
     } finally {
-      child_process.execSync(`rm -rf ${testOutputDirectory}`);
+      // child_process.execSync(`rm -rf ${testOutputDirectory}`);
     }
   }
 );
