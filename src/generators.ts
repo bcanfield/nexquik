@@ -27,6 +27,11 @@ const blueButtonClass =
 const grayButtonClass =
   "rounded-lg text-white bg-slate-200 dark:bg-slate-600 hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-300 font-medium  text-sm px-2 py-1 text-center dark:bg-slate-600 dark:hover:bg-slate-500 dark:focus:ring-slate-800";
 
+const blueTextClass =
+  "dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-600";
+
+const darkTextClass = "text-slate-700 dark:text-slate-400";
+const lightTextClass = "text-slate-900 dark:text-slate-200";
 const readFileAsync = promisify(fs.readFile);
 
 interface RouteSegment {
@@ -157,10 +162,6 @@ async function generateCreateForm(
         <Link href={\`${routeUrl}\`} className="${grayButtonClass}" passHref>
         Cancel
         </Link>
-        <button type="submit"                   className="${blueButtonClass}"
-        >
-            Create NexquikTemplateModel
-        </button>
        
     </div>      
     </form>     
@@ -328,11 +329,11 @@ async function generateListForm(
       ${idFields
         .map((field) => {
           return `<td  translate="no"
-            className="py-2 pr-2 font-mono font-medium text-sm leading-6 text-sky-500 whitespace-nowrap dark:text-sky-400"> {\`\${nexquikTemplateModel.${field}}\`} </td>`;
+            className="py-2 pr-2  font-medium text-sm leading-6 text-sky-500 whitespace-nowrap dark:text-sky-400"> {\`\${nexquikTemplateModel.${field}}\`} </td>`;
         })
         .join("\n")}
 
-      <td className="py-2 pr-2 font-mono font-medium text-sm leading-6 text-sky-500 whitespace-nowrap dark:text-sky-400">
+      <td className="py-2 pr-2 font-medium text-sm leading-6 text-sky-500 whitespace-nowrap dark:text-sky-400">
       <form className="flex space-x-2">
       ${uniqueFormInputs}
           <Link href={\`${linkHref}\`} className="${blueButtonClass}">View</Link>
@@ -452,7 +453,6 @@ export async function generate(
   // Route sidebar
   let routeSidebar = "";
   for (const model of modelNames) {
-    console.log(`Model: ${model}`);
     const lowerCase = model.charAt(0).toLowerCase() + model.slice(1);
     routeSidebar += `<li className="mt-4">
 <h5 className="pl-2 mb-8 lg:mb-1 font-semibold text-slate-700 dark:text-slate-400">
@@ -466,7 +466,7 @@ export async function generate(
 
                       <a href="/${lowerCase}/create">
                       <svg
-                      class="w-[14px] h-[14px] dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-600"
+                      class="w-[14px] h-[14px] ${blueTextClass}"
                       aria-hidden="true"
                       xmlns="http://www.w3.org/2000/svg"
                       width="20"
@@ -486,7 +486,7 @@ export async function generate(
 
                       <a href="/${lowerCase}">
                       <svg
-                      class="w-[14px] h-[14px] dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-600"
+                      class="w-[14px] h-[14px] ${blueTextClass}"
                       aria-hidden="true"
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -588,9 +588,9 @@ export async function generateShowForm(
         
               <tr key={'${field.name}'}>
 <td  translate="no"
-            className="py-2 pr-2 font-mono font-medium text-sm leading-6 text-sky-700 whitespace-nowrap dark:text-sky-400"> ${field.name} </td>
+            className="py-2 pr-2  font-medium text-sm leading-6 text-sky-700 whitespace-nowrap dark:text-sky-400"> ${field.name} </td>
 <td  translate="no"
-            className="py-2 pr-2 font-mono font-medium text-sm leading-6 text-slate-700 whitespace-nowrap dark:text-slate-400"> {\`\${nexquikTemplateModel?.${field.name}}\`} </td>
+            className="py-2 pr-2 font-medium text-sm leading-6 text-slate-700 whitespace-nowrap dark:text-slate-400"> {\`\${nexquikTemplateModel?.${field.name}}\`} </td>
 
 
               </tr>  
@@ -641,22 +641,22 @@ function generateRouteList(modelNames: string[]) {
     routeLinks.push(`<tr>
     <td
       translate="no"
-      className="py-2 pr-2 font-mono font-medium text-sm leading-6 text-sky-500 whitespace-nowrap dark:text-sky-400"
+      className="py-2 pr-2 font-bold text-sm leading-6 whitespace-nowrap ${lightTextClass}"
     >
       ${model}
     </td>
     
     <td
       translate="no"
-      className="py-2 pr-2 font-mono font-medium text-sm leading-6 hover:border-slate-400 whitespace-nowrap "
+      className="py-2 pr-2 font-medium text-sm leading-6 whitespace-nowrap "
     >
-    <a className="dark:hover:border-slate-500 text-slate-700 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300" href="/${lowerCase}/create">
+    <a className="${blueTextClass}" href="/${lowerCase}/create">
       Create 
       </a>
-      <a className="text-sky-500  dark:text-sky-400">
+      <a className="${darkTextClass}">
       {' '} / {' '}
       </a>
-      <a className="dark:hover:border-slate-500 text-slate-700 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300" href="/${lowerCase}">
+      <a className="${blueTextClass}" href="/${lowerCase}">
       List 
       </a>
     </td>
@@ -670,13 +670,13 @@ function generateRouteList(modelNames: string[]) {
   <table className="min-w-full text-left border-collapse border-solid border-2 border-pink-500">
   <thead>
   <tr>
-    <th className="sticky z-10 top-0 text-sm leading-6 font-semibold text-slate-700 bg-white p-0 dark:bg-slate-900 dark:text-slate-300">
+    <th className="sticky z-10 top-0 text-sm leading-6 font-semibold  bg-white p-0 dark:bg-slate-900 ${darkTextClass}">
       <div className="py-2 border-b border-slate-200 dark:border-slate-400/20">
         Model
       </div>
     </th>
-    <th className="sticky z-10 top-0 text-sm leading-6 font-semibold text-slate-700 bg-white p-0 dark:bg-slate-900 dark:text-slate-300 sm:table-cell">
-      <div className="py-2 pl-2 border-b border-slate-200 dark:border-slate-400/20 pr-2">
+    <th className="sticky z-10 top-0 text-sm leading-6 font-semibold bg-white p-0 dark:bg-slate-900 sm:table-cell ${darkTextClass}">
+      <div className="py-2 border-b border-slate-200 dark:border-slate-400/20 pr-2">
         Operations
       </div>
     </th>

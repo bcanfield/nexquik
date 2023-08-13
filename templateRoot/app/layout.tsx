@@ -152,7 +152,7 @@ export default function RootLayout({
         {/* End Navbar */}
         {/* Page Content Start*/}
 
-        <div className="w-full px-4 mx-auto max-w-7xl border-solid border-2 border-red-500">
+        <div className="w-full px-4 mx-auto max-w-8xl border-solid border-2 border-red-500">
           <div className="lg:flex">
             {/* Side Nav */}
 
