@@ -3,6 +3,8 @@ import { getDMMF } from "@prisma/internals";
 import chalk from "chalk";
 import fs from "fs";
 import path from "path";
+import cliProgress from "cli-progress"; // Import cli-progress
+
 import { promisify } from "util";
 import {
   convertRouteToRedirectUrl,
@@ -1214,13 +1216,16 @@ export async function generateAppDirectoryFromModelTree(
       });
     }
   }
-
+  const bar1 = new cliProgress.SingleBar({}, cliProgress.Presets.rect);
+  bar1.start(modelTreeArray.length, 0);
   for (const modelTree of modelTreeArray) {
     await generateRoutes(modelTree, {
       name: "/",
       uniqueIdentifierField: [],
     });
+    bar1.increment();
   }
+  bar1.stop();
 
   return routes;
 }
