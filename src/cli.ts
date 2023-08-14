@@ -14,8 +14,6 @@ const defaultPrismaSchemaPath = "./prisma/schema.prisma";
 
 export async function run(options?: GeneratorOptions) {
   try {
-    const args = process.argv;
-    console.log({ args });
     console.log(
       chalk.bgYellow.blue.bold(
         figlet.textSync("Nexquik", {
@@ -28,7 +26,7 @@ export async function run(options?: GeneratorOptions) {
     const program = new Command();
     program
       .version(require("../package.json").version)
-      .description("An example CLI for managing a directory")
+      .description("Auto-generate a Next.js 13 app from your DB Schema")
       .option(
         "-schema <value>",
         "Path to prisma schema file",
@@ -39,12 +37,29 @@ export async function run(options?: GeneratorOptions) {
         "Path to output directory",
         defaultOutputDirectory
       )
+      .option(
+        "-exclude <value>",
+        "Comma-separated list of model names to exclude from the top-level of the generated app. (NOTE: If the -include is passed, this exclusion list will be ignored)",
+        ""
+      )
+      .option(
+        "-include <value>",
+        "Comma-separated list of model names to include from the top-level of the generated app.",
+        ""
+      )
       .parse(process.argv);
 
     const cliArgs = program.opts();
     const prismaSchemaPath = options?.schemaPath || cliArgs.Schema;
     const outputDirectory =
       options?.generator.config.outputDirectory || cliArgs.Out;
+    const includedModels = cliArgs.Include ? cliArgs.Include.split(",") : [];
+
+    const excludedModels =
+      includedModels.length > 0 || !cliArgs.Exclude
+        ? []
+        : cliArgs.Exclude.split(",");
+
     console.log(
       `${chalk.whiteBright.bold(
         `\nParams:`
@@ -53,7 +68,12 @@ export async function run(options?: GeneratorOptions) {
       )}\nOutput location: ${chalk.yellow.bold(`${outputDirectory}`)}\n`
     );
 
-    await generate(prismaSchemaPath, outputDirectory);
+    await generate(
+      prismaSchemaPath,
+      outputDirectory,
+      excludedModels,
+      includedModels
+    );
     console.log(chalk.blue("Formatting Generated Files"));
     await formatDirectory(outputDirectory);
     console.log(chalk.green.bold("\nGenerated Successfully."));

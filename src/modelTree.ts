@@ -47,7 +47,11 @@ export function getCompositeKeyFields(
   return null;
 }
 
-export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
+export function createModelTree(
+  dataModel: DMMF.Datamodel,
+  excludedModels: string[],
+  includedModels: string[]
+): ModelTree[] {
   const models = dataModel.models;
   // console.log("Creating model tree");
   // console.log({ models });
@@ -128,7 +132,18 @@ export function createModelTree(dataModel: DMMF.Datamodel): ModelTree[] {
     };
   }
 
-  for (const model of models) {
+  // Filter out included or excluded models before beginning main loop to generate Tree
+  let topLevelModels: DMMF.Model[] = [];
+  if (includedModels.length > 0) {
+    topLevelModels = dataModel.models.filter((m) =>
+      includedModels.includes(m.name)
+    );
+  } else {
+    topLevelModels = dataModel.models.filter(
+      (m) => !excludedModels.includes(m.name)
+    );
+  }
+  for (const model of topLevelModels) {
     // Only include models that dont have required parent
     if (
       !model.fields.some(
