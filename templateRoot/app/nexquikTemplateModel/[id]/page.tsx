@@ -31,7 +31,7 @@ export default async function ShowNexquikTemplateModel({
     //@nexquik listRedirect stop
   }
   return (
-    <div className="flex-auto w-full min-w-0 pt-6 lg:px-8 lg:pt-8 pb:12 xl:pb-24 lg:pb-16 ">
+    <div className="flex-auto w-full min-w-0 pt-6 lg:px-8 lg:pt-8 pb:12 xl:pb-24 lg:pb-16 p-1 ">
       {/* @nexquik breadcrumb start */}
       {/* @nexquik breadcrumb stop */}
       <header id="header" className="relative z-20 mt-5">
