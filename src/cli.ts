@@ -4,6 +4,7 @@ import { Command } from "commander";
 import figlet from "figlet";
 import { generate } from "./generators";
 import { formatDirectory } from "./helpers";
+import ora from "ora"; // Import 'ora'
 
 export interface CliArgs {
   prismaSchemaPath: string;
@@ -61,22 +62,25 @@ export async function run(options?: GeneratorOptions) {
         : cliArgs.Exclude.split(",");
 
     console.log(
-      `${chalk.whiteBright.bold(
-        `\nParams:`
-      )}\n-----\nPrisma Schema location: ${chalk.yellow.bold(
-        `${prismaSchemaPath}`
-      )}\nOutput location: ${chalk.yellow.bold(`${outputDirectory}`)}\n`
+      chalk.gray(
+        `Fetching schema from ${prismaSchemaPath}\nOutputting to ${outputDirectory}\n`
+      )
     );
-
     await generate(
       prismaSchemaPath,
       outputDirectory,
       excludedModels,
       includedModels
     );
-    console.log(chalk.blue("Formatting Generated Files"));
+    const spinner = ora(
+      `${chalk.blue.bold("Linting and Formatting Generated Files...")}\n`
+    ).start();
     await formatDirectory(outputDirectory);
-    console.log(chalk.green.bold("\nGenerated Successfully."));
+    spinner.succeed(chalk.green.bold(`Linted and Formatted Generated Files`));
+
+    console.log(
+      `${chalk.green.bold("Success! Enjoy your new app at")} ${outputDirectory}`
+    );
   } catch (error) {
     console.log(chalk.red.bold("Nexquik Error:\n"), error);
   }

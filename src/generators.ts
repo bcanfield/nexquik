@@ -3,7 +3,7 @@ import { getDMMF } from "@prisma/internals";
 import chalk from "chalk";
 import fs from "fs";
 import path from "path";
-import cliProgress from "cli-progress"; // Import cli-progress
+import ora from "ora"; // Import 'ora'
 
 import { promisify } from "util";
 import {
@@ -403,11 +403,10 @@ export async function generate(
   includedModels: string[]
 ) {
   // Read the Prisma schema file
-  console.log(chalk.blue("Locating Prisma Schema File"));
   const prismaSchema = await readFileAsync(prismaSchemaPath, "utf-8");
 
   // Create the output directory
-  console.log(chalk.blue("Creating output directory"));
+  // console.log(chalk.blue.bold("Creating output directory"));
   if (fs.existsSync(outputDirectory)) {
     fs.rmSync(outputDirectory, { recursive: true });
   }
@@ -418,10 +417,7 @@ export async function generate(
   fs.mkdirSync(appDirectory);
 
   // Main section to build the app from the modelTree
-  console.log(chalk.blue("Reading Prisma Schema"));
   const dmmf = await getDMMF({ datamodel: prismaSchema });
-
-  console.log(chalk.blue("Creating Tree"));
 
   // Create model tree and verify there is at least one valid model
   const modelTree = createModelTree(
@@ -457,18 +453,15 @@ export async function generate(
     "schema.prisma"
   );
 
+  const enums = getEnums(dmmf.datamodel);
+
   console.log(
-    chalk.magentaBright.bold(
-      "TOP LEVEL MODEL TREE\n-------------\n",
-      modelTree.map((t) => t.modelName)
-    )
+    `${chalk.blue.bold(
+      "Generating directories for your models..."
+    )} ${chalk.gray("(For deeply-nested schemas, this may take a moment)")}`
   );
 
-  const enums = getEnums(dmmf.datamodel);
-  console.log(chalk.blue("Generating App Directory"));
   await generateAppDirectoryFromModelTree(modelTree, appDirectory, enums);
-
-  console.log(chalk.blue("Generating Route List"));
 
   // const modelHashMap: {
   //   [model: string]: Partial<RouteObject>[];
@@ -537,7 +530,6 @@ export async function generate(
     "{/* //@nexquik routeSidebar stop */}"
   );
 
-  console.log(chalk.blue("Finishing Up"));
   return;
 }
 
@@ -1216,17 +1208,17 @@ export async function generateAppDirectoryFromModelTree(
       });
     }
   }
-  const bar1 = new cliProgress.SingleBar({}, cliProgress.Presets.rect);
-  bar1.start(modelTreeArray.length, 0);
+
   for (const modelTree of modelTreeArray) {
+    const spinner = ora(
+      `Generating model: ${modelTree.model.name} ...`
+    ).start();
     await generateRoutes(modelTree, {
       name: "/",
       uniqueIdentifierField: [],
     });
-    bar1.increment();
+    spinner.stop();
   }
-  bar1.stop();
-
   return routes;
 }
 
