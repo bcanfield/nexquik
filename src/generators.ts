@@ -396,7 +396,9 @@ async function generateListForm(
 
 export async function generate(
   prismaSchemaPath: string,
-  outputDirectory: string
+  outputDirectory: string,
+  excludedModels: string[],
+  includedModels: string[]
 ) {
   // Read the Prisma schema file
   console.log(chalk.blue("Locating Prisma Schema File"));
@@ -420,10 +422,14 @@ export async function generate(
   console.log(chalk.blue("Creating Tree"));
 
   // Create model tree and verify there is at least one valid model
-  const modelTree = createModelTree(dmmf.datamodel);
+  const modelTree = createModelTree(
+    dmmf.datamodel,
+    excludedModels,
+    includedModels
+  );
   if (modelTree.length === 0) {
-    console.log(chalk.red("Nexquik Error: No valid models detected in schema"));
-    throw new Error("Nexquik Error: No valid models detected in schema");
+    console.log(chalk.red("No valid models detected in schema"));
+    throw new Error("No valid models detected in schema");
   }
 
   // Copy all files from the root dir except for app. (package.json, next.config, etc)
@@ -458,11 +464,7 @@ export async function generate(
 
   const enums = getEnums(dmmf.datamodel);
   console.log(chalk.blue("Generating App Directory"));
-  const routes = await generateAppDirectoryFromModelTree(
-    modelTree,
-    appDirectory,
-    enums
-  );
+  await generateAppDirectoryFromModelTree(modelTree, appDirectory, enums);
 
   console.log(chalk.blue("Generating Route List"));
 
