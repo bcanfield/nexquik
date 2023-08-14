@@ -780,6 +780,39 @@ export async function generateAppDirectoryFromModelTree(
       "{/* @nexquik listBreadcrumb stop */}"
     );
 
+    // Create dynamic directories
+    const slugsForThisModel = getDynamicSlugs(
+      modelTree.modelName,
+      modelUniqueIdentifierField.map((f) => f.name)
+    );
+    slugsForThisModel.forEach((parentSlug) => {
+      route += `[${parentSlug}]/`;
+    });
+    const dynamicOutputDirectory = path.join(outputDirectory, route);
+    const parts = dynamicOutputDirectory
+      .split(path.sep)
+      .filter((item) => item !== "");
+    let currentPath = "";
+    for (const part of parts) {
+      currentPath = path.join(currentPath, part);
+      if (!fs.existsSync(currentPath)) {
+        fs.mkdirSync(currentPath);
+      }
+    }
+
+    // Copy template dynamic directory into new dynamic directory
+    copyDirectory(
+      path.join(
+        __dirname,
+        "templateRoot",
+        "app",
+        "nexquikTemplateModel",
+        "[id]"
+      ),
+      dynamicOutputDirectory,
+      true
+    );
+
     // ############### List Page
     const idFields = modelTree.uniqueIdentifierField;
     let select = "";
@@ -836,7 +869,6 @@ take: limit`;
     if (parentIdentifierFields && parentIdentifierFields.length > 0) {
       parentIdentifierField = parentIdentifierFields[0];
     }
-
     // Delete Where Clause
     const deleteWhereClause = generateDeleteClause(modelUniqueIdentifierField);
     addStringBetweenComments(
@@ -1020,7 +1052,6 @@ take: limit`;
           ""
         )
       : ``;
-
     const listCount = `
     const page =
     typeof searchParams?.page === "string" ? Number(searchParams?.page) : 1;
@@ -1028,46 +1059,13 @@ take: limit`;
     typeof searchParams?.limit === "string" ? Number(searchParams?.limit) : 10;
   const count = await prisma.${
     modelName.charAt(0).toLowerCase() + modelName.slice(1)
-  }.count(${countWhereparentClause});
+  }.count${countWhereparentClause ? countWhereparentClause : "()"};
     `;
     addStringBetweenComments(
       baseModelDirectory,
       listCount,
       "/* @nexquik listCount start */",
       "/* @nexquik listCount stop */"
-    );
-
-    // Create dynamic directories
-    const slugsForThisModel = getDynamicSlugs(
-      modelTree.modelName,
-      modelUniqueIdentifierField.map((f) => f.name)
-    );
-    slugsForThisModel.forEach((parentSlug) => {
-      route += `[${parentSlug}]/`;
-    });
-    const dynamicOutputDirectory = path.join(outputDirectory, route);
-    const parts = dynamicOutputDirectory
-      .split(path.sep)
-      .filter((item) => item !== "");
-    let currentPath = "";
-    for (const part of parts) {
-      currentPath = path.join(currentPath, part);
-      if (!fs.existsSync(currentPath)) {
-        fs.mkdirSync(currentPath);
-      }
-    }
-
-    // Copy template dynamic directory into new dynamic directory
-    copyDirectory(
-      path.join(
-        __dirname,
-        "templateRoot",
-        "app",
-        "nexquikTemplateModel",
-        "[id]"
-      ),
-      dynamicOutputDirectory,
-      true
     );
 
     const uniqueDynamicSlugs = getDynamicSlugs(
@@ -1233,6 +1231,7 @@ take: limit`;
       "{/* @nexquik editBreadCrumb start */}",
       "{/* @nexquik editBreadCrumb stop */}"
     );
+
     // Replace all placeholder model names
     findAndReplaceInFiles(
       baseModelDirectory,
