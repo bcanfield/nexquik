@@ -461,53 +461,16 @@ export async function generate(
   for (const model of modelNames) {
     const lowerCase = model.charAt(0).toLowerCase() + model.slice(1);
     routeSidebar += `<li className="mt-4">
-<h5 className="pl-2 mb-8 lg:mb-1 font-semibold text-slate-700 dark:text-slate-400">
-                        ${model}
-                      </h5>
 
-
-
-                      <div className="flex pl-4 items-center">
-                      <div className="flex items-center space-x-2">
-
-                      <a href="/${lowerCase}/create">
-                      <svg
-                      className="w-[14px] h-[14px] ${blueTextClass}"
-                      aria-hidden="true"
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      fill="none"
-                      viewBox="0 0 20 20"
+                      <a
+                      href="/${lowerCase}"
+                      className="pl-2 mb-8 lg:mb-1 font-semibold dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-600"
                     >
-                      <path
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M10 5.757v8.486M5.757 10h8.486M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                      />
-                    </svg>
-                      </a>
-
-                      <a href="/${lowerCase}">
-                      <svg
-                      className="w-[14px] h-[14px] ${blueTextClass}"
-                      aria-hidden="true"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 17 10"
-                    >
-                      <path
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeWidth="2"
-                        d="M6 1h10M6 5h10M6 9h10M1.49 1h.01m-.01 4h.01m-.01 4h.01"
-                      />
-                    </svg>
+                    ${model}
                     </a>
-                      </div>
-                      </div>
+
+
+                    
 
 </li>
 
