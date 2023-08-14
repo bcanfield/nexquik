@@ -32,9 +32,9 @@ const blueTextClass =
 
 const labelClass = "block text-slate-500 dark:text-slate-400 text-sm";
 const inputClass =
-  "block text-sm leading-6 text-slate-300 rounded-md ring-1 ring-slate-900/10 shadow-sm py-1.5 pl-2 pr-3 hover:ring-slate-300 dark:bg-slate-800 dark:highlight-white/5 dark:hover:bg-slate-700";
+  "accent-sky-700 block text-sm leading-6 text-slate-300 rounded-md ring-1 ring-slate-900/10 shadow-sm py-1.5 pl-2 pr-3 hover:ring-slate-300 dark:bg-slate-800 dark:highlight-white/5 dark:hover:bg-slate-700";
 const disabledInputClass =
-  "block text-sm leading-6 text-slate-400 rounded-md ring-1 ring-slate-900/10 shadow-sm py-1.5 pl-2 pr-3  dark:bg-slate-800 ";
+  "block leading-6 text-slate-400 rounded-md ring-1 ring-slate-900/10 shadow-sm py-1.5 pl-2 pr-3  dark:bg-slate-800 ";
 const darkTextClass = "text-slate-700 dark:text-slate-400";
 const lightTextClass = "text-slate-900 dark:text-slate-200";
 const readFileAsync = promisify(fs.readFile);
@@ -1613,7 +1613,7 @@ export function generateFormFieldsWithDefaults(
         required && "*"
       }</label>\n<input    
        className="${
-         disabled ? inputClass : disabledInputClass
+         disabled === "disabled" ? disabledInputClass : inputClass
        } ${widthStyle}" type="${inputType}" name="${field.name}"  ${
         field.type === "Boolean"
           ? `defaultChecked={nexquikTemplateModel?.${field.name}}`
