@@ -1,12 +1,19 @@
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
+import clsx from "clsx";
 
 export default async function ListNexquikTemplateModels({
   params,
+  searchParams,
 }: {
   params: any;
+  searchParams?: { [key: string]: string | string[] | undefined };
 }) {
+  /* @nexquik listCount start */
+
+  /* @nexquik listCount stop */
+
   const nexquikTemplateModel = await prisma.nexquikTemplateModel
     .findMany
     //@nexquik prismaWhereParentClause start
@@ -75,6 +82,9 @@ export default async function ListNexquikTemplateModels({
         ))}
       </ul>
       {/* @nexquik listForm stop */}
+
+      {/* @nexquik listPagination start */}
+      {/* @nexquik listPagination stop */}
     </div>
   );
 }

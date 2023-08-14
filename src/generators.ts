@@ -313,7 +313,7 @@ async function generateListForm(
 
   // Define the React component template as a string
   const reactComponentTemplate = `
-  <table className="w-full text-left border-collapse mt-2">
+  <table className="w-full text-left border-collapse mt-2 border-b border-slate-200 dark:border-slate-400/20">
   <thead>
 
   <tr>
@@ -780,44 +780,7 @@ export async function generateAppDirectoryFromModelTree(
       "{/* @nexquik listBreadcrumb stop */}"
     );
 
-    // Create dynamic directories
-    const slugsForThisModel = getDynamicSlugs(
-      modelTree.modelName,
-      modelUniqueIdentifierField.map((f) => f.name)
-    );
-    slugsForThisModel.forEach((parentSlug) => {
-      route += `[${parentSlug}]/`;
-    });
-    const dynamicOutputDirectory = path.join(outputDirectory, route);
-    const parts = dynamicOutputDirectory
-      .split(path.sep)
-      .filter((item) => item !== "");
-    let currentPath = "";
-    for (const part of parts) {
-      currentPath = path.join(currentPath, part);
-      if (!fs.existsSync(currentPath)) {
-        fs.mkdirSync(currentPath);
-      }
-    }
-
-    // Copy template dynamic directory into new dynamic directory
-    copyDirectory(
-      path.join(
-        __dirname,
-        "templateRoot",
-        "app",
-        "nexquikTemplateModel",
-        "[id]"
-      ),
-      dynamicOutputDirectory,
-      true
-    );
-
-    const uniqueDynamicSlugs = getDynamicSlugs(
-      modelTree.modelName,
-      modelUniqueIdentifierField.map((f) => f.name)
-    );
-
+    // ############### List Page
     const idFields = modelTree.uniqueIdentifierField;
     let select = "";
     if (idFields.length > 0) {
@@ -828,10 +791,10 @@ export async function generateAppDirectoryFromModelTree(
         }
         select += `${name}: true`;
       });
-      select += "}";
+      select += "}, ";
     }
-
-    // ############### List Page
+    select += ` skip: page,
+take: limit`;
     const listFormCode = await generateListForm(
       modelTree,
       createRedirectForm,
@@ -980,6 +943,136 @@ export async function generateAppDirectoryFromModelTree(
       whereparentClause,
       "//@nexquik prismaWhereParentClause start",
       "//@nexquik prismaWhereParentClause stop"
+    );
+
+    const linkHref = createRedirectForm;
+
+    const listPagination = `
+    <div className="flex flex-col mt-2 ">
+      <span className="text-sm text-gray-700 dark:text-gray-400 mt-2">
+        Showing{" "}
+        <span className="font-semibold text-gray-900 dark:text-white">
+        {count === 0
+          ? 0
+          : page * limit > count
+          ? count - limit + 1
+          : (page - 1) * limit + 1}
+        </span>{" "}
+        to{" "}
+        <span className="font-semibold text-gray-900 dark:text-white">
+          {Math.min((page - 1) * limit + limit, count)}
+        </span>{" "}
+        of{" "}
+        <span className="font-semibold text-gray-900 dark:text-white">
+          {count}
+        </span>{" "}
+        Entries
+      </span>
+    <div className="inline-flex mt-2 xs:mt-0">
+      <Link
+        href={{
+          pathname: \`${linkHref}\`,
+          query: {
+            page: page > 1 ? page - 1 : 1,
+          },
+        }}
+        className="flex items-center justify-center px-3 h-8 text-sm font-medium text-white bg-gray-800 rounded-l hover:bg-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+      >
+        Prev
+      </Link>
+      <Link
+        href={{
+          pathname: \`${linkHref}\`,
+          query: {
+            page: page + 1,
+          },
+        }}
+        className={clsx(
+          "flex items-center justify-center px-3 h-8 text-sm font-medium text-white bg-gray-800 border-0 border-l border-gray-700 rounded-r hover:bg-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white",
+          page < Math.ceil(count / limit)
+            ? page + 1
+            : page && "pointer-events-none opacity-50"
+        )}
+      >
+        Next
+      </Link>
+    </div>
+    </div>
+    
+    
+    `;
+
+    addStringBetweenComments(
+      baseModelDirectory,
+      listPagination,
+      "{/* @nexquik listPagination start */}",
+      "{/* @nexquik listPagination stop */}"
+    );
+
+    const countWhereparentClause = modelTree.parent
+      ? generateWhereParentClause(
+          "params",
+          getDynamicSlugs(modelTree.parent.name, [parentIdentifierField])[0],
+          relationsToParent ? relationsToParent[0] : parentIdentifierField,
+          parentReferenceFieldType || fieldType,
+          getParentReferenceField(modelTree),
+          manyToManyWhere,
+          ""
+        )
+      : ``;
+
+    const listCount = `
+    const page =
+    typeof searchParams?.page === "string" ? Number(searchParams?.page) : 1;
+  const limit =
+    typeof searchParams?.limit === "string" ? Number(searchParams?.limit) : 10;
+  const count = await prisma.${
+    modelName.charAt(0).toLowerCase() + modelName.slice(1)
+  }.count(${countWhereparentClause});
+    `;
+    addStringBetweenComments(
+      baseModelDirectory,
+      listCount,
+      "/* @nexquik listCount start */",
+      "/* @nexquik listCount stop */"
+    );
+
+    // Create dynamic directories
+    const slugsForThisModel = getDynamicSlugs(
+      modelTree.modelName,
+      modelUniqueIdentifierField.map((f) => f.name)
+    );
+    slugsForThisModel.forEach((parentSlug) => {
+      route += `[${parentSlug}]/`;
+    });
+    const dynamicOutputDirectory = path.join(outputDirectory, route);
+    const parts = dynamicOutputDirectory
+      .split(path.sep)
+      .filter((item) => item !== "");
+    let currentPath = "";
+    for (const part of parts) {
+      currentPath = path.join(currentPath, part);
+      if (!fs.existsSync(currentPath)) {
+        fs.mkdirSync(currentPath);
+      }
+    }
+
+    // Copy template dynamic directory into new dynamic directory
+    copyDirectory(
+      path.join(
+        __dirname,
+        "templateRoot",
+        "app",
+        "nexquikTemplateModel",
+        "[id]"
+      ),
+      dynamicOutputDirectory,
+      true
+    );
+
+    const uniqueDynamicSlugs = getDynamicSlugs(
+      modelTree.modelName,
+      modelUniqueIdentifierField.map((f) => f.name)
     );
 
     // ############### Show Page
@@ -1365,7 +1458,7 @@ export function generateWhereParentClause(
       } else if (parentIdentifierFieldType === "String") {
         typecastValue = `String(${typecastValue})`;
       }
-      return `({ where: { ${parentReferenceField}: {${parentIdentifierFieldName}: {equals: ${typecastValue}} }, }, ${selectClause} },)`;
+      return `({ where: { ${parentReferenceField}: {${parentIdentifierFieldName}: {equals: ${typecastValue}} }, }, ${selectClause} })`;
     } else {
       return `{${selectClause}}`;
     }
