@@ -19,7 +19,7 @@
     "dev:3": "npm pack --silent",
     "dev:4": "mv \"$(ls *.tgz)\" \"nexquik.tgz\"",
     "dev:5": "npm i && npm i ./nexquik.tgz ",
-    "dev:6": "nexquik -out ./devNexquikApp -schema ./prisma_large/massiveSchema.prisma -include user",
+    "dev:6": "nexquik -out ./devNexquikApp -schema ./prisma/schema.prisma",
     "dev:7": "cd devNexquikApp && npm i && npm run dev",
     "test": "jest --silent=false",
     "clean": "rimraf dist/",
@@ -52,6 +52,7 @@
     "eslint": "^8.41.0",
     "figlet": "^1.6.0",
     "fs-extra": "^11.1.1",
+    "ora": "^5.4.1",
     "prettier": "^2.8.8",
     "ts-toolbelt": "^9.6.0"
   },
