@@ -32,7 +32,7 @@ const blueTextClass =
 
 const labelClass = "block text-slate-500 dark:text-slate-400 text-sm";
 const inputClass =
-  "accent-sky-700 block text-sm leading-6 text-slate-300 rounded-md ring-1 ring-slate-900/10 shadow-sm py-1.5 pl-2 pr-3 hover:ring-slate-300 dark:bg-slate-800 dark:highlight-white/5 dark:hover:bg-slate-700";
+  "accent-sky-700 block text-sm leading-6  rounded-md ring-1 ring-slate-900/10 shadow-sm py-1.5 pl-2 pr-3 hover:ring-slate-300 dark:bg-slate-800 dark:highlight-white/5 dark:hover:bg-slate-700";
 const disabledInputClass =
   "block leading-6 text-slate-400 rounded-md ring-1 ring-slate-900/10 shadow-sm py-1.5 pl-2 pr-3  dark:bg-slate-800 ";
 const darkTextClass = "text-slate-700 dark:text-slate-400";
@@ -163,7 +163,7 @@ async function generateCreateForm(
   const reactComponentTemplate = `
       <form className="space-y-2" action={addNexquikTemplateModel}>
         ${formFields}
-        <div className="flex space-x-4">
+        <div className="flex space-x-4  pt-4">
         <button type="submit"                   className="${blueButtonClass}"
         >
             Create NexquikTemplateModel
@@ -218,7 +218,7 @@ async function generateEditForm(
   const reactComponentTemplate = `
   <form className="space-y-2" action={editNexquikTemplateModel}>
   ${formFields}
-  <div className="flex space-x-4">
+  <div className="flex space-x-4  pt-4">
         <button  className="${blueButtonClass}" type="submit">Update NexquikTemplateModel</button>
         <Link href={\`${routeUrl}\`} className="${grayButtonClass}" passHref>
             Cancel
@@ -1515,7 +1515,9 @@ export function generateFormFields(
       const required =
         field.isRequired && !field.hasDefaultValue ? "required" : "";
 
-      const widthStyle = field.type === "Boolean" ? "" : "w-full";
+      const checkboxStyle =
+        field.type === "Boolean" ? "text-sky-700" : "text-slate-300 w-full";
+
       // Enum
       if (field.kind === "enum") {
         const enumValues = enums[field.type];
@@ -1525,9 +1527,7 @@ export function generateFormFields(
 
         <select name="${
           field.name
-        }" className="block w-full border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-1 focus:ring-sky-500 focus:border-sky-500 dark:focus:ring-sky-400 dark:focus:border-sky-400" id="${
-          field.name
-        }">
+        }" className="${inputClass} ${checkboxStyle}" id="${field.name}">
         ${enumValues.map((v) => `<option value="${v}">${v}</option>`)}
 </select>`;
       }
@@ -1552,7 +1552,7 @@ export function generateFormFields(
               required && "*"
             }</label>\n
             <input type="${inputType2}" name="${relationFrom}"      
-            className=" ${inputClass} ${widthStyle}"
+            className=" ${inputClass} ${checkboxStyle}"
             ${required}/>`;
           } else {
             return "";
@@ -1566,7 +1566,7 @@ export function generateFormFields(
           required && "*"
         }</label>\n
         <input type="${inputType}" name="${field.name}"    
-        className="${inputClass} ${widthStyle}" ${required}/>`;
+        className="${inputClass} ${checkboxStyle}" ${required}/>`;
       }
 
       return returnValue;
@@ -1585,17 +1585,17 @@ export function generateFormFieldsWithDefaults(
       }
       const required =
         field.isRequired && !field.hasDefaultValue ? "required" : "";
-      const widthStyle = field.type === "Boolean" ? "" : "w-full";
-
+      const checkboxStyle =
+        field.type === "Boolean" ? "text-sky-700" : "text-slate-300 w-full ";
       // Enum
       if (field.kind === "enum") {
         const enumValues = enums[field.type];
         return `<label className="${labelClass}">${field.name} </label>\n
-              <select className="${inputClass}" name="${field.name} ${
-          required && "*"
-        }" id="${field.name}" defaultValue={nexquikTemplateModel?.${
+              <select className="${inputClass} ${checkboxStyle}" name="${
           field.name
-        }}>
+        } ${required && "*"}" id="${
+          field.name
+        }" defaultValue={nexquikTemplateModel?.${field.name}}>
               ${enumValues.map((v) => `<option value="${v}">${v}</option>`)}
       </select>`;
       }
@@ -1614,7 +1614,7 @@ export function generateFormFieldsWithDefaults(
       }</label>\n<input    
        className="${
          disabled === "disabled" ? disabledInputClass : inputClass
-       } ${widthStyle}" type="${inputType}" name="${field.name}"  ${
+       } ${checkboxStyle}" type="${inputType}" name="${field.name}"  ${
         field.type === "Boolean"
           ? `defaultChecked={nexquikTemplateModel?.${field.name}}`
           : `defaultValue=${defaultValue}`

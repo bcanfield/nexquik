@@ -31,7 +31,7 @@
     ],
     "ext": "ts,tsx,css,",
     "exec": "npm-run-all dev:*",
-    "delay": 3000
+    "delay": 500
   },
   "author": "Brandin Canfield",
   "license": "MIT",
