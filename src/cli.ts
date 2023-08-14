@@ -79,7 +79,9 @@ export async function run(options?: GeneratorOptions) {
     spinner.succeed(chalk.green.bold(`Linted and Formatted Generated Files`));
 
     console.log(
-      `${chalk.green.bold("Success! Enjoy your new app at")} ${outputDirectory}`
+      `${chalk.green.bold(
+        "✔ Success! Enjoy your new app at"
+      )} ${outputDirectory}`
     );
   } catch (error) {
     console.log(chalk.red.bold("Nexquik Error:\n"), error);
