@@ -1,26 +1,16 @@
 import * as child_process from "child_process";
 import { readdirSync, statSync } from "fs";
 import path from "path";
+import { isDirectoryNotEmpty } from "../utils";
 
-const nexquikMain = "dist/index.js";
-const testOutputDirectory = path.join("__tests__", "testOutputDirectory");
+const nexquikMain = "./dist/index.js";
+const testOutputDirectory = path.join(
+  "__tests__",
+  "core",
+  "testOutputDirectory"
+);
 const prismaSchemaDirectory = "prisma";
 const prismaMain = "./node_modules/prisma/build/index.js";
-
-const isDirectoryNotEmpty = (path: string) => {
-  try {
-    const files = readdirSync(path);
-    return files.length > 0;
-  } catch (err) {
-    if (err.code === "ENOENT") {
-      // Directory doesn't exist
-      return false;
-    } else {
-      // Other error occurred
-      throw err;
-    }
-  }
-};
 
 test.each(readdirSync(prismaSchemaDirectory))(
   `Schema Test: %p`,

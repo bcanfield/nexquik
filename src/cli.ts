@@ -1,15 +1,21 @@
+import { GeneratorOptions } from "@prisma/generator-helper";
 import chalk from "chalk";
 import { Command } from "commander";
 import figlet from "figlet";
-import { formatDirectory } from "./helpers";
 import { generate } from "./generators";
+import { formatDirectory } from "./helpers";
 
-export async function run() {
+export interface CliArgs {
+  prismaSchemaPath: string;
+  outputDirectory: string;
+}
+const defaultOutputDirectory = "nexquikApp";
+const defaultPrismaSchemaPath = "./prisma/schema.prisma";
+
+export async function run(options?: GeneratorOptions) {
   try {
-    const program = new Command();
-    const defaultPrismaSchemaPath = "./prisma/schema.prisma";
-    const defaultOutputDirectory = "nexquikApp";
-
+    const args = process.argv;
+    console.log({ args });
     console.log(
       chalk.bgYellow.blue.bold(
         figlet.textSync("Nexquik", {
@@ -19,6 +25,7 @@ export async function run() {
         })
       )
     );
+    const program = new Command();
     program
       .version(require("../package.json").version)
       .description("An example CLI for managing a directory")
@@ -34,21 +41,22 @@ export async function run() {
       )
       .parse(process.argv);
 
-    const options = program.opts();
-    if (options.Schema && options.Out) {
-      console.log(
-        `${chalk.whiteBright.bold(
-          `\nParams:`
-        )}\n-----\nPrisma Schema location: ${chalk.yellow.bold(
-          `${options.Schema}`
-        )}\nOutput location: ${chalk.yellow.bold(`${options.Out}`)}
-        )}-----\n`
-      );
-      await generate(options.Schema, options.Out);
-      console.log(chalk.blue("Formatting Generated Files"));
-      await formatDirectory(options.Out);
-      console.log(chalk.green.bold("\nGenerated Successfully."));
-    }
+    const cliArgs = program.opts();
+    const prismaSchemaPath = options?.schemaPath || cliArgs.Schema;
+    const outputDirectory =
+      options?.generator.config.outputDirectory || cliArgs.Out;
+    console.log(
+      `${chalk.whiteBright.bold(
+        `\nParams:`
+      )}\n-----\nPrisma Schema location: ${chalk.yellow.bold(
+        `${prismaSchemaPath}`
+      )}\nOutput location: ${chalk.yellow.bold(`${outputDirectory}`)}\n`
+    );
+
+    await generate(prismaSchemaPath, outputDirectory);
+    console.log(chalk.blue("Formatting Generated Files"));
+    await formatDirectory(outputDirectory);
+    console.log(chalk.green.bold("\nGenerated Successfully."));
   } catch (error) {
     console.log(chalk.red.bold("Nexquik Error:\n"), error);
   }

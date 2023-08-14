@@ -8,4 +8,4 @@ dev/
 *.tsbuildinfo\
 nexquik.tgz
 
-__tests__/testOutputDirectory/
+testOutputDirectory
