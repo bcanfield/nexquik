@@ -21,8 +21,6 @@ import {
   getParentReferenceField,
 } from "./modelTree";
 
-const redButtonClass =
-  "rounded-lg text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 font-medium  text-sm px-2 py-1 text-center dark:bg-red-800 dark:hover:bg-red-900 dark:focus:ring-red-950";
 const blueButtonClass =
   "px-2 py-1 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-sky-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-sky-600 dark:focus:ring-blue-500 dark:focus:text-white";
 const grayButtonClass =
@@ -47,7 +45,6 @@ interface RouteSegment {
 
 function splitTheRoute(route: string): RouteSegment[] {
   const segments = route.split("/").filter((r) => r != "");
-  // console.log({ segments });
   let currentRoute = "";
 
   const returnSegs = segments.flatMap((segment) => {
@@ -64,7 +61,6 @@ function splitTheRoute(route: string): RouteSegment[] {
     return [];
   });
   return returnSegs;
-  // .filter(Boolean);
 }
 function generateBreadCrumb(route: string) {
   let routeCrumbs = "";
@@ -215,7 +211,6 @@ async function generateEditForm(
   routeUrl: string,
   enums: Record<string, string[]>
 ): Promise<string> {
-  // const tableFields = await extractTableFields(tableName, prismaSchema);
   const formFields = generateFormFieldsWithDefaults(
     modelTree.model.fields,
     enums
@@ -258,7 +253,6 @@ async function generateChildrenList(
   );
   const childrenLinks: string[] = [];
 
-  // if (childrenLinks.length > 0) {
   const childList = `  <table className="w-full text-left border-collapse mt-4">
 
   <thead>
@@ -295,8 +289,6 @@ async function generateChildrenList(
     childrenLinks.push(childLink);
   });
   return childList + childrenLinks.join("\n") + "</tbody></table>";
-  // }
-  // return "";
 }
 async function generateListForm(
   modelTree: ModelTree,
@@ -406,7 +398,6 @@ export async function generate(
   const prismaSchema = await readFileAsync(prismaSchemaPath, "utf-8");
 
   // Create the output directory
-  // console.log(chalk.blue.bold("Creating output directory"));
   if (fs.existsSync(outputDirectory)) {
     fs.rmSync(outputDirectory, { recursive: true });
   }
@@ -463,21 +454,6 @@ export async function generate(
 
   await generateAppDirectoryFromModelTree(modelTree, appDirectory, enums);
 
-  // const modelHashMap: {
-  //   [model: string]: Partial<RouteObject>[];
-  // } = {};
-
-  // console.log({routes})
-  // modelTree.forEach((modelTree) => {
-  //   const { model, segment, operation, description } = route;
-
-  //   if (!modelHashMap[model]) {
-  //     modelHashMap[model] = [];
-  //   }
-
-  //   modelHashMap[model].push({ segment, operation, description });
-  // });
-
   // Home route list
   const modelNames = modelTree.map((m) => m.model.name);
 
@@ -509,20 +485,6 @@ export async function generate(
 
 `;
   }
-
-  //   const routesListItems = routes
-  //     .filter((r) => !r.segment.includes("["))
-  //     .map(
-  //       (r) => `<li>
-  //   <a
-  //     className="block border-l pl-4 -ml-px border-transparent hover:border-slate-400 dark:hover:border-slate-500 text-slate-700 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300"
-  //     href="${r.segment}"
-  //   >
-  //     ${r.model} - ${r.operation}
-  //   </a>
-  // </li>`
-  //     )
-  //     .join("\n");
   addStringBetweenComments(
     outputDirectory,
     routeSidebar,
@@ -649,7 +611,6 @@ function generateRouteList(modelNames: string[]) {
   const routeLinks = [];
   for (const model of modelNames) {
     const lowerCase = model.charAt(0).toLowerCase() + model.slice(1);
-    // const routeObjects = modelHashMap[model];
     routeLinks.push(`<tr>
     <td
       translate="no"
@@ -1039,13 +1000,6 @@ export async function generateAppDirectoryFromModelTree(
       "{/* @nexquik showForm stop */}"
     );
 
-    // addStringBetweenComments(
-    //   baseModelDirectory,
-    //   childModelLinkList,
-    //   "{/* @nexquik listChildren start */}",
-    //   "{/* @nexquik listChildren stop */}"
-    // );
-
     // If many to many, must do a connect
     const createFormCode = await generateCreateForm(
       modelTree,
@@ -1169,14 +1123,6 @@ export async function generateAppDirectoryFromModelTree(
       "{/* @nexquik backLink stop */}"
     );
 
-    // const backToCurrent = await generateLink(`${createRedirectForm}`, "Back");
-    // addStringBetweenComments(
-    //   baseModelDirectory,
-    //   backToCurrent,
-    //   "{/* @nexquik backToCurrentLink start */}",
-    //   "{/* @nexquik backToCurrentLink stop */}"
-    // );
-
     const baseBreadCrumb = generateBreadCrumb(route);
 
     addStringBetweenComments(
@@ -1247,11 +1193,9 @@ export function generateConvertToPrismaCreateInputCode(
       )?.type || "";
   }
 
-  const fieldsToConvert: Partial<DMMF.Field>[] = modelTree.model.fields
-    // .filter((field) => {
-    //   return field.isId !== true || field.hasDefaultValue == false;
-    // })
-    .filter((field) => isFieldRenderable(field));
+  const fieldsToConvert: Partial<DMMF.Field>[] = modelTree.model.fields.filter(
+    (field) => isFieldRenderable(field)
+  );
 
   const convertToPrismaInputLines = fieldsToConvert.map(
     ({ name, type, kind, isRequired, hasDefaultValue }) => {
