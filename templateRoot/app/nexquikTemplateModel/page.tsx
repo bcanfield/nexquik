@@ -26,7 +26,7 @@ export default async function ListNexquikTemplateModels({
     //@nexquik revalidatePath stop
   }
   return (
-    <div className="flex-auto w-full min-w-0 pt-6 lg:px-8 lg:pt-8 pb:12 xl:pb-24 lg:pb-16 p-1 ">
+    <div className="flex-auto w-full min-w-0 pt-6 lg:px-8 lg:pt-8 pb:12 xl:pb-24 lg:pb-16 ">
       {/* @nexquik listBreadcrumb start */}
       {/* @nexquik listBreadcrumb stop */}
       <header id="header" className="relative z-20 mt-5">
@@ -36,7 +36,7 @@ export default async function ListNexquikTemplateModels({
           </h1>
         </div>
       </header>
-      <div className="w-full overflow-x-auto  pt-2">
+      <div className="w-full overflow-x-auto  pt-2 pb-2">
         {/* @nexquik createLink start */}
         <Link href={`/nexquikTemplateModel/create`}>
           Create New NexquikTemplateModel
