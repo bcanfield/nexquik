@@ -10,6 +10,7 @@ import {
   convertRouteToRedirectUrl,
   copyAndRenameFile,
   copyDirectory,
+  copyImage,
   copyPublicDirectory,
   findAndReplaceInFiles,
   getDynamicSlugs,
@@ -435,6 +436,18 @@ export async function generate(
     path.join(outputDirectory, "public"),
     true,
     "app"
+  );
+
+  // copy over images
+  copyImage(
+    path.join(__dirname, "templateRoot", "app"),
+    "favicon.ico",
+    path.join(outputDirectory, "app")
+  );
+  copyImage(
+    path.join(__dirname, "templateRoot", "app"),
+    "icon.png",
+    path.join(outputDirectory, "app")
   );
 
   // Copy over the user's prisma schema and rename it to schema.prisma
