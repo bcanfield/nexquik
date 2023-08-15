@@ -15,5 +15,11 @@
       }
     ]
   },
-  "exclude": ["dist/*", "templateRoot/*", "devNexquikApp/*", "__tests__"]
+  "exclude": [
+    "dist/*",
+    "templateRoot/*",
+    "devNexquikApp/*",
+    "nexquikApp/*",
+    "__tests__"
+  ]
 }

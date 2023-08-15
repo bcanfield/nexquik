@@ -45,7 +45,6 @@ export default function RootLayout({
                       src="/logo.png"
                       width="35"
                       height="35"
-                      style="position: absolute; inset: 0px; box-sizing: border-box; padding: 0px; border: none; margin: auto; display: block; width: 0px; height: 0px; min-width: 100%; max-width: 100%; min-height: 100%; max-height: 100%;"
                     ></Image>
                   </span>
                   <span className="self-center ml-3 text-2xl font-semibold whitespace-nowrap dark:text-white">
