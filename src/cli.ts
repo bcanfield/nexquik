@@ -10,7 +10,7 @@ export interface CliArgs {
   prismaSchemaPath: string;
   outputDirectory: string;
 }
-const defaultOutputDirectory = "nexquikApp";
+export const defaultOutputDirectory = "nexquikApp";
 const defaultPrismaSchemaPath = "./prisma/schema.prisma";
 
 export async function run(options?: GeneratorOptions) {
@@ -52,8 +52,7 @@ export async function run(options?: GeneratorOptions) {
 
     const cliArgs = program.opts();
     const prismaSchemaPath = options?.schemaPath || cliArgs.Schema;
-    const outputDirectory =
-      options?.generator.config.outputDirectory || cliArgs.Out;
+    const outputDirectory = options?.generator?.output?.value || cliArgs.Out;
     const includedModels = cliArgs.Include ? cliArgs.Include.split(",") : [];
 
     const excludedModels =
