@@ -8,8 +8,8 @@ generator client {
 }
 
 generator nexquik {
-    provider        = "node ./dist/prismaGenerator.js"
-    outputDirectory = "__tests__/prisma-generator/testOutputDirectory"
+    provider = "node ./dist/prismaGenerator.js"
+    output   = "testOutputDirectory"
 }
 
 model Product {
