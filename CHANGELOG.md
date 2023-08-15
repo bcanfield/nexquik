@@ -1,3 +1,21 @@
+# [2.0.0](https://github.com/bcanfield/nexquik/compare/v1.2.8...v2.0.0) (2023-08-15)
+
+
+### Bug Fixes
+
+* Fix binaries ([ccd60d1](https://github.com/bcanfield/nexquik/commit/ccd60d1f0be1183581197edbaa3dafec8374f436))
+* Remove nexquik dependency that is only used in dev env ([31ba559](https://github.com/bcanfield/nexquik/commit/31ba5596d833d21f98e1d2899083b7c928366918))
+
+
+### Features
+
+* V2  ([#65](https://github.com/bcanfield/nexquik/issues/65)) ([9a34b77](https://github.com/bcanfield/nexquik/commit/9a34b77ec0c8c5d7f07c29a025b6f248a6f2c8e4))
+
+
+### BREAKING CHANGES
+
+* V2 Improvements
+
 ## [1.2.8](https://github.com/bcanfield/nexquik/compare/v1.2.7...v1.2.8) (2023-07-24)
 
 
