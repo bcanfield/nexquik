@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 import { generatorHandler } from "@prisma/generator-helper";
-import { run } from "./cli";
+import { defaultOutputDirectory, run } from "./cli";
+import chalk from "chalk";
 
-console.log("in generator handler");
+console.log(chalk.gray("Running Nexquik as Prisma Generator"));
 generatorHandler({
   onManifest() {
     return {
-      defaultOutput: "../generated",
       prettyName: "Nexquik",
+      version: require("../package.json").version,
+      defaultOutput: defaultOutputDirectory,
     };
   },
   onGenerate: run,
