@@ -1,65 +1,52 @@
-![nexquik](https://github.com/bcanfield/nexquik/assets/12603953/611be768-106f-47b2-a94f-688f80f75132)
-![npm](https://img.shields.io/npm/v/nexquik?style=flat-square&color=07198b)
-![npm](https://img.shields.io/npm/dt/nexquik?style=flat-square&color=07198b)
-![License](https://img.shields.io/badge/License-Apache%202.0-blue?style=flat-square&color=07198b)
-[![Build / Publish](https://github.com/bcanfield/nexquik/actions/workflows/publish.yml/badge.svg)](https://github.com/bcanfield/nexquik/actions/workflows/publish.yml)
+<!-- LOGO -->
+<br />
+<h1>
+<p align="center">
+  <img align=top src="https://github.com/bcanfield/nexquik/assets/12603953/91861aeb-f7ff-4830-aded-760730a1057b" alt="Logo" width="140" height="140">
+  <br>Nexquik
+</h1>
 
-**Nexquik** is a CLI tool to auto-generate Next.js full CRUD [server components](https://nextjs.org/docs/getting-started/react-essentials#server-components) & [server actions](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions) from a [Prisma](https://www.prisma.io/docs) schema.
-
-For a more in depth example, checkout this [Medium Article](https://medium.com/@bcanfield_60634/next-js-server-components-server-actions-setup-in-seconds-8593a557866a).
-
-## Description
-
-Nexquik reads your Prisma Schema and generates an ENTIRE app directory containing React components and server actions for all your Prisma models.
-
-Say goodbye to manual CRUD implementation and hello to full CRUD capabilities in seconds!
-This enables you to focus on building your application without spending time on repetitive tasks.
-
-With Next.js server actions, you can harness the power of server-side logic within your React components. Reduce data transfer and supercharge your application's performance.
-
-## Usage
-
-Reference the [dev folder](https://github.com/bcanfield/nexquik/tree/main/dev) for an example starting project.
-
-All you need to get started is:
-
-- A Prisma Schema
-- A Next.js project
-  - Using App Directory
-  - In your next config, you will need to enable server actions since they are still in Alpha
-  ```
-      experimental: {
-        appDir: true,
-        serverActions: true,
-      }
-  ```
-
-Nexquik supports the following parameters:
-
-- `-schema <value>`: Path to prisma schema file (default: "./prisma/schema.prisma").
-- `-out <value>`: Path to output directory (default: "nexquikApp").
-- `-prismaImport <value>`: String to use for Prisma Import (default: "@/lib/prisma").
-
-## Examples
-
-With defaults:
-
-```bash
-npx nexquik@latest
+  
+  <p align="center">
+    Transform your database schema into a Stunning Next.js app in seconds
+    <br />
+    </p>
+</p>
+<p align="center">
+  <a href="#cli-usage">CLI Usage</a> •
+  <a href="#prisma-generator-usage">Prisma Generator Usage</a> •
+  <a href="#options">Options</a> 
+</p>  
+                                                                                                                      
+                                                                                                                                                      
+## CLI Usage
+```zsh
+npx nexquik -schema schema.prisma
 ```
 
-With params:
+## Prisma Generator Usage
+Add to your Prisma schema
 
-```bash
-npx nexquik@latest -schema ./prisma/schema.prisma -out nexquikApp -prismaImport ~/server/db
+```prisma
+generator Nexquik {
+    provider = "prisma-generator-nexquik"
+}
+```
+Generate
+```zsh
+npx prisma generate
 ```
 
-![asdf](https://github.com/bcanfield/nexquik/assets/12603953/1362d685-3941-4b57-863e-a9d34db87d2c)
 
-## Contributors
+## Options
+```lua
+  -schema               Path to prisma schema file (default: "./prisma/schema.prisma")
+  -out                  Path to output directory (default: "nexquikApp")
+  -exclude              Comma-separated list of model names to exclude
+  -include              Comma-separated list of model names to include
+```
+By default, all of your database models will be created. 
 
-<a href="[https://github.com/t3-oss/create-t3-app/graphs/contributors](https://github.com/bcanfield/nexquik/graphs/contributors)">
-  <p align="left">
-    <img  src="https://contrib.rocks/image?repo=bcanfield/nexquik" alt="A table of avatars from the project's contributors" />
-  </p>
-</a>
+If you exclude models, they will not be generated in the top-level of your app, but they will still be present as children of your other top-level models.
+
+If you specify models to include, only those models will be generated at the top-level. But all of their children will be generated. This will also over-write any value you set for your exclusion list.
