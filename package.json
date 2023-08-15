@@ -5,8 +5,8 @@
   "main": "dist/index.js",
   "repository": "https://github.com/bcanfield/nexquik",
   "bin": {
-    "nexquik": "./dist/index.js",
-    "prisma-generator-nexquik": "./dist/prismaGenerator.ts"
+    "generate": "./dist/index.js",
+    "prisma-generator": "./dist/prismaGenerator.ts"
   },
   "scripts": {
     "build": "npm-run-all build:*",
