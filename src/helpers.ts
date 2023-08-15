@@ -147,6 +147,37 @@ export async function copyPublicDirectory(
   }
 }
 
+export async function copyImage(
+  sourceDir: string,
+  sourceFile: string,
+  destinationDir: string
+) {
+  try {
+    if (!fs.existsSync(destinationDir)) {
+      fs.mkdirSync(destinationDir);
+    }
+    const destinationFile = path.join(destinationDir, sourceFile);
+
+    if (!fs.existsSync(destinationFile)) {
+      // fse.copyFileSync(sourceFile, destinationFile);
+      const srcStream = fs.createReadStream(path.join(sourceDir, sourceFile));
+      await waitForEvent(srcStream, "ready");
+      const destStream = fs.createWriteStream(destinationFile);
+      await waitForEvent(destStream, "ready");
+      const handleError = (err: any) => {
+        throw new Error(err);
+      };
+      srcStream.on("error", handleError);
+      destStream.on("error", handleError);
+
+      srcStream.pipe(destStream);
+      await waitForEvent(srcStream, "end");
+    }
+  } catch (error) {
+    console.error(chalk.red("An error occurred:", error));
+  }
+}
+
 // copy files from one directory to another
 // copy files from one directory to another
 export function copyDirectory(
