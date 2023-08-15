@@ -1,3 +1,11 @@
+## [2.0.1](https://github.com/bcanfield/nexquik/compare/v2.0.0...v2.0.1) (2023-08-15)
+
+
+### Bug Fixes
+
+* Binary commands and logs ([ad3304d](https://github.com/bcanfield/nexquik/commit/ad3304d595ab21f84986109764f6fdc27c8f45dd))
+* Tests ([8230266](https://github.com/bcanfield/nexquik/commit/82302668ba3aba34dd8ad778d5de7c0f8ee45f98))
+
 # [2.0.0](https://github.com/bcanfield/nexquik/compare/v1.2.8...v2.0.0) (2023-08-15)
 
 
