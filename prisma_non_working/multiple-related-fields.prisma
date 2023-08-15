@@ -1,0 +1,23 @@
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+model Child {
+    id         Int     @id @default(autoincrement())
+    Parent     Parent? @relation(fields: [ParentName, ParentType], references: [name, type], onDelete: Cascade)
+    ParentName String?
+    ParentType String?
+}
+
+model Parent {
+    name     String  @id @default(cuid())
+    type     String
+    Children Child[]
+
+    @@unique([name, type])
+}

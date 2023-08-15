@@ -7,6 +7,11 @@ generator client {
     provider = "prisma-client-js"
 }
 
+generator nexquik {
+    provider        = "node ./dist/prismaGenerator.js"
+    outputDirectory = "__tests__/prisma-generator/testOutputDirectory"
+}
+
 model Product {
     id    String @id
     name  String

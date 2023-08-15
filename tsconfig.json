@@ -8,7 +8,6 @@
     "sourceMap": true,
     "esModuleInterop": true,
     "moduleResolution": "node",
-    "watch": false,
     "types": ["node"],
     "plugins": [
       {
@@ -16,13 +15,5 @@
       }
     ]
   },
-  "exclude": [
-    "prisnextApp/*",
-    "lib/app/*",
-    "dist/*",
-    "templateApp/*",
-    "nexquikApp/*",
-    "__tests__",
-    "dev/*"
-  ]
+  "exclude": ["dist/*", "templateRoot/*", "devNexquikApp/*", "__tests__"]
 }

@@ -1,11 +1,13 @@
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-//@nexquik prismaClientImport start
-import { prisma } from "utils/db";
-//@nexquik prismaClientImport stop
+import prisma from "@/lib/prisma";
 
-export default async function ShowNexquikTemplateModel({ params }) {
+export default async function ShowNexquikTemplateModel({
+  params,
+}: {
+  params: any;
+}) {
   const nexquikTemplateModel = await prisma.nexquikTemplateModel.findUnique({
     where:
       //@nexquik prismaWhereInput start
@@ -29,8 +31,16 @@ export default async function ShowNexquikTemplateModel({ params }) {
     //@nexquik listRedirect stop
   }
   return (
-    <div className="main">
-      <h1 className="title"> View NexquikTemplateModel</h1>
+    <div className="flex-auto w-full min-w-0 pt-6 lg:px-8 lg:pt-8 pb:12 xl:pb-24 lg:pb-16 p-1 ">
+      {/* @nexquik breadcrumb start */}
+      {/* @nexquik breadcrumb stop */}
+      <header id="header" className="relative z-20 mt-5">
+        <div className="flex items-center">
+          <h1 className="inline-block text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight dark:text-slate-200">
+            View NexquikTemplateModel
+          </h1>
+        </div>
+      </header>{" "}
       {/* @nexquik showForm start */}
       <form>
         <input
@@ -59,15 +69,11 @@ export default async function ShowNexquikTemplateModel({ params }) {
         </ul>
       </form>
       {/* @nexquik showForm stop */}
-      <div className="button-group">
-        {/* @nexquik listChildren start */}
-        {/* @nexquik listChildren stop */}
-      </div>
-
-      <div className="button-group">
-        {/* @nexquik backToCurrentLink start */}
-        <Link href={`/nexquikTemplateModel/create`}>Back</Link>
-        {/* @nexquik backToCurrentLink stop */}
+      <div className="mt-8">
+        <div className="flex space-x-4">
+          {/* @nexquik listChildren start */}
+          {/* @nexquik listChildren stop */}
+        </div>
       </div>
     </div>
   );

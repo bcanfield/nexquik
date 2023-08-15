@@ -5,34 +5,34 @@
   "main": "dist/index.js",
   "repository": "https://github.com/bcanfield/nexquik",
   "bin": {
-    "nexquik": "./dist/index.js"
+    "generate": "./dist/index.js",
+    "prisma-generator": "./dist/prismaGenerator.ts"
   },
   "scripts": {
     "build": "npm-run-all build:*",
     "build:1": "npm run clean",
     "build:2": "npx tsc",
-    "build:3": "npm run copy-files2",
+    "build:3": "npm run copy-files",
     "dev": "nodemon",
     "dev:1": "npm run build",
-    "dev:2": "npm pack --silent",
-    "dev:3": "mv \"$(ls *.tgz)\" \"nexquik.tgz\"",
-    "dev:4": "cd dev && npm i --silent && npm i ../nexquik.tgz --silent",
-    "dev:5": "rm ./nexquik.tgz",
-    "dev:6": "cd dev && npm run auto-generate",
-    "dev:7": "cd dev && npm run dev",
-    "test": "jest",
+    "dev:2": "rm -f ./nexquik.tgz && rm -rf devNexquikApp",
+    "dev:3": "npm pack --silent",
+    "dev:4": "mv \"$(ls *.tgz)\" \"nexquik.tgz\"",
+    "dev:5": "npm i && npm i ./nexquik.tgz ",
+    "dev:6": "nexquik -out ./devNexquikApp -schema ./prisma/schema.prisma",
+    "dev:7": "cd devNexquikApp && npm i && npm run dev",
+    "test": "jest --silent=false",
     "clean": "rimraf dist/",
-    "copy-files": "copyfiles -u 1 \"lib/**/*\" dist",
-    "copy-files2": "copyfiles -u 1 \"templateApp/**/*\" dist/templateApp"
+    "copy-files": "copyfiles -a -u 1 \"templateRoot/**/*\" dist/templateRoot"
   },
   "nodemonConfig": {
     "watch": [
       "src",
-      "templateApp"
+      "templateRoot"
     ],
     "ext": "ts,tsx,css,",
     "exec": "npm-run-all dev:*",
-    "delay": 1000
+    "delay": 500
   },
   "author": "Brandin Canfield",
   "license": "MIT",
@@ -43,11 +43,16 @@
     "React"
   ],
   "dependencies": {
+    "@prisma/client": "^5.1.1",
     "@prisma/internals": "^4.14.1",
+    "@prisma/sdk": "^4.0.0",
     "chalk": "^4.1.2",
+    "cli-progress": "^3.12.0",
     "commander": "^11.0.0",
     "eslint": "^8.41.0",
     "figlet": "^1.6.0",
+    "fs-extra": "^11.1.1",
+    "ora": "^5.4.1",
     "prettier": "^2.8.8",
     "ts-toolbelt": "^9.6.0"
   },
@@ -57,8 +62,10 @@
     "@babel/preset-typescript": "^7.21.5",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
+    "@types/cli-progress": "^3.11.0",
     "@types/eslint": "^8.40.0",
     "@types/figlet": "^1.5.6",
+    "@types/fs-extra": "^11.0.1",
     "@types/jest": "^29.5.1",
     "@types/node": "^20.2.5",
     "@types/prettier": "^2.7.2",
@@ -68,9 +75,11 @@
     "copyfiles": "^2.4.1",
     "eslint-plugin-prettier": "^4.2.1",
     "jest": "^29.5.0",
+    "nexquik": "file:nexquik.tgz",
     "nodemon": "^2.0.22",
     "npm-run-all": "^4.1.5",
     "npm-watch": "^0.11.0",
+    "prisma": "^5.1.1",
     "rimraf": "^5.0.1",
     "typescript": "^5.0.4"
   }

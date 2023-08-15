@@ -1,10 +1,19 @@
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
-//@nexquik prismaClientImport start
-import { prisma } from "utils/db";
-//@nexquik prismaClientImport stop
+import prisma from "@/lib/prisma";
+import clsx from "clsx";
 
-export default async function ListNexquikTemplateModels({ params }) {
+export default async function ListNexquikTemplateModels({
+  params,
+  searchParams,
+}: {
+  params: any;
+  searchParams?: { [key: string]: string | string[] | undefined };
+}) {
+  /* @nexquik listCount start */
+
+  /* @nexquik listCount stop */
+
   const nexquikTemplateModel = await prisma.nexquikTemplateModel
     .findMany
     //@nexquik prismaWhereParentClause start
@@ -24,9 +33,17 @@ export default async function ListNexquikTemplateModels({ params }) {
     //@nexquik revalidatePath stop
   }
   return (
-    <div className="main">
-      <h1> NexquikTemplateModel List</h1>
-      <div className="button-group">
+    <div className="flex-auto w-full min-w-0 pt-6 lg:px-8 lg:pt-8 pb:12 xl:pb-24 lg:pb-16 ">
+      {/* @nexquik listBreadcrumb start */}
+      {/* @nexquik listBreadcrumb stop */}
+      <header id="header" className="relative z-20 mt-5">
+        <div className="flex items-center">
+          <h1 className="inline-block text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight dark:text-slate-200">
+            NexquikTemplateModel List
+          </h1>
+        </div>
+      </header>
+      <div className="w-full overflow-x-auto  pt-2 pb-2">
         {/* @nexquik createLink start */}
         <Link href={`/nexquikTemplateModel/create`}>
           Create New NexquikTemplateModel
@@ -48,7 +65,10 @@ export default async function ListNexquikTemplateModels({ params }) {
               <p>name: {nexquikTemplateModel.name}</p>
               <p>lat: {nexquikTemplateModel.lat}</p>
               <p>lng: {nexquikTemplateModel.lat}</p>
-              <Link href={`/nexquikTemplateModel/${nexquikTemplateModel.id}`}>
+              <Link
+                className="px-3 py-2 text-xs font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                href={`/nexquikTemplateModel/${nexquikTemplateModel.id}`}
+              >
                 View
               </Link>
               <Link
@@ -62,11 +82,9 @@ export default async function ListNexquikTemplateModels({ params }) {
         ))}
       </ul>
       {/* @nexquik listForm stop */}
-      <div className="button-group">
-        {/* @nexquik backLink start */}
-        <Link href={`/nexquikTemplateModel/create`}>Back</Link>
-        {/* @nexquik backLink stop */}
-      </div>
+
+      {/* @nexquik listPagination start */}
+      {/* @nexquik listPagination stop */}
     </div>
   );
 }

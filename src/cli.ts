@@ -1,16 +1,20 @@
+import { GeneratorOptions } from "@prisma/generator-helper";
 import chalk from "chalk";
 import { Command } from "commander";
 import figlet from "figlet";
-import { formatDirectory } from "./helpers";
 import { generate } from "./generators";
+import { formatDirectory } from "./helpers";
+import ora from "ora"; // Import 'ora'
 
-export async function run() {
+export interface CliArgs {
+  prismaSchemaPath: string;
+  outputDirectory: string;
+}
+const defaultOutputDirectory = "nexquikApp";
+const defaultPrismaSchemaPath = "./prisma/schema.prisma";
+
+export async function run(options?: GeneratorOptions) {
   try {
-    const program = new Command();
-    const defaultPrismaSchemaPath = "./prisma/schema.prisma";
-    const defaultPrismaClientImportPath = "@/lib/prisma";
-    const defaultOutputDirectory = "nexquikApp";
-
     console.log(
       chalk.bgYellow.blue.bold(
         figlet.textSync("Nexquik", {
@@ -20,9 +24,10 @@ export async function run() {
         })
       )
     );
+    const program = new Command();
     program
       .version(require("../package.json").version)
-      .description("An example CLI for managing a directory")
+      .description("Auto-generate a Next.js 13 app from your DB Schema")
       .option(
         "-schema <value>",
         "Path to prisma schema file",
@@ -34,30 +39,50 @@ export async function run() {
         defaultOutputDirectory
       )
       .option(
-        "-prismaImport <value>",
-        "String to use for Prisma Import",
-        defaultPrismaClientImportPath
+        "-exclude <value>",
+        "Comma-separated list of model names to exclude from the top-level of the generated app. (NOTE: If the -include is passed, this exclusion list will be ignored)",
+        ""
+      )
+      .option(
+        "-include <value>",
+        "Comma-separated list of model names to include from the top-level of the generated app.",
+        ""
       )
       .parse(process.argv);
 
-    const options = program.opts();
-    if (options.Schema && options.Out && options.PrismaImport) {
-      console.log(
-        `${chalk.whiteBright.bold(
-          `\nParams:`
-        )}\n-----\nPrisma Schema location: ${chalk.yellow.bold(
-          `${options.Schema}`
-        )}\nOutput location: ${chalk.yellow.bold(
-          `${options.Out}`
-        )}\nPrisma Import: ${chalk.yellow.bold(
-          `${options.PrismaImport}\n`
-        )}-----\n`
-      );
-      await generate(options.Schema, options.Out, options.PrismaImport);
-      console.log(chalk.blue("Formatting Generated Files"));
-      await formatDirectory(options.Out);
-      console.log(chalk.green.bold("\nGenerated Successfully."));
-    }
+    const cliArgs = program.opts();
+    const prismaSchemaPath = options?.schemaPath || cliArgs.Schema;
+    const outputDirectory =
+      options?.generator.config.outputDirectory || cliArgs.Out;
+    const includedModels = cliArgs.Include ? cliArgs.Include.split(",") : [];
+
+    const excludedModels =
+      includedModels.length > 0 || !cliArgs.Exclude
+        ? []
+        : cliArgs.Exclude.split(",");
+
+    console.log(
+      chalk.gray(
+        `Fetching schema from ${prismaSchemaPath}\nOutputting to ${outputDirectory}\n`
+      )
+    );
+    await generate(
+      prismaSchemaPath,
+      outputDirectory,
+      excludedModels,
+      includedModels
+    );
+    const spinner = ora(
+      `${chalk.blue.bold("Linting and Formatting Generated Files...")}\n`
+    ).start();
+    await formatDirectory(outputDirectory);
+    spinner.succeed(chalk.green.bold(`Linted and Formatted Generated Files`));
+
+    console.log(
+      `${chalk.green.bold(
+        "✔ Success! Enjoy your new app at"
+      )} ${outputDirectory}`
+    );
   } catch (error) {
     console.log(chalk.red.bold("Nexquik Error:\n"), error);
   }
