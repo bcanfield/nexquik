@@ -5,8 +5,8 @@
   "main": "dist/index.js",
   "repository": "https://github.com/bcanfield/nexquik",
   "bin": {
-    "generate": "./dist/index.js",
-    "prisma-generator": "./dist/prismaGenerator.ts"
+    "nexquik-generate": "./dist/index.js",
+    "prisma-generator-nexquik": "./dist/prismaGenerator.js"
   },
   "scripts": {
     "build": "npm-run-all build:*",
@@ -19,7 +19,7 @@
     "dev:3": "npm pack --silent",
     "dev:4": "mv \"$(ls *.tgz)\" \"nexquik.tgz\"",
     "dev:5": "npm i && npm i ./nexquik.tgz ",
-    "dev:6": "nexquik -out ./devNexquikApp -schema ./prisma/schema.prisma",
+    "dev:6": "nexquik-generate -out ./devNexquikApp -schema ./prisma/schema.prisma",
     "dev:7": "cd devNexquikApp && npm i && npm run dev",
     "test": "jest --silent=false",
     "clean": "rimraf dist/",

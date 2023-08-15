@@ -3,6 +3,8 @@ dist/
 prisnextApp/
 coverage/
 devNexquikApp/
+nexquikApp/
+
 dev/
 # TypeScript cache
 *.tsbuildinfo\

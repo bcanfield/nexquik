@@ -3,6 +3,10 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
+generator nexquik {
+    provider = "prisma-generator-nexquik"
+}
+
 model User {
     id              Int                 @id @default(autoincrement())
     createdAt       DateTime            @default(now())
