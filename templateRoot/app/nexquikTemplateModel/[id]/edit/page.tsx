@@ -1,10 +1,16 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-//@nexquik prismaClientImport start
-import { prisma } from "utils/db";
-//@nexquik prismaClientImport stop
+import prisma from "@/lib/prisma";
 
-export default async function EditNexquikTemplateModel({ params }) {
+//@nexquik prismaEnumImport start
+import { Enum } from "@prisma/client";
+//@nexquik prismaEnumImport stop
+
+export default async function EditNexquikTemplateModel({
+  params,
+}: {
+  params: any;
+}) {
   const nexquikTemplateModel = await prisma.nexquikTemplateModel.findUnique({
     where:
       //@nexquik prismaWhereInput start
@@ -20,9 +26,9 @@ export default async function EditNexquikTemplateModel({ params }) {
         { id: params.id },
       //@nexquik prismaWhereInput stop
       data:
-        //@nexquik prismaDataInput start
+        //@nexquik prismaEditDataInput start
         { name: formData.get("name") },
-      //@nexquik prismaDataInput stop
+      //@nexquik prismaEditDataInput stop
     });
     //@nexquik editRedirect start
     redirect(`/nexquikTemplateModel/${params.id}`);
@@ -30,8 +36,16 @@ export default async function EditNexquikTemplateModel({ params }) {
   }
 
   return (
-    <div className="main">
-      <h1> Edit NexquikTemplateModel</h1>
+    <div className="flex-auto w-full min-w-0 pt-6 lg:px-8 lg:pt-8 pb:12 xl:pb-24 lg:pb-16 p-1 ">
+      {/* @nexquik editBreadCrumb start */}
+      {/* @nexquik editBreadCrumb stop */}
+      <header id="header" className="relative z-2 mt-5">
+        <div className="flex items-center">
+          <h1 className="inline-block text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight dark:text-slate-200">
+            Edit NexquikTemplateModel
+          </h1>
+        </div>
+      </header>{" "}
       {/* @nexquik editForm start */}
       <form action={editNexquikTemplateModel}>
         <label>name</label>

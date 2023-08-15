@@ -10,6 +10,7 @@
   },
   "extends": ["plugin:@typescript-eslint/recommended"],
   "plugins": ["prettier", "@typescript-eslint"],
+  "ignorePatterns": ["__tests__", "templateRoot"],
   "rules": {
     "react/react-in-jsx-scope": "off",
     // all prettier file errors

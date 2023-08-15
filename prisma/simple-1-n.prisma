@@ -1,6 +1,10 @@
 datasource db {
-    provider = "postgresql"
+    provider = "sqlite"
     url      = env("DATABASE_URL")
+}
+
+generator client {
+    provider = "prisma-client-js"
 }
 
 model Product {
