@@ -16,8 +16,7 @@
   <a href="#prisma-generator-usage">Prisma Generator Usage</a> •
   <a href="#options">Options</a> •
   <a href="#examples">Examples</a> 
-</p>  
-                                                                                                                      
+</p>                                                                                                         
                                                                                                                                                       
 ## CLI Usage
 ```zsh
@@ -72,3 +71,22 @@ npx nexquik -schema mySchema.prisma -output myOutputDirectory -exclude ModelOne,
 ```zsh
 npx nexquik -schema mySchema.prisma -output myOutputDirectory -include ModelThree
 ```
+<br></br>
+<div align="center">
+  <!-- NPM version -->
+  <a href="https://npmjs.org/package/nexquik">
+    <img src="https://img.shields.io/npm/dt/nexquik"
+      alt="NPM version" />
+  </a>
+  <!-- Build Status -->
+  <a href="https://github.com/bcanfield/nexquik/actions/workflows/publish.yml">
+    <img src="https://github.com/bcanfield/nexquik/actions/workflows/publish.yml/badge.svg"
+      alt="Build Status" />
+  </a>
+  <!-- License -->
+  <a href="https://npmjs.org/package/choo">
+    <img src="https://img.shields.io/badge/License-Apache%202.0-blue"
+      alt="Download" />
+  </a>
+</div>
+               
