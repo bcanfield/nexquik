@@ -56,7 +56,7 @@ export async function run(options?: GeneratorOptions) {
     const includedModels = cliArgs.include
       ? cliArgs.Include.split(",")
       : options?.generator.config.include
-      ? options?.generator.config.include.split(",")
+      ? String(options.generator.config.include).split(",")
       : [];
     const excludedModels =
       includedModels.length > 0
@@ -64,7 +64,7 @@ export async function run(options?: GeneratorOptions) {
         : cliArgs?.exclude
         ? cliArgs.exclude.split(",")
         : options?.generator.config.exclude
-        ? options?.generator.config.exclude.split(",")
+        ? String(options?.generator.config.exclude).split(",")
         : [];
 
     console.log(

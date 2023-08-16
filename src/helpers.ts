@@ -4,7 +4,6 @@ import prettier from "prettier";
 import { RouteObject } from "./generators";
 import { ESLint } from "eslint";
 import chalk from "chalk";
-import * as fse from "fs-extra";
 
 export function copyAndRenameFile(
   sourceFilePath: string,
@@ -238,7 +237,7 @@ export const formatNextJsFilesRecursively = async (directory: string) => {
         const fileContents = await fs.promises.readFile(entryPath, "utf8");
 
         // Format the file contents using Prettier
-        const formattedContents = prettier.format(fileContents, {
+        const formattedContents = await prettier.format(fileContents, {
           parser: "babel-ts", // Specify the parser according to your project's configuration
         });
 
@@ -322,7 +321,7 @@ export async function formatDirectory(directoryPath: string): Promise<void> {
     results.map(async (result) => {
       const filePath = result.filePath;
       const fileContent = await fs.promises.readFile(filePath, "utf-8");
-      const formattedContent = prettier.format(fileContent, {
+      const formattedContent = await prettier.format(fileContent, {
         ...prettierConfig,
         filepath: filePath,
       });
