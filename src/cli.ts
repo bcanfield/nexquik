@@ -53,18 +53,18 @@ export async function run(options?: GeneratorOptions) {
     const cliArgs = program.opts();
     const prismaSchemaPath = options?.schemaPath || cliArgs.Schema;
     const outputDirectory = options?.generator?.output?.value || cliArgs.Out;
-    const includedModels = cliArgs.Include
+    const includedModels = cliArgs.include
       ? cliArgs.Include.split(",")
-      : options?.generator.config.Include
-      ? options?.generator.config.Include.split(",")
+      : options?.generator.config.include
+      ? options?.generator.config.include.split(",")
       : [];
     const excludedModels =
       includedModels.length > 0
         ? []
-        : cliArgs?.Exclude
-        ? cliArgs.Exclude.split(",")
-        : options?.generator.config.Exclude
-        ? options?.generator.config.Exclude.split(",")
+        : cliArgs?.exclude
+        ? cliArgs.exclude.split(",")
+        : options?.generator.config.exclude
+        ? options?.generator.config.exclude.split(",")
         : [];
 
     console.log(
