@@ -1,3 +1,13 @@
+## [2.0.3](https://github.com/bcanfield/nexquik/compare/v2.0.2...v2.0.3) (2023-08-16)
+
+
+### Bug Fixes
+
+* Consistend CLI args ([ef0f1c2](https://github.com/bcanfield/nexquik/commit/ef0f1c23adae3fd91e00e4f2619602b866d0027a))
+* Consistent CLI options ([6846d6d](https://github.com/bcanfield/nexquik/commit/6846d6d8526995a02785955ddeadcef8eabb20d3))
+* Dependencies ([a4b2306](https://github.com/bcanfield/nexquik/commit/a4b23067fab60b4860e722276bba3a55da8fa255))
+* Tests ([56729e5](https://github.com/bcanfield/nexquik/commit/56729e5f5142be1eaaad8cafdd94255551c5078c))
+
 ## [2.0.2](https://github.com/bcanfield/nexquik/compare/v2.0.1...v2.0.2) (2023-08-16)
 
 
