@@ -34,7 +34,7 @@ export async function run(options?: GeneratorOptions) {
         defaultPrismaSchemaPath
       )
       .option(
-        "-out <value>",
+        "-output <value>",
         "Path to output directory",
         defaultOutputDirectory
       )
@@ -52,7 +52,7 @@ export async function run(options?: GeneratorOptions) {
 
     const cliArgs = program.opts();
     const prismaSchemaPath = options?.schemaPath || cliArgs.Schema;
-    const outputDirectory = options?.generator?.output?.value || cliArgs.Out;
+    const outputDirectory = options?.generator?.output?.value || cliArgs.Output;
     const includedModels = cliArgs.include
       ? cliArgs.Include.split(",")
       : options?.generator.config.include
