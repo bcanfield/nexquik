@@ -11,7 +11,7 @@ export interface CliArgs {
   outputDirectory: string;
 }
 export const defaultOutputDirectory = "nexquikApp";
-const defaultPrismaSchemaPath = "./prisma/schema.prisma";
+const defaultPrismaSchemaPath = "schema.prisma";
 
 export async function run(options?: GeneratorOptions) {
   try {
@@ -53,12 +53,19 @@ export async function run(options?: GeneratorOptions) {
     const cliArgs = program.opts();
     const prismaSchemaPath = options?.schemaPath || cliArgs.Schema;
     const outputDirectory = options?.generator?.output?.value || cliArgs.Out;
-    const includedModels = cliArgs.Include ? cliArgs.Include.split(",") : [];
-
+    const includedModels = cliArgs.Include
+      ? cliArgs.Include.split(",")
+      : options?.generator.config.Include
+      ? options?.generator.config.Include.split(",")
+      : [];
     const excludedModels =
-      includedModels.length > 0 || !cliArgs.Exclude
+      includedModels.length > 0
         ? []
-        : cliArgs.Exclude.split(",");
+        : cliArgs?.Exclude
+        ? cliArgs.Exclude.split(",")
+        : options?.generator.config.Exclude
+        ? options?.generator.config.Exclude.split(",")
+        : [];
 
     console.log(
       chalk.gray(
