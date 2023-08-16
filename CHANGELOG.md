@@ -1,3 +1,10 @@
+## [2.0.5](https://github.com/bcanfield/nexquik/compare/v2.0.4...v2.0.5) (2023-08-16)
+
+
+### Bug Fixes
+
+* CLI Args ([b74f4d1](https://github.com/bcanfield/nexquik/commit/b74f4d1fe92f5912915620f53ac24b1b787ecea2))
+
 ## [2.0.4](https://github.com/bcanfield/nexquik/compare/v2.0.3...v2.0.4) (2023-08-16)
 
 
