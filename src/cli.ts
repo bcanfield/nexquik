@@ -53,7 +53,7 @@ export async function run(options?: GeneratorOptions) {
     const cliArgs = program.opts();
     const prismaSchemaPath = options?.schemaPath || cliArgs.Schema;
     const outputDirectory = options?.generator?.output?.value || cliArgs.Output;
-    const includedModels = cliArgs.include
+    const includedModels = cliArgs.Include
       ? cliArgs.Include.split(",")
       : options?.generator.config.include
       ? String(options.generator.config.include).split(",")
@@ -61,8 +61,8 @@ export async function run(options?: GeneratorOptions) {
     const excludedModels =
       includedModels.length > 0
         ? []
-        : cliArgs?.exclude
-        ? cliArgs.exclude.split(",")
+        : cliArgs?.Exclude
+        ? cliArgs.Exclude.split(",")
         : options?.generator.config.exclude
         ? String(options?.generator.config.exclude).split(",")
         : [];
