@@ -1,3 +1,10 @@
+## [2.0.2](https://github.com/bcanfield/nexquik/compare/v2.0.1...v2.0.2) (2023-08-16)
+
+
+### Bug Fixes
+
+* CLI Arg parse ([d45732c](https://github.com/bcanfield/nexquik/commit/d45732c6c6daf606b9935d6cf27fd879407aa86f))
+
 ## [2.0.1](https://github.com/bcanfield/nexquik/compare/v2.0.0...v2.0.1) (2023-08-15)
 
 
