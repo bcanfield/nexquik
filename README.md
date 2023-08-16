@@ -1,4 +1,3 @@
-<!-- LOGO -->
 <br />
 <h1>
 <p align="center">
@@ -15,7 +14,8 @@
 <p align="center">
   <a href="#cli-usage">CLI Usage</a> •
   <a href="#prisma-generator-usage">Prisma Generator Usage</a> •
-  <a href="#options">Options</a> 
+  <a href="#options">Options</a> •
+  <a href="#examples">Examples</a> 
 </p>  
                                                                                                                       
                                                                                                                                                       
@@ -25,10 +25,14 @@ npx nexquik -schema schema.prisma
 ```
 
 ## Prisma Generator Usage
+Install
+```zsh
+npm install nexquik
+```
 Add to your Prisma schema
 
 ```prisma
-generator Nexquik {
+generator nexquik {
     provider = "prisma-generator-nexquik"
 }
 ```
@@ -39,14 +43,32 @@ npx prisma generate
 
 
 ## Options
-```lua
-  -schema               Path to prisma schema file (default: "./prisma/schema.prisma")
-  -out                  Path to output directory (default: "nexquikApp")
-  -exclude              Comma-separated list of model names to exclude
-  -include              Comma-separated list of model names to include
+| Option    | Description                                                                                                                                                       | Default       | Required |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | -------- |
+| schema  | Path to prisma schema file                                                                                                                                        | schema.prisma | false    |
+| output     | Path to output directory                                                                                                                                          | nexquikApp    | false    |
+| include   | Comma-separated list of model names to include from the top-level of the generated app |   | false  |
+| exclude   | Comma-separated list of model names to exclude from the top-level of the generated app (NOTE: If the 'include' option is used, this exclusion list will be ignored) |               | false    |
+
+
+## Examples
+```prisma
+generator nexquik {
+    provider = "prisma-generator-nexquik"
+    output   = "yourOutputDirectory"
+    exclude  = "ModelOne,ModelTwo"
+}
 ```
-By default, all of your database models will be created. 
-
-If you exclude models, they will not be generated in the top-level of your app, but they will still be present as children of your other top-level models.
-
-If you specify models to include, only those models will be generated at the top-level. But all of their children will be generated. This will also over-write any value you set for your exclusion list.
+```prisma
+generator nexquik {
+    provider = "prisma-generator-nexquik"
+    output   = "yourOutputDirectory"
+    include  = "ModelThree"
+}
+```
+```zsh
+npx nexquik -schema mySchema.prisma -output myOutputDirectory -exclude ModelOne,ModelTwo
+```
+```zsh
+npx nexquik -schema mySchema.prisma -output myOutputDirectory -include ModelThree
+```
