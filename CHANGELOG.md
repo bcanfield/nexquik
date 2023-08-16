@@ -1,3 +1,10 @@
+## [2.0.6](https://github.com/bcanfield/nexquik/compare/v2.0.5...v2.0.6) (2023-08-16)
+
+
+### Bug Fixes
+
+* Remove linting step to reduce execution time ([82605c4](https://github.com/bcanfield/nexquik/commit/82605c491a3d8d6aacfdc987126e159392bcbfaf))
+
 ## [2.0.5](https://github.com/bcanfield/nexquik/compare/v2.0.4...v2.0.5) (2023-08-16)
 
 
