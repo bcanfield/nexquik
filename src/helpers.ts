@@ -4,6 +4,7 @@ import prettier from "prettier";
 import { RouteObject } from "./generators";
 import { ESLint } from "eslint";
 import chalk from "chalk";
+// import ora from "ora";
 
 export function copyAndRenameFile(
   sourceFilePath: string,
@@ -311,15 +312,16 @@ export async function formatDirectory(directoryPath: string): Promise<void> {
   const files = (await getFilePaths(directoryPath)).filter((filePath: string) =>
     filePath.endsWith(".tsx")
   );
+  // console.log(`${chalk.blue.bold(`Linting ${files.length} files...`)}`);
 
-  const results = await eslint.lintFiles(files);
-  await ESLint.outputFixes(results);
+  // const results = await eslint.lintFiles(files);
 
   // Format the files using Prettier
+  console.log(`${chalk.blue.bold(`Formatting ${files.length} files...`)}`);
   const prettierConfig = await prettier.resolveConfig(directoryPath);
   await Promise.all(
-    results.map(async (result) => {
-      const filePath = result.filePath;
+    files.map(async (result) => {
+      const filePath = result;
       const fileContent = await fs.promises.readFile(filePath, "utf-8");
       const formattedContent = await prettier.format(fileContent, {
         ...prettierConfig,
