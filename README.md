@@ -44,11 +44,12 @@ npx prisma generate
 ## Options
 | Option    | Description                                                                                                                                                       | Default       | Required |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | -------- |
-| schema  | Path to prisma schema file                                                                                                                                        | schema.prisma | false    |
-| output     | Path to output directory                                                                                                                                          | nexquikApp    | false    |
-| include   | Comma-separated list of model names to include from the top-level of the generated app |   | false  |
-| exclude   | Comma-separated list of model names to exclude from the top-level of the generated app (NOTE: If the 'include' option is used, this exclusion list will be ignored) |               | false    |
-| depth   | Maximum recursion depth for your models. (Changing this for large data models is not recommended, unless you filter down your models with the 'include' or 'exclude' flags also.) |     5          | false    |
+| schema \<value\>  | Path to prisma schema file                                                                                                                                        | schema.prisma | false    |
+| output \<value\>    | Path to output directory                                                                                                                                          | nexquikApp    | false    |
+| include \<value\> | Comma-separated list of model names to include from the top-level of the generated app |   | false  |
+| exclude \<value\>  | Comma-separated list of model names to exclude from the top-level of the generated app (NOTE: If the 'include' option is used, this exclusion list will be ignored) |               | false    |
+| depth \<value\>  | Maximum recursion depth for your models. (Changing this for large data models is not recommended, unless you filter down your models with the 'include' or 'exclude' flags also.) |     5          | false    |
+| modelsOnly   | Output only the model directories in your desired output location, excluding the main directory files. |               | false    |
 
 ### Disabled
 To disable Nexquik from generating during a Prisma generate, add the following environmental variable.
