@@ -419,6 +419,19 @@ export async function generate(
     "schema.prisma"
   );
 
+  // Copy over tsconfig
+  fs.copyFile(
+    path.join(__dirname, "templateRoot", "tsconfig.json"),
+    path.join(outputDirectory, "tsconfig.json"),
+    (err) => {
+      if (err) {
+        console.error("An error occurred while copying the file:", err);
+      } else {
+        console.log(`File copied to ${outputDirectory}`);
+      }
+    }
+  );
+
   const enums = getEnums(dmmf.datamodel);
 
   console.log(
