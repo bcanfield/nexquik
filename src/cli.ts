@@ -78,11 +78,8 @@ export async function run(options?: GeneratorOptions) {
       excludedModels,
       includedModels
     );
-    const spinner = ora(
-      `${chalk.blue.bold("Linting and Formatting Generated Files...")}\n`
-    ).start();
+
     await formatDirectory(outputDirectory);
-    spinner.succeed(chalk.green.bold(`Linted and Formatted Generated Files`));
 
     console.log(
       `${chalk.green.bold(

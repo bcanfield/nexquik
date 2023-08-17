@@ -178,6 +178,51 @@ export async function copyImage(
   }
 }
 
+function addStringsBetweenComments(
+  fileContent: string,
+  insertData: Array<{
+    insertString: string;
+    startComment: string;
+    endComment: string;
+  }>
+): string {
+  insertData.forEach(({ insertString, startComment, endComment }) => {
+    while (
+      fileContent.includes(startComment) &&
+      fileContent.includes(endComment)
+    ) {
+      const startIndex = fileContent.indexOf(startComment);
+      const endIndex = fileContent.indexOf(endComment) + endComment.length;
+      const contentToRemove = fileContent.slice(startIndex, endIndex);
+      fileContent = fileContent.replace(contentToRemove, insertString);
+    }
+  });
+
+  return fileContent;
+}
+
+export function modifyFile(
+  sourceFilePath: string,
+  destinationFilePath: string,
+  insertData: Array<{
+    insertString: string;
+    startComment: string;
+    endComment: string;
+  }>
+): void {
+  try {
+    const fileContent = fs.readFileSync(sourceFilePath, "utf8");
+
+    // Perform string replacements
+    const modifiedContent = addStringsBetweenComments(fileContent, insertData);
+
+    // Write the modified content to the destination file
+    fs.writeFileSync(destinationFilePath, modifiedContent);
+  } catch (error) {
+    console.error("An error occurred:", error);
+  }
+}
+
 // copy files from one directory to another
 // copy files from one directory to another
 export function copyDirectory(
@@ -222,6 +267,7 @@ export function copyDirectory(
     console.error(chalk.red("An error occurred:", error));
   }
 }
+
 export const formatNextJsFilesRecursively = async (directory: string) => {
   // Get a list of all files and directories in the current directory
   const entries = await fs.promises.readdir(directory);
