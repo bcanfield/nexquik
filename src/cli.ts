@@ -50,7 +50,7 @@ export async function run(options?: GeneratorOptions) {
       )
       .option(
         "-depth <value>",
-        "Maximum recursion depth for your models. (It is not recommended to change this)",
+        "Maximum recursion depth for your models. (Changing this for large data models is not recommended, unless you filter down your models with the 'include' or 'exclude' flags also.)",
         "5"
       )
       .parse(process.argv);
