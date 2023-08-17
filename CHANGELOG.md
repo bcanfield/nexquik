@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/bcanfield/nexquik/compare/v2.0.6...v2.1.0) (2023-08-17)
+
+
+### Features
+
+* Optimize file IO and add max-depth option ([#67](https://github.com/bcanfield/nexquik/issues/67)) ([540af5a](https://github.com/bcanfield/nexquik/commit/540af5a9795d87798e72b1aafd660dc30c42b4dd))
+
 ## [2.0.6](https://github.com/bcanfield/nexquik/compare/v2.0.5...v2.0.6) (2023-08-16)
 
 
