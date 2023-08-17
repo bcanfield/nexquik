@@ -15,6 +15,10 @@ const defaultPrismaSchemaPath = "schema.prisma";
 
 export async function run(options?: GeneratorOptions) {
   try {
+    const disabled = process.env.DISABLE_NEXQUIK === "true";
+    if (disabled) {
+      return console.log("Nexquik generation disabled due to env var");
+    }
     console.log(
       chalk.bgYellow.blue.bold(
         figlet.textSync("Nexquik", {

@@ -50,6 +50,11 @@ npx prisma generate
 | exclude   | Comma-separated list of model names to exclude from the top-level of the generated app (NOTE: If the 'include' option is used, this exclusion list will be ignored) |               | false    |
 | depth   | Maximum recursion depth for your models. (Changing this for large data models is not recommended, unless you filter down your models with the 'include' or 'exclude' flags also.) |     5          | false    |
 
+### Disabled
+To disable Nexquik from generating during a Prisma generate, add the following environmental variable.
+```zsh
+DISABLE_NEXQUIK=true
+```
 
 ## Examples
 ```prisma
