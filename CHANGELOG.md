@@ -1,3 +1,10 @@
+## [2.1.3](https://github.com/bcanfield/nexquik/compare/v2.1.2...v2.1.3) (2023-08-17)
+
+
+### Bug Fixes
+
+* Copy over tsconfig ([0d71a24](https://github.com/bcanfield/nexquik/commit/0d71a24b4b563c5f489236042c6ce3846bb712d9))
+
 ## [2.1.2](https://github.com/bcanfield/nexquik/compare/v2.1.1...v2.1.2) (2023-08-17)
 
 
