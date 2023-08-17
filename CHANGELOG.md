@@ -1,3 +1,10 @@
+## [2.1.2](https://github.com/bcanfield/nexquik/compare/v2.1.1...v2.1.2) (2023-08-17)
+
+
+### Bug Fixes
+
+* Create prisma directory ([41bb7fd](https://github.com/bcanfield/nexquik/commit/41bb7fd99363e6543ec61899e1a2a62ee9aede03))
+
 ## [2.1.1](https://github.com/bcanfield/nexquik/compare/v2.1.0...v2.1.1) (2023-08-17)
 
 
