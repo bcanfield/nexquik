@@ -410,6 +410,8 @@ export async function generate(
     path.join(outputDirectory, "app")
   );
 
+  fs.mkdirSync(path.join(outputDirectory, "prisma"));
+
   // Copy over the user's prisma schema and rename it to schema.prisma
   copyAndRenameFile(
     prismaSchemaPath,
