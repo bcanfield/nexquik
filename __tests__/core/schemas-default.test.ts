@@ -7,7 +7,7 @@ const nexquikMain = "./dist/index.js";
 const testOutputDirectory = path.join(
   "__tests__",
   "core",
-  "testOutputDirectory"
+  "defaultTestOutputDirectory"
 );
 const prismaSchemaDirectory = "prisma";
 const prismaMain = "./node_modules/prisma/build/index.js";
