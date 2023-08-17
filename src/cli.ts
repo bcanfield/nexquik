@@ -48,6 +48,11 @@ export async function run(options?: GeneratorOptions) {
         "Comma-separated list of model names to include from the top-level of the generated app.",
         ""
       )
+      .option(
+        "-depth <value>",
+        "Maximum recursion depth for your models. (Changing this for large data models is not recommended, unless you filter down your models with the 'include' or 'exclude' flags also.)",
+        "5"
+      )
       .parse(process.argv);
 
     const cliArgs = program.opts();
@@ -58,6 +63,8 @@ export async function run(options?: GeneratorOptions) {
       : options?.generator.config.include
       ? String(options.generator.config.include).split(",")
       : [];
+    const maxDepth = parseInt(options?.generator.config.depth || cliArgs.Depth);
+
     const excludedModels =
       includedModels.length > 0
         ? []
@@ -76,13 +83,11 @@ export async function run(options?: GeneratorOptions) {
       prismaSchemaPath,
       outputDirectory,
       excludedModels,
-      includedModels
+      includedModels,
+      maxDepth
     );
-    const spinner = ora(
-      `${chalk.blue.bold("Linting and Formatting Generated Files...")}\n`
-    ).start();
-    await formatDirectory(outputDirectory);
-    spinner.succeed(chalk.green.bold(`Linted and Formatted Generated Files`));
+
+    // await formatDirectory(outputDirectory);
 
     console.log(
       `${chalk.green.bold(
