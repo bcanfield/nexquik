@@ -1,3 +1,11 @@
+## [2.1.1](https://github.com/bcanfield/nexquik/compare/v2.1.0...v2.1.1) (2023-08-17)
+
+
+### Bug Fixes
+
+* Add option to disable generator via env var ([9bc9ee7](https://github.com/bcanfield/nexquik/commit/9bc9ee7d261c28188281121a97fcc50e7f176252))
+* Reduce bundle size ([1a38b2a](https://github.com/bcanfield/nexquik/commit/1a38b2ae997b42f30839fa6dc6371d054237a370))
+
 # [2.1.0](https://github.com/bcanfield/nexquik/compare/v2.0.6...v2.1.0) (2023-08-17)
 
 
