@@ -201,23 +201,33 @@ function addStringsBetweenComments(
   return fileContent;
 }
 
-export function modifyFile(
+export async function modifyFile(
   sourceFilePath: string,
   destinationFilePath: string,
   insertData: Array<{
     insertString: string;
     startComment: string;
     endComment: string;
-  }>
-): void {
+  }>,
+  modelName?: string
+) {
   try {
     const fileContent = fs.readFileSync(sourceFilePath, "utf8");
 
     // Perform string replacements
-    const modifiedContent = addStringsBetweenComments(fileContent, insertData);
-
+    let modifiedContent = addStringsBetweenComments(fileContent, insertData);
+    modifiedContent = await prettier.format(modifiedContent, {
+      parser: "babel-ts", // Specify the parser according to your project's configuration
+    });
+    if (modelName) {
+      modifiedContent = findAndReplaceInFile(
+        modifiedContent,
+        "nexquikTemplateModel",
+        modelName
+      );
+    }
     // Write the modified content to the destination file
-    fs.writeFileSync(destinationFilePath, modifiedContent);
+    fs.promises.writeFile(destinationFilePath, modifiedContent);
   } catch (error) {
     console.error("An error occurred:", error);
   }
@@ -343,18 +353,6 @@ async function getFilePaths(directoryPath: string): Promise<string[]> {
 }
 
 export async function formatDirectory(directoryPath: string): Promise<void> {
-  const eslint = new ESLint({
-    fix: true, // Enable automatic fixes
-    extensions: [".tsx"], // Specify file extensions to be linted
-    overrideConfig: {
-      parserOptions: {
-        ecmaVersion: 2020, // Specify the ECMAScript version to be linted (change as needed)
-        sourceType: "module", // Specify the source type (e.g., 'module', 'script')
-      },
-      rules: {}, // Add any additional rules or overrides
-    },
-  });
-
   const files = (await getFilePaths(directoryPath)).filter((filePath: string) =>
     filePath.endsWith(".tsx")
   );
@@ -378,50 +376,24 @@ export async function formatDirectory(directoryPath: string): Promise<void> {
   );
 }
 
-export function findAndReplaceInFiles(
-  directoryPath: string,
+export function findAndReplaceInFile(
+  textContent: string,
   searchString: string,
   replacementString: string
-): void {
-  // console.log(
-  //   chalk.blue(
-  //     `Finding ${searchString}, replacing with ${replacementString}, in ${directoryPath}`
-  //   )
-  // );
-  // Read the directory contents
-  const files = fs.readdirSync(directoryPath);
-
-  // Iterate through all files and directories
-  for (const file of files) {
-    const filePath = path.join(directoryPath, file);
-
-    // Check if the path is a directory
-    if (fs.statSync(filePath).isDirectory()) {
-      // Recursively search and replace in subdirectories
-      findAndReplaceInFiles(filePath, searchString, replacementString);
-    } else {
-      // Read the file content
-      let fileContent = fs.readFileSync(filePath, "utf-8");
-
-      // Perform case-insensitive find and replace
-      const pattern = new RegExp(searchString, "gi");
-      fileContent = fileContent.replace(pattern, (match) => {
-        // Preserve the casing of the first character
-        const firstChar = match.charAt(0);
-        const replacementFirstChar = replacementString.charAt(0);
-        const replacedFirstChar =
-          firstChar === firstChar.toLowerCase()
-            ? replacementFirstChar.toLowerCase()
-            : firstChar === firstChar.toUpperCase()
-            ? replacementFirstChar.toUpperCase()
-            : replacementFirstChar;
-        return replacedFirstChar + replacementString.slice(1);
-      });
-
-      // Write the modified content back to the file
-      fs.writeFileSync(filePath, fileContent, "utf-8");
-    }
-  }
+): string {
+  const pattern = new RegExp(searchString, "gi");
+  return textContent.replace(pattern, (match) => {
+    // Preserve the casing of the first character
+    const firstChar = match.charAt(0);
+    const replacementFirstChar = replacementString.charAt(0);
+    const replacedFirstChar =
+      firstChar === firstChar.toLowerCase()
+        ? replacementFirstChar.toLowerCase()
+        : firstChar === firstChar.toUpperCase()
+        ? replacementFirstChar.toUpperCase()
+        : replacementFirstChar;
+    return replacedFirstChar + replacementString.slice(1);
+  });
 }
 
 export function copyFileToDirectory(
