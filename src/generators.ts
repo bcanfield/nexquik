@@ -361,9 +361,13 @@ export async function generate(
 
   // Create the output directory
   if (fs.existsSync(outputDirectory)) {
-    fs.rmSync(outputDirectory, { recursive: true });
+    if (modelsOnly === false) {
+      fs.rmSync(outputDirectory, { recursive: true });
+      fs.mkdirSync(outputDirectory);
+    }
+  } else {
+    fs.mkdirSync(outputDirectory);
   }
-  fs.mkdirSync(outputDirectory);
 
   // Main section to build the app from the modelTree
   const dmmf = await getDMMF({ datamodel: prismaSchema });
@@ -727,7 +731,7 @@ export async function generateAppDirectoryFromModelTree(
 
     let route = parentRoute.name;
 
-    if (!modelsOnly && route === "/") {
+    if (modelsOnly === false && route === "/") {
       // Copy over the files in the template app dir, skipping the model directory. (globals.css, layout.tsx, page.tsx)
       copyDirectory(
         path.join(__dirname, "templateRoot", "app"),
