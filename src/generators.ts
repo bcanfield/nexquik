@@ -353,20 +353,21 @@ export async function generate(
   outputDirectory: string,
   excludedModels: string[],
   includedModels: string[],
-  maxAllowedDepth: number
+  maxAllowedDepth: number,
+  modelsOnly: boolean
 ) {
   // Read the Prisma schema file
   const prismaSchema = await readFileAsync(prismaSchemaPath, "utf-8");
 
   // Create the output directory
   if (fs.existsSync(outputDirectory)) {
-    fs.rmSync(outputDirectory, { recursive: true });
+    if (modelsOnly === false) {
+      fs.rmSync(outputDirectory, { recursive: true });
+      fs.mkdirSync(outputDirectory);
+    }
+  } else {
+    fs.mkdirSync(outputDirectory);
   }
-  fs.mkdirSync(outputDirectory);
-
-  // Create the app directory
-  const appDirectory = path.join(outputDirectory, "app");
-  fs.mkdirSync(appDirectory);
 
   // Main section to build the app from the modelTree
   const dmmf = await getDMMF({ datamodel: prismaSchema });
@@ -382,94 +383,100 @@ export async function generate(
     throw new Error("No valid models detected in schema");
   }
 
-  // Copy all files from the root dir except for app. (package.json, next.config, etc)
-  copyDirectory(
-    path.join(__dirname, "templateRoot"),
-    outputDirectory,
-    true,
-    "app"
-  );
-
-  // Try copying over public folder
-  copyPublicDirectory(
-    path.join(__dirname, "templateRoot", "public"),
-    path.join(outputDirectory, "public"),
-    true,
-    "app"
-  );
-
-  // copy over images
-  copyImage(
-    path.join(__dirname, "templateRoot", "app"),
-    "favicon.ico",
-    path.join(outputDirectory, "app")
-  );
-  copyImage(
-    path.join(__dirname, "templateRoot", "app"),
-    "icon.png",
-    path.join(outputDirectory, "app")
-  );
-
-  fs.mkdirSync(path.join(outputDirectory, "prisma"));
-
-  // Copy over the user's prisma schema and rename it to schema.prisma
-  copyAndRenameFile(
-    prismaSchemaPath,
-    path.join(outputDirectory, "prisma"),
-    "schema.prisma"
-  );
-
-  // Copy over tsconfig
-  fs.copyFile(
-    path.join(__dirname, "templateRoot", "tsconfig.json"),
-    path.join(outputDirectory, "tsconfig.json"),
-    (err) => {
-      if (err) {
-        console.error("An error occurred while copying the file:", err);
-      } else {
-        console.log(`File copied to ${outputDirectory}`);
-      }
-    }
-  );
-
+  let directoryToOutputFiles = outputDirectory;
   const enums = getEnums(dmmf.datamodel);
-
   console.log(
     `${chalk.blue.bold(
       "Generating directories for your models..."
     )} ${chalk.gray("(For deeply-nested schemas, this may take a moment)")}`
   );
+  // Create files in main directory
+  if (modelsOnly === false) {
+    // Create the app directory
+    directoryToOutputFiles = path.join(outputDirectory, "app");
+    fs.mkdirSync(directoryToOutputFiles);
 
-  await generateAppDirectoryFromModelTree(
-    modelTree,
-    appDirectory,
-    enums,
-    maxAllowedDepth
-  );
+    // Copy all files from the root dir except for app. (package.json, next.config, etc)
+    copyDirectory(
+      path.join(__dirname, "templateRoot"),
+      outputDirectory,
+      true,
+      "app"
+    );
 
-  // Home route list
-  const modelNames = modelTree.map((m) => m.model.name);
+    // Try copying over public folder
+    copyPublicDirectory(
+      path.join(__dirname, "templateRoot", "public"),
+      path.join(outputDirectory, "public"),
+      true,
+      "app"
+    );
 
-  const routeList = generateRouteList(modelTree.map((m) => m.model.name));
+    // copy over images
+    copyImage(
+      path.join(__dirname, "templateRoot", "app"),
+      "favicon.ico",
+      path.join(outputDirectory, "app")
+    );
+    copyImage(
+      path.join(__dirname, "templateRoot", "app"),
+      "icon.png",
+      path.join(outputDirectory, "app")
+    );
 
-  // dynamic/edit/page.tsx
-  modifyFile(
-    path.join(appDirectory, "page.tsx"),
-    path.join(path.join(outputDirectory, "app", "page.tsx")),
-    [
-      {
-        startComment: "{/* @nexquik routeList start */}",
-        endComment: "{/* @nexquik routeList stop */}",
-        insertString: routeList,
-      },
-    ]
-  );
+    fs.mkdirSync(path.join(outputDirectory, "prisma"));
 
-  // Route sidebar
-  let routeSidebar = "";
-  for (const model of modelNames) {
-    const lowerCase = model.charAt(0).toLowerCase() + model.slice(1);
-    routeSidebar += `<li className="mt-4">
+    // Copy over the user's prisma schema and rename it to schema.prisma
+    copyAndRenameFile(
+      prismaSchemaPath,
+      path.join(outputDirectory, "prisma"),
+      "schema.prisma"
+    );
+
+    // Copy over tsconfig
+    fs.copyFile(
+      path.join(__dirname, "templateRoot", "tsconfig.json"),
+      path.join(outputDirectory, "tsconfig.json"),
+      (err) => {
+        if (err) {
+          console.error("An error occurred while copying the file:", err);
+        } else {
+          console.log(`File copied to ${outputDirectory}`);
+        }
+      }
+    );
+
+    await generateAppDirectoryFromModelTree(
+      modelTree,
+      directoryToOutputFiles,
+      enums,
+      maxAllowedDepth,
+      modelsOnly
+    );
+
+    // Home route list
+    const modelNames = modelTree.map((m) => m.model.name);
+
+    const routeList = generateRouteList(modelTree.map((m) => m.model.name));
+
+    // page.tsx
+    modifyFile(
+      path.join(directoryToOutputFiles, "page.tsx"),
+      path.join(path.join(outputDirectory, "app", "page.tsx")),
+      [
+        {
+          startComment: "{/* @nexquik routeList start */}",
+          endComment: "{/* @nexquik routeList stop */}",
+          insertString: routeList,
+        },
+      ]
+    );
+
+    // Route sidebar
+    let routeSidebar = "";
+    for (const model of modelNames) {
+      const lowerCase = model.charAt(0).toLowerCase() + model.slice(1);
+      routeSidebar += `<li className="mt-4">
 
                       <a
                       href="/${lowerCase}"
@@ -484,19 +491,28 @@ export async function generate(
 </li>
 
 `;
+    }
+
+    // layout.tsx
+    await modifyFile(
+      path.join(path.join(__dirname, "templateRoot", "app", "layout.tsx")),
+      path.join(path.join(outputDirectory, "app", "layout.tsx")),
+      [
+        {
+          startComment: "{/* //@nexquik routeSidebar start */}",
+          endComment: "{/* //@nexquik routeSidebar stop */}",
+          insertString: routeSidebar,
+        },
+      ]
+    );
   }
 
-  // layout.tsx
-  await modifyFile(
-    path.join(path.join(__dirname, "templateRoot", "app", "layout.tsx")),
-    path.join(path.join(outputDirectory, "app", "layout.tsx")),
-    [
-      {
-        startComment: "{/* //@nexquik routeSidebar start */}",
-        endComment: "{/* //@nexquik routeSidebar stop */}",
-        insertString: routeSidebar,
-      },
-    ]
+  await generateAppDirectoryFromModelTree(
+    modelTree,
+    directoryToOutputFiles,
+    enums,
+    maxAllowedDepth,
+    modelsOnly
   );
 
   return;
@@ -676,7 +692,8 @@ export async function generateAppDirectoryFromModelTree(
   modelTreeArray: ModelTree[],
   outputDirectory: string,
   enums: Record<string, string[]>,
-  maxAllowedDepth: number
+  maxAllowedDepth: number,
+  modelsOnly: boolean
 ): Promise<RouteObject[]> {
   const routes: RouteObject[] = [];
   let fileCount = 0;
@@ -714,7 +731,7 @@ export async function generateAppDirectoryFromModelTree(
 
     let route = parentRoute.name;
 
-    if (route === "/") {
+    if (modelsOnly === false && route === "/") {
       // Copy over the files in the template app dir, skipping the model directory. (globals.css, layout.tsx, page.tsx)
       copyDirectory(
         path.join(__dirname, "templateRoot", "app"),

@@ -3,8 +3,6 @@ import chalk from "chalk";
 import { Command } from "commander";
 import figlet from "figlet";
 import { generate } from "./generators";
-import { formatDirectory } from "./helpers";
-import ora from "ora"; // Import 'ora'
 
 export interface CliArgs {
   prismaSchemaPath: string;
@@ -57,6 +55,10 @@ export async function run(options?: GeneratorOptions) {
         "Maximum recursion depth for your models. (Changing this for large data models is not recommended, unless you filter down your models with the 'include' or 'exclude' flags also.)",
         "5"
       )
+      .option(
+        "-modelsOnly",
+        "Output only the model directories in your desired output location, excluding the main directory files."
+      )
       .parse(process.argv);
 
     const cliArgs = program.opts();
@@ -68,7 +70,8 @@ export async function run(options?: GeneratorOptions) {
       ? String(options.generator.config.include).split(",")
       : [];
     const maxDepth = parseInt(options?.generator.config.depth || cliArgs.Depth);
-
+    const modelsOnly =
+      options?.generator.config.modelsOnly || cliArgs.ModelsOnly || false;
     const excludedModels =
       includedModels.length > 0
         ? []
@@ -88,7 +91,8 @@ export async function run(options?: GeneratorOptions) {
       outputDirectory,
       excludedModels,
       includedModels,
-      maxDepth
+      maxDepth,
+      modelsOnly
     );
 
     // await formatDirectory(outputDirectory);
