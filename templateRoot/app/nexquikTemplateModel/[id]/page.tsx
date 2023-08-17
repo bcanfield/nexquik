@@ -69,12 +69,6 @@ export default async function ShowNexquikTemplateModel({
         </ul>
       </form>
       {/* @nexquik showForm stop */}
-      <div className="mt-8">
-        <div className="flex space-x-4">
-          {/* @nexquik listChildren start */}
-          {/* @nexquik listChildren stop */}
-        </div>
-      </div>
     </div>
   );
 }

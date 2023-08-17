@@ -2,8 +2,8 @@ import { DMMF } from "@prisma/generator-helper";
 import { getDMMF } from "@prisma/internals";
 import chalk from "chalk";
 import fs from "fs";
-import path from "path";
 import ora from "ora"; // Import 'ora'
+import path from "path";
 
 import { promisify } from "util";
 import {
@@ -14,7 +14,7 @@ import {
   copyPublicDirectory,
   findAndReplaceInFiles,
   getDynamicSlugs,
-  popStringEnd,
+  modifyFile,
 } from "./helpers";
 import {
   ModelTree,
@@ -111,45 +111,6 @@ export interface RouteObject {
   model: string;
   operation: string;
   description: string;
-}
-
-function addStringBetweenComments(
-  directory: string,
-  insertString: string,
-  startComment: string,
-  endComment: string
-): void {
-  const files = fs.readdirSync(directory);
-  files.forEach((file) => {
-    const filePath = path.join(directory, file);
-
-    // Check if the file is a directory
-    if (fs.statSync(filePath).isDirectory()) {
-      // Recursively process subdirectories
-      addStringBetweenComments(
-        filePath,
-        insertString,
-        startComment,
-        endComment
-      );
-    } else {
-      // Read file contents
-      let fileContent = fs.readFileSync(filePath, "utf8");
-      // Check if both comments exist in the file
-      while (
-        fileContent.includes(startComment) &&
-        fileContent.includes(endComment)
-      ) {
-        // Replace the content between the comments and the comments themselves with the insert string
-        const startIndex = fileContent.indexOf(startComment);
-        const endIndex = fileContent.indexOf(endComment) + endComment.length;
-        const contentToRemove = fileContent.slice(startIndex, endIndex);
-        fileContent = fileContent.replace(contentToRemove, insertString);
-      }
-      // Write the modified content back to the file
-      fs.writeFileSync(filePath, fileContent);
-    }
-  });
 }
 
 async function generateCreateForm(
@@ -471,11 +432,18 @@ export async function generate(
   const modelNames = modelTree.map((m) => m.model.name);
 
   const routeList = generateRouteList(modelTree.map((m) => m.model.name));
-  addStringBetweenComments(
-    appDirectory,
-    routeList,
-    "{/* @nexquik routeList start */}",
-    "{/* @nexquik routeList stop */}"
+
+  // dynamic/edit/page.tsx
+  modifyFile(
+    path.join(appDirectory, "page.tsx"),
+    path.join(path.join(outputDirectory, "app", "page.tsx")),
+    [
+      {
+        startComment: "{/* @nexquik routeList start */}",
+        endComment: "{/* @nexquik routeList stop */}",
+        insertString: routeList,
+      },
+    ]
   );
 
   // Route sidebar
@@ -498,11 +466,18 @@ export async function generate(
 
 `;
   }
-  addStringBetweenComments(
-    outputDirectory,
-    routeSidebar,
-    "{/* //@nexquik routeSidebar start */}",
-    "{/* //@nexquik routeSidebar stop */}"
+
+  // layout.tsx
+  modifyFile(
+    path.join(path.join(__dirname, "templateRoot", "app", "layout.tsx")),
+    path.join(path.join(outputDirectory, "app", "layout.tsx")),
+    [
+      {
+        startComment: "{/* //@nexquik routeSidebar start */}",
+        endComment: "{/* //@nexquik routeSidebar stop */}",
+        insertString: routeSidebar,
+      },
+    ]
   );
 
   return;
@@ -765,33 +740,20 @@ export async function generateAppDirectoryFromModelTree(
       }
     }
 
-    if (baseModelDirectory !== "app/") {
-      // Copy files from template model, skipping dynamic directory. (create/, page.tsx)
-      copyDirectory(
-        path.join(__dirname, "templateRoot", "app", "nexquikTemplateModel"),
-        baseModelDirectory,
-        true,
-        "[id]"
-      );
+    // Create create directory
+    if (!fs.existsSync(path.join(baseModelDirectory, "create"))) {
+      fs.mkdirSync(path.join(baseModelDirectory, "create"));
     }
 
+    const templateModelDirectory = path.join(
+      __dirname,
+      "templateRoot",
+      "app",
+      "nexquikTemplateModel"
+    );
     const createBreadCrumb = generateBreadCrumb(route + "/create");
 
-    addStringBetweenComments(
-      path.join(baseModelDirectory),
-      createBreadCrumb,
-      "{/* @nexquik createBreadcrumb start */}",
-      "{/* @nexquik createBreadcrumb stop */}"
-    );
-
     const listBreadCrumb = generateBreadCrumb(route);
-
-    addStringBetweenComments(
-      baseModelDirectory,
-      listBreadCrumb,
-      "{/* @nexquik listBreadcrumb start */}",
-      "{/* @nexquik listBreadcrumb stop */}"
-    );
 
     // Create dynamic directories
     const slugsForThisModel = getDynamicSlugs(
@@ -813,17 +775,17 @@ export async function generateAppDirectoryFromModelTree(
       }
     }
 
-    // Copy template dynamic directory into new dynamic directory
-    copyDirectory(
-      path.join(
-        __dirname,
-        "templateRoot",
-        "app",
-        "nexquikTemplateModel",
-        "[id]"
-      ),
-      dynamicOutputDirectory,
-      true
+    // Create edit directory
+    if (!fs.existsSync(path.join(dynamicOutputDirectory, "edit"))) {
+      fs.mkdirSync(path.join(dynamicOutputDirectory, "edit"));
+    }
+
+    const templateDynamicDirectory = path.join(
+      __dirname,
+      "templateRoot",
+      "app",
+      "nexquikTemplateModel",
+      "[id]"
     );
 
     // ############### List Page
@@ -846,12 +808,6 @@ take: limit`;
       createRedirectForm,
       modelUniqueIdentifierField,
       idFields.map((f) => f.name)
-    );
-    addStringBetweenComments(
-      baseModelDirectory,
-      listFormCode,
-      "{/* @nexquik listForm start */}",
-      "{/* @nexquik listForm stop */}"
     );
 
     // Get relation fields to parent
@@ -884,19 +840,8 @@ take: limit`;
     }
     // Delete Where Clause
     const deleteWhereClause = generateDeleteClause(modelUniqueIdentifierField);
-    addStringBetweenComments(
-      baseModelDirectory,
-      deleteWhereClause,
-      "//@nexquik prismaDeleteClause start",
-      "//@nexquik prismaDeleteClause stop"
-    );
+
     const listRedirect = await generateRedirect(`\`${createRedirectForm}\``);
-    addStringBetweenComments(
-      baseModelDirectory,
-      listRedirect,
-      "//@nexquik listRedirect start",
-      "//@nexquik listRedirect stop"
-    );
 
     // In parent, loop through fields and find field of 'type' current model
     let isManyToMany = false;
@@ -976,20 +921,6 @@ take: limit`;
       .map((e) => `import { ${e} } from "@prisma/client";`)
       .join("\n");
 
-    addStringBetweenComments(
-      baseModelDirectory,
-      enumImport,
-      "//@nexquik prismaEnumImport start",
-      "//@nexquik prismaEnumImport stop"
-    );
-
-    addStringBetweenComments(
-      baseModelDirectory,
-      whereparentClause,
-      "//@nexquik prismaWhereParentClause start",
-      "//@nexquik prismaWhereParentClause stop"
-    );
-
     const linkHref = createRedirectForm;
 
     const listPagination = `
@@ -1047,13 +978,6 @@ take: limit`;
     
     `;
 
-    addStringBetweenComments(
-      baseModelDirectory,
-      listPagination,
-      "{/* @nexquik listPagination start */}",
-      "{/* @nexquik listPagination stop */}"
-    );
-
     const countWhereparentClause = modelTree.parent
       ? generateWhereParentClause(
           "params",
@@ -1074,12 +998,6 @@ take: limit`;
     modelName.charAt(0).toLowerCase() + modelName.slice(1)
   }.count${countWhereparentClause ? countWhereparentClause : "()"};
     `;
-    addStringBetweenComments(
-      baseModelDirectory,
-      listCount,
-      "/* @nexquik listCount start */",
-      "/* @nexquik listCount stop */"
-    );
 
     const uniqueDynamicSlugs = getDynamicSlugs(
       modelTree.modelName,
@@ -1097,24 +1015,11 @@ take: limit`;
       childModelLinkList
     );
 
-    addStringBetweenComments(
-      baseModelDirectory,
-      showFormCode,
-      "{/* @nexquik showForm start */}",
-      "{/* @nexquik showForm stop */}"
-    );
-
     // If many to many, must do a connect
     const createFormCode = await generateCreateForm(
       modelTree,
       createRedirectForm,
       enums
-    );
-    addStringBetweenComments(
-      baseModelDirectory,
-      createFormCode,
-      "{/* @nexquik createForm start */}",
-      "{/* @nexquik createForm stop */}"
     );
 
     let redirectStr = "";
@@ -1124,29 +1029,13 @@ take: limit`;
     const createRedirect = await generateRedirect(
       `\`${createRedirectForm}${redirectStr}\``
     );
-    addStringBetweenComments(
-      baseModelDirectory,
-      createRedirect,
-      "//@nexquik createRedirect start",
-      "//@nexquik createRedirect stop"
-    );
+
     const createLink = await generateLink(
       `${createRedirectForm}/create`,
       "Create New NexquikTemplateModel"
     );
-    addStringBetweenComments(
-      baseModelDirectory,
-      createLink,
-      "{/* @nexquik createLink start */}",
-      "{/* @nexquik createLink stop */}"
-    );
+
     const prismaInput = generateConvertToPrismaInputCode(modelTree);
-    addStringBetweenComments(
-      baseModelDirectory,
-      prismaInput,
-      "//@nexquik prismaEditDataInput start",
-      "//@nexquik prismaEditDataInput stop"
-    );
 
     const parentSlugs = getDynamicSlugs(
       modelTree.parent?.name,
@@ -1158,23 +1047,11 @@ take: limit`;
       parentSlugs,
       manyToManyConnect
     );
-    addStringBetweenComments(
-      baseModelDirectory,
-      prismaCreateInput,
-      "//@nexquik prismaCreateDataInput start",
-      "//@nexquik prismaCreateDataInput stop"
-    );
 
     const whereClause = generateWhereClause(
       "params",
       uniqueDynamicSlugs,
       modelUniqueIdentifierField
-    );
-    addStringBetweenComments(
-      baseModelDirectory,
-      whereClause,
-      "//@nexquik prismaWhereInput start",
-      "//@nexquik prismaWhereInput stop"
     );
 
     // ############### Edit Page
@@ -1182,12 +1059,6 @@ take: limit`;
       modelTree,
       createRedirectForm,
       enums
-    );
-    addStringBetweenComments(
-      baseModelDirectory,
-      editFormCode,
-      "{/* @nexquik editForm start */}",
-      "{/* @nexquik editForm stop */}"
     );
 
     let redirectStr2 = "";
@@ -1198,51 +1069,177 @@ take: limit`;
     const editRedirect = await generateRedirect(
       `\`${createRedirectForm}/${redirectStr2}\``
     );
-    addStringBetweenComments(
-      baseModelDirectory,
-      editRedirect,
-      "//@nexquik editRedirect start",
-      "//@nexquik editRedirect stop"
-    );
 
     // ############### Extras
     const revalidatePath = await generateRevalidatePath(
       `${createRedirectForm}`
     );
-    addStringBetweenComments(
-      baseModelDirectory,
-      revalidatePath,
-      "//@nexquik revalidatePath start",
-      "//@nexquik revalidatePath stop"
-    );
-
-    const backLink = await generateLink(
-      popStringEnd(popStringEnd(`${createRedirectForm}`, "/"), "/"),
-      "Back"
-    );
-    addStringBetweenComments(
-      baseModelDirectory,
-      backLink,
-      "{/* @nexquik backLink start */}",
-      "{/* @nexquik backLink stop */}"
-    );
 
     const baseBreadCrumb = generateBreadCrumb(route);
 
-    addStringBetweenComments(
-      baseModelDirectory,
-      baseBreadCrumb,
-      "{/* @nexquik breadcrumb start */}",
-      "{/* @nexquik breadcrumb stop */}"
-    );
-
     const editBreadCrumb = generateBreadCrumb(route + "/edit");
 
-    addStringBetweenComments(
-      path.join(baseModelDirectory),
-      editBreadCrumb,
-      "{/* @nexquik editBreadCrumb start */}",
-      "{/* @nexquik editBreadCrumb stop */}"
+    // dynamic/edit/page.tsx
+    modifyFile(
+      path.join(templateDynamicDirectory, "edit", "page.tsx"),
+      path.join(dynamicOutputDirectory, "edit", "page.tsx"),
+      [
+        {
+          startComment: "//@nexquik prismaEnumImport start",
+          endComment: "//@nexquik prismaEnumImport stop",
+          insertString: enumImport,
+        },
+        {
+          startComment: "//@nexquik prismaWhereInput start",
+          endComment: "//@nexquik prismaWhereInput stop",
+          insertString: whereClause,
+        },
+        {
+          startComment: "//@nexquik prismaEditDataInput start",
+          endComment: "//@nexquik prismaEditDataInput stop",
+          insertString: prismaInput,
+        },
+        {
+          startComment: "//@nexquik editRedirect start",
+          endComment: "//@nexquik editRedirect stop",
+          insertString: editRedirect,
+        },
+        {
+          startComment: "{/* @nexquik editBreadCrumb start */}",
+          endComment: "{/* @nexquik editBreadCrumb stop */}",
+          insertString: editBreadCrumb,
+        },
+        {
+          startComment: "{/* @nexquik editForm start */}",
+          endComment: "{/* @nexquik editForm stop */}",
+          insertString: editBreadCrumb,
+        },
+      ]
+    );
+
+    // dynamic/page.tsx
+    modifyFile(
+      path.join(templateDynamicDirectory, "page.tsx"),
+      path.join(dynamicOutputDirectory, "page.tsx"),
+      [
+        {
+          startComment: "//@nexquik prismaWhereInput start",
+          endComment: "//@nexquik prismaWhereInput stop",
+          insertString: whereClause,
+        },
+        {
+          startComment: "//@nexquik prismaDeleteClause start",
+          endComment: "//@nexquik prismaDeleteClause stop",
+          insertString: deleteWhereClause,
+        },
+        {
+          startComment: "//@nexquik revalidatePath start",
+          endComment: "//@nexquik revalidatePath stop",
+          insertString: revalidatePath,
+        },
+        {
+          startComment: "//@nexquik listRedirect start",
+          endComment: "//@nexquik listRedirect stop",
+          insertString: listRedirect,
+        },
+        {
+          startComment: "{/* @nexquik breadcrumb start */}",
+          endComment: "{/* @nexquik breadcrumb stop */}",
+          insertString: baseBreadCrumb,
+        },
+        {
+          startComment: "{/* @nexquik showForm start */}",
+          endComment: "{/* @nexquik showForm stop */}",
+          insertString: showFormCode,
+        },
+      ]
+    );
+
+    // base/page.tsx
+    modifyFile(
+      path.join(templateModelDirectory, "page.tsx"),
+      path.join(baseModelDirectory, "page.tsx"),
+      [
+        {
+          startComment: "/* @nexquik listCount start */",
+          endComment: "/* @nexquik listCount stop */",
+          insertString: listCount,
+        },
+        {
+          startComment: "//@nexquik prismaWhereParentClause start",
+          endComment: "//@nexquik prismaWhereParentClause stop",
+          insertString: whereparentClause,
+        },
+        {
+          startComment: "//@nexquik prismaDeleteClause start",
+          endComment: "//@nexquik prismaDeleteClause stop",
+          insertString: deleteWhereClause,
+        },
+        {
+          startComment: "//@nexquik revalidatePath start",
+          endComment: "//@nexquik revalidatePath stop",
+          insertString: revalidatePath,
+        },
+        {
+          startComment: "{/* @nexquik listBreadcrumb start */}",
+          endComment: "{/* @nexquik listBreadcrumb stop */}",
+          insertString: listBreadCrumb,
+        },
+        {
+          startComment: "{/* @nexquik createLink start */}",
+          endComment: "{/* @nexquik createLink stop */}",
+          insertString: createLink,
+        },
+        {
+          startComment: "{/* @nexquik listForm start */}",
+          endComment: "{/* @nexquik listForm stop */}",
+          insertString: listFormCode,
+        },
+        {
+          startComment: "{/* @nexquik listPagination start */}",
+          endComment: "{/* @nexquik listPagination stop */}",
+          insertString: listPagination,
+        },
+      ]
+    );
+
+    // base/create/page.tsx
+    modifyFile(
+      path.join(templateModelDirectory, "create", "page.tsx"),
+      path.join(baseModelDirectory, "create", "page.tsx"),
+      [
+        {
+          startComment: "//@nexquik prismaEnumImport start",
+          endComment: "//@nexquik prismaEnumImport stop",
+          insertString: enumImport,
+        },
+        {
+          startComment: "//@nexquik prismaCreateDataInput start",
+          endComment: "//@nexquik prismaCreateDataInput stop",
+          insertString: prismaCreateInput,
+        },
+        {
+          startComment: "//@nexquik revalidatePath start",
+          endComment: "//@nexquik revalidatePath stop",
+          insertString: revalidatePath,
+        },
+        {
+          startComment: "//@nexquik createRedirect start",
+          endComment: "//@nexquik createRedirect stop",
+          insertString: createRedirect,
+        },
+
+        {
+          startComment: "{/* @nexquik createBreadcrumb start */}",
+          endComment: "{/* @nexquik createBreadcrumb stop */}",
+          insertString: createBreadCrumb,
+        },
+        {
+          startComment: "{/* @nexquik createForm start */}",
+          endComment: "{/* @nexquik createForm stop */}",
+          insertString: createFormCode,
+        },
+      ]
     );
 
     // Replace all placeholder model names
