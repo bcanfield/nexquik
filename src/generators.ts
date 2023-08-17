@@ -2,7 +2,6 @@ import { DMMF } from "@prisma/generator-helper";
 import { getDMMF } from "@prisma/internals";
 import chalk from "chalk";
 import fs from "fs";
-import ora from "ora"; // Import 'ora'
 import path from "path";
 
 import { promisify } from "util";
@@ -12,7 +11,6 @@ import {
   copyDirectory,
   copyImage,
   copyPublicDirectory,
-  findAndReplaceInFiles,
   getDynamicSlugs,
   modifyFile,
 } from "./helpers";
@@ -354,7 +352,8 @@ export async function generate(
   prismaSchemaPath: string,
   outputDirectory: string,
   excludedModels: string[],
-  includedModels: string[]
+  includedModels: string[],
+  maxAllowedDepth: number
 ) {
   // Read the Prisma schema file
   const prismaSchema = await readFileAsync(prismaSchemaPath, "utf-8");
@@ -426,7 +425,12 @@ export async function generate(
     )} ${chalk.gray("(For deeply-nested schemas, this may take a moment)")}`
   );
 
-  await generateAppDirectoryFromModelTree(modelTree, appDirectory, enums);
+  await generateAppDirectoryFromModelTree(
+    modelTree,
+    appDirectory,
+    enums,
+    maxAllowedDepth
+  );
 
   // Home route list
   const modelNames = modelTree.map((m) => m.model.name);
@@ -468,7 +472,7 @@ export async function generate(
   }
 
   // layout.tsx
-  modifyFile(
+  await modifyFile(
     path.join(path.join(__dirname, "templateRoot", "app", "layout.tsx")),
     path.join(path.join(outputDirectory, "app", "layout.tsx")),
     [
@@ -656,17 +660,37 @@ ${routeLinks.join("\n")}
 export async function generateAppDirectoryFromModelTree(
   modelTreeArray: ModelTree[],
   outputDirectory: string,
-  enums: Record<string, string[]>
+  enums: Record<string, string[]>,
+  maxAllowedDepth: number
 ): Promise<RouteObject[]> {
   const routes: RouteObject[] = [];
-
+  let fileCount = 0;
+  let directoryCount = 0;
+  let maxDepth = 0;
   async function generateRoutes(
     modelTree: ModelTree,
     parentRoute: {
       name: string;
       uniqueIdentifierField: { name: string; type: string }[];
-    }
+    },
+    depth = 0,
+    maxAllowedDepth: number
   ) {
+    if (depth > maxAllowedDepth) {
+      maxDepth = maxAllowedDepth;
+      process.stdout.write(
+        chalk.yellow(`\u001b[2K\rMax depth hit for ${modelTree.modelName}`)
+      );
+      return;
+    }
+    if (depth > maxDepth) {
+      maxDepth = depth;
+    }
+    process.stdout.write(`\u001b[2K\r${modelTree.model.name} - Depth ${depth}`);
+
+    let childLoopPromises: Promise<void>[] = [];
+    directoryCount += 3;
+    fileCount += 4;
     // Get the current model name
     const modelName = modelTree.modelName;
 
@@ -685,6 +709,7 @@ export async function generateAppDirectoryFromModelTree(
       );
     }
     route += modelName.charAt(0).toLowerCase() + modelName.slice(1) + "/";
+
     routes.push({
       segment: `${route}create`,
       model: modelName,
@@ -740,141 +765,144 @@ export async function generateAppDirectoryFromModelTree(
       }
     }
 
-    // Create create directory
-    if (!fs.existsSync(path.join(baseModelDirectory, "create"))) {
-      fs.mkdirSync(path.join(baseModelDirectory, "create"));
-    }
-
-    const templateModelDirectory = path.join(
-      __dirname,
-      "templateRoot",
-      "app",
-      "nexquikTemplateModel"
-    );
-    const createBreadCrumb = generateBreadCrumb(route + "/create");
-
-    const listBreadCrumb = generateBreadCrumb(route);
-
-    // Create dynamic directories
-    const slugsForThisModel = getDynamicSlugs(
-      modelTree.modelName,
-      modelUniqueIdentifierField.map((f) => f.name)
-    );
-    slugsForThisModel.forEach((parentSlug) => {
-      route += `[${parentSlug}]/`;
-    });
-    const dynamicOutputDirectory = path.join(outputDirectory, route);
-    const parts = dynamicOutputDirectory
-      .split(path.sep)
-      .filter((item) => item !== "");
-    let currentPath = "";
-    for (const part of parts) {
-      currentPath = path.join(currentPath, part);
-      if (!fs.existsSync(currentPath)) {
-        fs.mkdirSync(currentPath);
+    if (baseModelDirectory !== "app/") {
+      // Create create directory
+      if (!fs.existsSync(path.join(baseModelDirectory, "create"))) {
+        fs.mkdirSync(path.join(baseModelDirectory, "create"));
       }
-    }
 
-    // Create edit directory
-    if (!fs.existsSync(path.join(dynamicOutputDirectory, "edit"))) {
-      fs.mkdirSync(path.join(dynamicOutputDirectory, "edit"));
-    }
-
-    const templateDynamicDirectory = path.join(
-      __dirname,
-      "templateRoot",
-      "app",
-      "nexquikTemplateModel",
-      "[id]"
-    );
-
-    // ############### List Page
-    const idFields = modelTree.uniqueIdentifierField;
-    let select = "";
-    if (idFields.length > 0) {
-      select += "select:{";
-      idFields.forEach(({ name }, index) => {
-        if (index > 0) {
-          select += ",";
-        }
-        select += `${name}: true`;
-      });
-      select += "}, ";
-    }
-    select += ` skip: page,
-take: limit`;
-    const listFormCode = await generateListForm(
-      modelTree,
-      createRedirectForm,
-      modelUniqueIdentifierField,
-      idFields.map((f) => f.name)
-    );
-
-    // Get relation fields to parent
-    let relationFieldToParent = "";
-    let fieldType = "";
-    if (modelTree.parent) {
-      // Get the field on the current model that is the id referencing the parent
-      modelTree.model.fields.forEach((mf) => {
-        if (mf.type === modelTree.parent?.name) {
-          if (
-            mf.relationFromFields?.length &&
-            mf.relationFromFields.length > 0
-          ) {
-            relationFieldToParent = mf.relationFromFields[0];
-          }
-        }
-      });
-
-      // Get the field type on the current model that is the id referencing the parent
-      fieldType =
-        modelTree.model.fields.find((f) => f.name === relationFieldToParent)
-          ?.type || "";
-    }
-    const parentIdentifierFields = modelTree.model.fields.find((field) =>
-      field.relationFromFields?.includes(relationFieldToParent)
-    )?.relationToFields;
-    let parentIdentifierField = "";
-    if (parentIdentifierFields && parentIdentifierFields.length > 0) {
-      parentIdentifierField = parentIdentifierFields[0];
-    }
-    // Delete Where Clause
-    const deleteWhereClause = generateDeleteClause(modelUniqueIdentifierField);
-
-    const listRedirect = await generateRedirect(`\`${createRedirectForm}\``);
-
-    // In parent, loop through fields and find field of 'type' current model
-    let isManyToMany = false;
-    let referenceFieldNameToParent = "";
-    const parentIdField = modelTree.parent?.fields.find((f) => f.isId);
-    const relationNameToParent = modelTree.parent?.fields.find(
-      (a) => a.type === modelTree.modelName
-    )?.relationName;
-    if (relationNameToParent) {
-      const referenceFieldToParent = modelTree.model.fields.find(
-        (f) => f.relationName === relationNameToParent
+      const templateModelDirectory = path.join(
+        __dirname,
+        "templateRoot",
+        "app",
+        "nexquikTemplateModel"
       );
-      if (referenceFieldToParent) {
-        referenceFieldNameToParent = referenceFieldToParent.name;
+      const createBreadCrumb = generateBreadCrumb(route + "/create");
+
+      const listBreadCrumb = generateBreadCrumb(route);
+
+      // Create dynamic directories
+      const slugsForThisModel = getDynamicSlugs(
+        modelTree.modelName,
+        modelUniqueIdentifierField.map((f) => f.name)
+      );
+      slugsForThisModel.forEach((parentSlug) => {
+        route += `[${parentSlug}]/`;
+      });
+      const dynamicOutputDirectory = path.join(outputDirectory, route);
+      const parts = dynamicOutputDirectory
+        .split(path.sep)
+        .filter((item) => item !== "");
+      let currentPath = "";
+      for (const part of parts) {
+        currentPath = path.join(currentPath, part);
+        if (!fs.existsSync(currentPath)) {
+          fs.mkdirSync(currentPath);
+        }
       }
-      if (referenceFieldToParent?.isList) {
-        isManyToMany = true;
+
+      // Create edit directory
+      if (!fs.existsSync(path.join(dynamicOutputDirectory, "edit"))) {
+        fs.mkdirSync(path.join(dynamicOutputDirectory, "edit"));
       }
-    }
-    let manyToManyWhere = "";
-    let manyToManyConnect = "";
-    if (isManyToMany && parentIdField) {
-      let typecastValue = `params.${getDynamicSlugs(modelTree.parent?.name, [
-        parentIdField.name,
-      ])}`;
-      if (parentIdField?.type === "Int" || parentIdField?.type === "Float") {
-        typecastValue = `Number(${typecastValue})`;
-      } else if (parentIdField?.type === "Boolean") {
-        typecastValue = `Boolean(${typecastValue})`;
-      } else if (parentIdField?.type === "String") {
-        typecastValue = `String(${typecastValue})`;
+
+      const templateDynamicDirectory = path.join(
+        __dirname,
+        "templateRoot",
+        "app",
+        "nexquikTemplateModel",
+        "[id]"
+      );
+
+      // ############### List Page
+      const idFields = modelTree.uniqueIdentifierField;
+      let select = "";
+      if (idFields.length > 0) {
+        select += "select:{";
+        idFields.forEach(({ name }, index) => {
+          if (index > 0) {
+            select += ",";
+          }
+          select += `${name}: true`;
+        });
+        select += "}, ";
       }
-      manyToManyWhere = `
+      select += ` skip: page,
+take: limit`;
+      const listFormCode = await generateListForm(
+        modelTree,
+        createRedirectForm,
+        modelUniqueIdentifierField,
+        idFields.map((f) => f.name)
+      );
+
+      // Get relation fields to parent
+      let relationFieldToParent = "";
+      let fieldType = "";
+      if (modelTree.parent) {
+        // Get the field on the current model that is the id referencing the parent
+        modelTree.model.fields.forEach((mf) => {
+          if (mf.type === modelTree.parent?.name) {
+            if (
+              mf.relationFromFields?.length &&
+              mf.relationFromFields.length > 0
+            ) {
+              relationFieldToParent = mf.relationFromFields[0];
+            }
+          }
+        });
+
+        // Get the field type on the current model that is the id referencing the parent
+        fieldType =
+          modelTree.model.fields.find((f) => f.name === relationFieldToParent)
+            ?.type || "";
+      }
+      const parentIdentifierFields = modelTree.model.fields.find((field) =>
+        field.relationFromFields?.includes(relationFieldToParent)
+      )?.relationToFields;
+      let parentIdentifierField = "";
+      if (parentIdentifierFields && parentIdentifierFields.length > 0) {
+        parentIdentifierField = parentIdentifierFields[0];
+      }
+      // Delete Where Clause
+      const deleteWhereClause = generateDeleteClause(
+        modelUniqueIdentifierField
+      );
+
+      const listRedirect = await generateRedirect(`\`${createRedirectForm}\``);
+
+      // In parent, loop through fields and find field of 'type' current model
+      let isManyToMany = false;
+      let referenceFieldNameToParent = "";
+      const parentIdField = modelTree.parent?.fields.find((f) => f.isId);
+      const relationNameToParent = modelTree.parent?.fields.find(
+        (a) => a.type === modelTree.modelName
+      )?.relationName;
+      if (relationNameToParent) {
+        const referenceFieldToParent = modelTree.model.fields.find(
+          (f) => f.relationName === relationNameToParent
+        );
+        if (referenceFieldToParent) {
+          referenceFieldNameToParent = referenceFieldToParent.name;
+        }
+        if (referenceFieldToParent?.isList) {
+          isManyToMany = true;
+        }
+      }
+      let manyToManyWhere = "";
+      let manyToManyConnect = "";
+      if (isManyToMany && parentIdField) {
+        let typecastValue = `params.${getDynamicSlugs(modelTree.parent?.name, [
+          parentIdField.name,
+        ])}`;
+        if (parentIdField?.type === "Int" || parentIdField?.type === "Float") {
+          typecastValue = `Number(${typecastValue})`;
+        } else if (parentIdField?.type === "Boolean") {
+          typecastValue = `Boolean(${typecastValue})`;
+        } else if (parentIdField?.type === "String") {
+          typecastValue = `String(${typecastValue})`;
+        }
+        manyToManyWhere = `
     where: {
       ${referenceFieldNameToParent}: {
         some: {
@@ -886,110 +914,139 @@ take: limit`;
     }
     `;
 
-      manyToManyConnect = `
+        manyToManyConnect = `
       ${referenceFieldNameToParent}: {
       connect: {
         ${parentIdField?.name}: ${typecastValue},
       },
     },
     `;
-    }
+      }
 
-    // Unique field on parent, that points to this model
-    const parentReferenceField = getParentReferenceField(modelTree);
-    const relationsToParent = modelTree.model.fields.find(
-      (f) => f.name === parentReferenceField
-    )?.relationToFields;
+      // Unique field on parent, that points to this model
+      const parentReferenceField = getParentReferenceField(modelTree);
+      const relationsToParent = modelTree.model.fields.find(
+        (f) => f.name === parentReferenceField
+      )?.relationToFields;
 
-    const parentReferenceFieldType = modelTree.parent?.fields.find(
-      (f) => relationsToParent && relationsToParent[0] === f.name
-    )?.type;
+      const parentReferenceFieldType = modelTree.parent?.fields.find(
+        (f) => relationsToParent && relationsToParent[0] === f.name
+      )?.type;
 
-    const whereparentClause = modelTree.parent
-      ? generateWhereParentClause(
-          "params",
-          getDynamicSlugs(modelTree.parent.name, [parentIdentifierField])[0],
-          relationsToParent ? relationsToParent[0] : parentIdentifierField,
-          parentReferenceFieldType || fieldType,
-          getParentReferenceField(modelTree),
-          manyToManyWhere,
-          select
-        )
-      : `({${select}})`;
-    // Enum import for create and edit pages
-    const enumImport = Object.keys(enums)
-      .map((e) => `import { ${e} } from "@prisma/client";`)
-      .join("\n");
+      const whereparentClause = modelTree.parent
+        ? generateWhereParentClause(
+            "params",
+            getDynamicSlugs(modelTree.parent.name, [parentIdentifierField])[0],
+            relationsToParent ? relationsToParent[0] : parentIdentifierField,
+            parentReferenceFieldType || fieldType,
+            getParentReferenceField(modelTree),
+            manyToManyWhere,
+            select
+          )
+        : `({${select}})`;
+      // Enum import for create and edit pages
+      const enumImport = Object.keys(enums)
+        .map((e) => `import { ${e} } from "@prisma/client";`)
+        .join("\n");
 
-    const linkHref = createRedirectForm;
+      const linkHref = createRedirectForm;
 
-    const listPagination = `
-    <div className="flex flex-col mt-2 ">
-      <span className="text-sm text-gray-700 dark:text-gray-400 mt-2">
-        Showing{" "}
-        <span className="font-semibold text-gray-900 dark:text-white">
-        {count === 0
-          ? 0
-          : page * limit > count
-          ? count - limit + 1
-          : (page - 1) * limit + 1}
-        </span>{" "}
-        to{" "}
-        <span className="font-semibold text-gray-900 dark:text-white">
-          {Math.min((page - 1) * limit + limit, count)}
-        </span>{" "}
-        of{" "}
-        <span className="font-semibold text-gray-900 dark:text-white">
-          {count}
-        </span>{" "}
-        Entries
-      </span>
-    <div className="inline-flex mt-2 xs:mt-0">
-      <Link
-        href={{
-          pathname: \`${linkHref}\`,
-          query: {
-            page: page > 1 ? page - 1 : 1,
-          },
-        }}
-        className="flex items-center justify-center px-3 h-8 text-sm font-medium text-white bg-gray-800 rounded-l hover:bg-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-      >
-        Prev
-      </Link>
-      <Link
-        href={{
-          pathname: \`${linkHref}\`,
-          query: {
-            page: page + 1,
-          },
-        }}
-        className={clsx(
-          "flex items-center justify-center px-3 h-8 text-sm font-medium text-white bg-gray-800 border-0 border-l border-gray-700 rounded-r hover:bg-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white",
-          page < Math.ceil(count / limit)
-            ? page + 1
-            : page && "pointer-events-none opacity-50"
-        )}
-      >
-        Next
-      </Link>
-    </div>
-    </div>
+      const listPagination = `
+
+      <ul className="flex items-center -space-x-px h-8 text-sm mt-4">
+      <li>
+        <Link
+          href={{
+            pathname: \`${linkHref}\`,
+            query: {
+              page: page != 1 ? page - 1 : 1,
+            },
+          }}
+          className="flex items-center justify-center px-3 h-8 ml-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+        >
+          <span className="sr-only">Previous</span>
+          <svg
+            className="w-2.5 h-2.5"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 6 10"
+          >
+            <path
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M5 1 1 5l4 4"
+            />
+          </svg>
+        </Link>
+      </li>
+      {Array(Math.ceil(count / limit))
+        .fill(0)
+        .map((_, i) => (
+          <li>
+            <Link
+              href={{
+                pathname: \`${linkHref}\`,
+                query: {
+                  page: i + 1,
+                },
+              }}
+              className={clsx(
+                "flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white",
+                page === i + 1 && "pointer-events-none opacity-50"
+              )}
+            >
+              {i + 1}
+            </Link>
+          </li>
+        ))}
+      <li>
+        <Link
+          href={{
+            pathname: \`${linkHref}\`,
+            query: {
+              page: page >= Math.ceil(count / limit) ? page : page + 1,
+            },
+          }}
+          className="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+        >
+          <span className="sr-only">Next</span>
+          <svg
+            className="w-2.5 h-2.5"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 6 10"
+          >
+            <path
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="m1 9 4-4-4-4"
+            />
+          </svg>
+        </Link>
+      </li>
+    </ul>
     
     
     `;
 
-    const countWhereparentClause = modelTree.parent
-      ? generateWhereParentClause(
-          "params",
-          getDynamicSlugs(modelTree.parent.name, [parentIdentifierField])[0],
-          relationsToParent ? relationsToParent[0] : parentIdentifierField,
-          parentReferenceFieldType || fieldType,
-          getParentReferenceField(modelTree),
-          manyToManyWhere,
-          ""
-        )
-      : ``;
-    const listCount = `
+      const countWhereparentClause = modelTree.parent
+        ? generateWhereParentClause(
+            "params",
+            getDynamicSlugs(modelTree.parent.name, [parentIdentifierField])[0],
+            relationsToParent ? relationsToParent[0] : parentIdentifierField,
+            parentReferenceFieldType || fieldType,
+            getParentReferenceField(modelTree),
+            manyToManyWhere,
+            ""
+          )
+        : ``;
+      const listCount = `
     const page =
     typeof searchParams?.page === "string" ? Number(searchParams?.page) : 1;
   const limit =
@@ -999,274 +1056,312 @@ take: limit`;
   }.count${countWhereparentClause ? countWhereparentClause : "()"};
     `;
 
-    const uniqueDynamicSlugs = getDynamicSlugs(
-      modelTree.modelName,
-      modelUniqueIdentifierField.map((f) => f.name)
-    );
+      const uniqueDynamicSlugs = getDynamicSlugs(
+        modelTree.modelName,
+        modelUniqueIdentifierField.map((f) => f.name)
+      );
 
-    // ############### Show Page
-    const childModelLinkList = await generateChildrenList(
-      modelTree,
-      createRedirectForm
-    );
-    const showFormCode = await generateShowForm(
-      modelTree,
-      createRedirectForm,
-      childModelLinkList
-    );
+      // ############### Show Page
+      const childModelLinkList = await generateChildrenList(
+        modelTree,
+        createRedirectForm
+      );
+      const showFormCode = await generateShowForm(
+        modelTree,
+        createRedirectForm,
+        childModelLinkList
+      );
 
-    // If many to many, must do a connect
-    const createFormCode = await generateCreateForm(
-      modelTree,
-      createRedirectForm,
-      enums
-    );
+      // If many to many, must do a connect
+      const createFormCode = await generateCreateForm(
+        modelTree,
+        createRedirectForm,
+        enums
+      );
 
-    let redirectStr = "";
-    modelTree.uniqueIdentifierField.forEach(
-      (f) => (redirectStr += "/" + `\${created.${f.name}}`)
-    );
-    const createRedirect = await generateRedirect(
-      `\`${createRedirectForm}${redirectStr}\``
-    );
+      let redirectStr = "";
+      modelTree.uniqueIdentifierField.forEach(
+        (f) => (redirectStr += "/" + `\${created.${f.name}}`)
+      );
+      const createRedirect = await generateRedirect(
+        `\`${createRedirectForm}${redirectStr}\``
+      );
 
-    const createLink = await generateLink(
-      `${createRedirectForm}/create`,
-      "Create New NexquikTemplateModel"
-    );
+      const createLink = await generateLink(
+        `${createRedirectForm}/create`,
+        "Create New NexquikTemplateModel"
+      );
 
-    const prismaInput = generateConvertToPrismaInputCode(modelTree);
+      const prismaInput = generateConvertToPrismaInputCode(modelTree);
 
-    const parentSlugs = getDynamicSlugs(
-      modelTree.parent?.name,
-      parentRoute.uniqueIdentifierField.map((f) => f.name)
-    );
+      const parentSlugs = getDynamicSlugs(
+        modelTree.parent?.name,
+        parentRoute.uniqueIdentifierField.map((f) => f.name)
+      );
 
-    const prismaCreateInput = generateConvertToPrismaCreateInputCode(
-      modelTree,
-      parentSlugs,
-      manyToManyConnect
-    );
+      const prismaCreateInput = generateConvertToPrismaCreateInputCode(
+        modelTree,
+        parentSlugs,
+        manyToManyConnect
+      );
 
-    const whereClause = generateWhereClause(
-      "params",
-      uniqueDynamicSlugs,
-      modelUniqueIdentifierField
-    );
+      const whereClause = generateWhereClause(
+        "params",
+        uniqueDynamicSlugs,
+        modelUniqueIdentifierField
+      );
 
-    // ############### Edit Page
-    const editFormCode = await generateEditForm(
-      modelTree,
-      createRedirectForm,
-      enums
-    );
+      // ############### Edit Page
+      const editFormCode = await generateEditForm(
+        modelTree,
+        createRedirectForm,
+        enums
+      );
 
-    let redirectStr2 = "";
-    uniqueDynamicSlugs.forEach(
-      (f) => (redirectStr2 += "/" + `\${params.${f}}`)
-    );
+      let redirectStr2 = "";
+      uniqueDynamicSlugs.forEach(
+        (f) => (redirectStr2 += "/" + `\${params.${f}}`)
+      );
 
-    const editRedirect = await generateRedirect(
-      `\`${createRedirectForm}/${redirectStr2}\``
-    );
+      const editRedirect = await generateRedirect(
+        `\`${createRedirectForm}/${redirectStr2}\``
+      );
 
-    // ############### Extras
-    const revalidatePath = await generateRevalidatePath(
-      `${createRedirectForm}`
-    );
+      // ############### Extras
+      const revalidatePath = await generateRevalidatePath(
+        `${createRedirectForm}`
+      );
 
-    const baseBreadCrumb = generateBreadCrumb(route);
+      const baseBreadCrumb = generateBreadCrumb(route);
 
-    const editBreadCrumb = generateBreadCrumb(route + "/edit");
+      const editBreadCrumb = generateBreadCrumb(route + "/edit");
 
-    // dynamic/edit/page.tsx
-    modifyFile(
-      path.join(templateDynamicDirectory, "edit", "page.tsx"),
-      path.join(dynamicOutputDirectory, "edit", "page.tsx"),
-      [
-        {
-          startComment: "//@nexquik prismaEnumImport start",
-          endComment: "//@nexquik prismaEnumImport stop",
-          insertString: enumImport,
-        },
-        {
-          startComment: "//@nexquik prismaWhereInput start",
-          endComment: "//@nexquik prismaWhereInput stop",
-          insertString: whereClause,
-        },
-        {
-          startComment: "//@nexquik prismaEditDataInput start",
-          endComment: "//@nexquik prismaEditDataInput stop",
-          insertString: prismaInput,
-        },
-        {
-          startComment: "//@nexquik editRedirect start",
-          endComment: "//@nexquik editRedirect stop",
-          insertString: editRedirect,
-        },
-        {
-          startComment: "{/* @nexquik editBreadCrumb start */}",
-          endComment: "{/* @nexquik editBreadCrumb stop */}",
-          insertString: editBreadCrumb,
-        },
-        {
-          startComment: "{/* @nexquik editForm start */}",
-          endComment: "{/* @nexquik editForm stop */}",
-          insertString: editBreadCrumb,
-        },
-      ]
-    );
+      // dynamic/edit/page.tsx
+      childLoopPromises.push(
+        modifyFile(
+          path.join(templateDynamicDirectory, "edit", "page.tsx"),
+          path.join(dynamicOutputDirectory, "edit", "page.tsx"),
+          [
+            {
+              startComment: "//@nexquik prismaEnumImport start",
+              endComment: "//@nexquik prismaEnumImport stop",
+              insertString: enumImport,
+            },
+            {
+              startComment: "//@nexquik prismaWhereInput start",
+              endComment: "//@nexquik prismaWhereInput stop",
+              insertString: whereClause,
+            },
+            {
+              startComment: "//@nexquik prismaEditDataInput start",
+              endComment: "//@nexquik prismaEditDataInput stop",
+              insertString: prismaInput,
+            },
+            {
+              startComment: "//@nexquik editRedirect start",
+              endComment: "//@nexquik editRedirect stop",
+              insertString: editRedirect,
+            },
+            {
+              startComment: "{/* @nexquik editBreadCrumb start */}",
+              endComment: "{/* @nexquik editBreadCrumb stop */}",
+              insertString: editBreadCrumb,
+            },
+            {
+              startComment: "{/* @nexquik editForm start */}",
+              endComment: "{/* @nexquik editForm stop */}",
+              insertString: editFormCode,
+            },
+          ],
+          modelTree.modelName
+        )
+      );
 
-    // dynamic/page.tsx
-    modifyFile(
-      path.join(templateDynamicDirectory, "page.tsx"),
-      path.join(dynamicOutputDirectory, "page.tsx"),
-      [
-        {
-          startComment: "//@nexquik prismaWhereInput start",
-          endComment: "//@nexquik prismaWhereInput stop",
-          insertString: whereClause,
-        },
-        {
-          startComment: "//@nexquik prismaDeleteClause start",
-          endComment: "//@nexquik prismaDeleteClause stop",
-          insertString: deleteWhereClause,
-        },
-        {
-          startComment: "//@nexquik revalidatePath start",
-          endComment: "//@nexquik revalidatePath stop",
-          insertString: revalidatePath,
-        },
-        {
-          startComment: "//@nexquik listRedirect start",
-          endComment: "//@nexquik listRedirect stop",
-          insertString: listRedirect,
-        },
-        {
-          startComment: "{/* @nexquik breadcrumb start */}",
-          endComment: "{/* @nexquik breadcrumb stop */}",
-          insertString: baseBreadCrumb,
-        },
-        {
-          startComment: "{/* @nexquik showForm start */}",
-          endComment: "{/* @nexquik showForm stop */}",
-          insertString: showFormCode,
-        },
-      ]
-    );
+      // dynamic/page.tsx
+      childLoopPromises.push(
+        modifyFile(
+          path.join(templateDynamicDirectory, "page.tsx"),
+          path.join(dynamicOutputDirectory, "page.tsx"),
+          [
+            {
+              startComment: "//@nexquik prismaWhereInput start",
+              endComment: "//@nexquik prismaWhereInput stop",
+              insertString: whereClause,
+            },
+            {
+              startComment: "//@nexquik prismaDeleteClause start",
+              endComment: "//@nexquik prismaDeleteClause stop",
+              insertString: deleteWhereClause,
+            },
+            {
+              startComment: "//@nexquik revalidatePath start",
+              endComment: "//@nexquik revalidatePath stop",
+              insertString: revalidatePath,
+            },
+            {
+              startComment: "//@nexquik listRedirect start",
+              endComment: "//@nexquik listRedirect stop",
+              insertString: listRedirect,
+            },
+            {
+              startComment: "{/* @nexquik breadcrumb start */}",
+              endComment: "{/* @nexquik breadcrumb stop */}",
+              insertString: baseBreadCrumb,
+            },
+            {
+              startComment: "{/* @nexquik showForm start */}",
+              endComment: "{/* @nexquik showForm stop */}",
+              insertString: showFormCode,
+            },
+          ],
+          modelTree.modelName
+        )
+      );
 
-    // base/page.tsx
-    modifyFile(
-      path.join(templateModelDirectory, "page.tsx"),
-      path.join(baseModelDirectory, "page.tsx"),
-      [
-        {
-          startComment: "/* @nexquik listCount start */",
-          endComment: "/* @nexquik listCount stop */",
-          insertString: listCount,
-        },
-        {
-          startComment: "//@nexquik prismaWhereParentClause start",
-          endComment: "//@nexquik prismaWhereParentClause stop",
-          insertString: whereparentClause,
-        },
-        {
-          startComment: "//@nexquik prismaDeleteClause start",
-          endComment: "//@nexquik prismaDeleteClause stop",
-          insertString: deleteWhereClause,
-        },
-        {
-          startComment: "//@nexquik revalidatePath start",
-          endComment: "//@nexquik revalidatePath stop",
-          insertString: revalidatePath,
-        },
-        {
-          startComment: "{/* @nexquik listBreadcrumb start */}",
-          endComment: "{/* @nexquik listBreadcrumb stop */}",
-          insertString: listBreadCrumb,
-        },
-        {
-          startComment: "{/* @nexquik createLink start */}",
-          endComment: "{/* @nexquik createLink stop */}",
-          insertString: createLink,
-        },
-        {
-          startComment: "{/* @nexquik listForm start */}",
-          endComment: "{/* @nexquik listForm stop */}",
-          insertString: listFormCode,
-        },
-        {
-          startComment: "{/* @nexquik listPagination start */}",
-          endComment: "{/* @nexquik listPagination stop */}",
-          insertString: listPagination,
-        },
-      ]
-    );
+      // base/page.tsx
+      childLoopPromises.push(
+        modifyFile(
+          path.join(templateModelDirectory, "page.tsx"),
+          path.join(baseModelDirectory, "page.tsx"),
+          [
+            {
+              startComment: "/* @nexquik listCount start */",
+              endComment: "/* @nexquik listCount stop */",
+              insertString: listCount,
+            },
+            {
+              startComment: "//@nexquik prismaWhereParentClause start",
+              endComment: "//@nexquik prismaWhereParentClause stop",
+              insertString: whereparentClause,
+            },
+            {
+              startComment: "//@nexquik prismaDeleteClause start",
+              endComment: "//@nexquik prismaDeleteClause stop",
+              insertString: deleteWhereClause,
+            },
+            {
+              startComment: "//@nexquik revalidatePath start",
+              endComment: "//@nexquik revalidatePath stop",
+              insertString: revalidatePath,
+            },
+            {
+              startComment: "{/* @nexquik listBreadcrumb start */}",
+              endComment: "{/* @nexquik listBreadcrumb stop */}",
+              insertString: listBreadCrumb,
+            },
+            {
+              startComment: "{/* @nexquik createLink start */}",
+              endComment: "{/* @nexquik createLink stop */}",
+              insertString: createLink,
+            },
+            {
+              startComment: "{/* @nexquik listForm start */}",
+              endComment: "{/* @nexquik listForm stop */}",
+              insertString: listFormCode,
+            },
+            {
+              startComment: "{/* @nexquik listPagination start */}",
+              endComment: "{/* @nexquik listPagination stop */}",
+              insertString: listPagination,
+            },
+          ],
+          modelTree.modelName
+        )
+      );
 
-    // base/create/page.tsx
-    modifyFile(
-      path.join(templateModelDirectory, "create", "page.tsx"),
-      path.join(baseModelDirectory, "create", "page.tsx"),
-      [
-        {
-          startComment: "//@nexquik prismaEnumImport start",
-          endComment: "//@nexquik prismaEnumImport stop",
-          insertString: enumImport,
-        },
-        {
-          startComment: "//@nexquik prismaCreateDataInput start",
-          endComment: "//@nexquik prismaCreateDataInput stop",
-          insertString: prismaCreateInput,
-        },
-        {
-          startComment: "//@nexquik revalidatePath start",
-          endComment: "//@nexquik revalidatePath stop",
-          insertString: revalidatePath,
-        },
-        {
-          startComment: "//@nexquik createRedirect start",
-          endComment: "//@nexquik createRedirect stop",
-          insertString: createRedirect,
-        },
+      // base/create/page.tsx
+      childLoopPromises.push(
+        modifyFile(
+          path.join(templateModelDirectory, "create", "page.tsx"),
+          path.join(baseModelDirectory, "create", "page.tsx"),
+          [
+            {
+              startComment: "//@nexquik prismaEnumImport start",
+              endComment: "//@nexquik prismaEnumImport stop",
+              insertString: enumImport,
+            },
+            {
+              startComment: "//@nexquik prismaCreateDataInput start",
+              endComment: "//@nexquik prismaCreateDataInput stop",
+              insertString: prismaCreateInput,
+            },
+            {
+              startComment: "//@nexquik revalidatePath start",
+              endComment: "//@nexquik revalidatePath stop",
+              insertString: revalidatePath,
+            },
+            {
+              startComment: "//@nexquik createRedirect start",
+              endComment: "//@nexquik createRedirect stop",
+              insertString: createRedirect,
+            },
 
-        {
-          startComment: "{/* @nexquik createBreadcrumb start */}",
-          endComment: "{/* @nexquik createBreadcrumb stop */}",
-          insertString: createBreadCrumb,
-        },
-        {
-          startComment: "{/* @nexquik createForm start */}",
-          endComment: "{/* @nexquik createForm stop */}",
-          insertString: createFormCode,
-        },
-      ]
-    );
+            {
+              startComment: "{/* @nexquik createBreadcrumb start */}",
+              endComment: "{/* @nexquik createBreadcrumb stop */}",
+              insertString: createBreadCrumb,
+            },
+            {
+              startComment: "{/* @nexquik createForm start */}",
+              endComment: "{/* @nexquik createForm stop */}",
+              insertString: createFormCode,
+            },
+          ],
+          modelTree.modelName
+        )
+      );
 
-    // Replace all placeholder model names
-    findAndReplaceInFiles(
-      baseModelDirectory,
-      "nexquikTemplateModel",
-      modelTree.modelName
-    );
-
-    for (const child of modelTree.children) {
-      await generateRoutes(child, {
-        name: route,
-        uniqueIdentifierField: modelUniqueIdentifierField,
-      });
+      childLoopPromises = childLoopPromises.concat(
+        modelTree.children.map(async (child) => {
+          try {
+            await generateRoutes(
+              child,
+              {
+                name: route,
+                uniqueIdentifierField: modelUniqueIdentifierField,
+              },
+              depth + 1,
+              maxAllowedDepth
+            );
+          } catch (error) {
+            console.error("An error occurred:", error);
+          }
+        })
+      );
+      await Promise.all(childLoopPromises);
     }
   }
 
-  for (const modelTree of modelTreeArray) {
-    const spinner = ora(
-      `Generating model: ${modelTree.model.name} ...`
-    ).start();
-    await generateRoutes(modelTree, {
-      name: "/",
-      uniqueIdentifierField: [],
-    });
-    spinner.stop();
-  }
+  const startTime = new Date().getTime();
+
+  // Start the main loop
+  const mainLoopPromises = modelTreeArray.map(async (modelTree) => {
+    try {
+      await generateRoutes(
+        modelTree,
+        {
+          name: "/",
+          uniqueIdentifierField: [],
+        },
+        0,
+        maxAllowedDepth
+      );
+    } catch (error) {
+      console.error("An error occurred:", error);
+    }
+  });
+
+  // Wait for all loop promises to complete
+  await Promise.all(mainLoopPromises);
+  process.stdout.write(`\u001b[2K\r`);
+  const endTime = new Date().getTime();
+  const duration = (endTime - startTime) / 1000;
+  console.log(
+    chalk.green(
+      `\n\nCreated ${fileCount} files and ${directoryCount} directories in ${duration} seconds.\nCreated ${modelTreeArray.length} model(s) with a max depth of ${maxDepth}`
+    )
+  );
+
   return routes;
 }
 
