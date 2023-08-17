@@ -1,3 +1,10 @@
+# [2.2.0](https://github.com/bcanfield/nexquik/compare/v2.1.3...v2.2.0) (2023-08-17)
+
+
+### Features
+
+* Generation Output mode ([#68](https://github.com/bcanfield/nexquik/issues/68)) ([e848086](https://github.com/bcanfield/nexquik/commit/e848086a9aba25f2173e375a1f67a01ed812a0f9))
+
 ## [2.1.3](https://github.com/bcanfield/nexquik/compare/v2.1.2...v2.1.3) (2023-08-17)
 
 
