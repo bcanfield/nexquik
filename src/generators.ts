@@ -21,6 +21,9 @@ import {
   getParentReferenceField,
 } from "./modelTree";
 
+const routeGroupName = "(nexquik)";
+const routeGroupAppDirName = "generated";
+
 const blueButtonClass =
   "px-2 py-1 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-sky-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-sky-600 dark:focus:ring-blue-500 dark:focus:text-white";
 const grayButtonClass =
@@ -355,13 +358,13 @@ export async function generate(
   excludedModels: string[],
   includedModels: string[],
   maxAllowedDepth: number,
-  modelsOnly: boolean
+  routeGroupOnly: boolean
 ) {
   // Read the Prisma schema file
   const prismaSchema = await readFileAsync(prismaSchemaPath, "utf-8");
 
   // Create the output directory
-  console.log("generate - create output dir", { modelsOnly });
+  console.log("generate - create output dir", { routeGroupOnly });
   createNestedDirectory(outputDirectory);
 
   // Main section to build the app from the modelTree
@@ -387,7 +390,7 @@ export async function generate(
   );
 
   // Create files in main directory
-  if (modelsOnly === false) {
+  if (routeGroupOnly === false) {
     copyDirectory(
       path.join(__dirname, "templateRoot"),
       outputDirectory,
@@ -445,7 +448,7 @@ export async function generate(
       directoryToOutputFiles,
       enums,
       maxAllowedDepth,
-      modelsOnly
+      routeGroupOnly
     );
 
     // Home route list
@@ -501,6 +504,11 @@ export async function generate(
     );
   } else {
     // Copy all files from the root dir except for app. (package.json, next.config, etc)
+    directoryToOutputFiles = path.join(
+      directoryToOutputFiles,
+      routeGroupName,
+      routeGroupAppDirName
+    );
     copyDirectory(
       path.join(__dirname, "templateRoot", "app"),
       directoryToOutputFiles,
@@ -563,7 +571,7 @@ export async function generate(
       directoryToOutputFiles,
       enums,
       maxAllowedDepth,
-      modelsOnly
+      routeGroupOnly
     );
   }
 
@@ -745,7 +753,7 @@ export async function generateAppDirectoryFromModelTree(
   outputDirectory: string,
   enums: Record<string, string[]>,
   maxAllowedDepth: number,
-  modelsOnly: boolean
+  routeGroupOnly: boolean
 ): Promise<RouteObject[]> {
   const routes: RouteObject[] = [];
   let fileCount = 0;
@@ -783,7 +791,7 @@ export async function generateAppDirectoryFromModelTree(
 
     let route = parentRoute.name;
 
-    if (modelsOnly === false && route === "/") {
+    if (routeGroupOnly === false && route === "/") {
       // Copy over the files in the template app dir, skipping the model directory. (globals.css, layout.tsx, page.tsx)
       copyDirectory(
         path.join(__dirname, "templateRoot", "app"),
