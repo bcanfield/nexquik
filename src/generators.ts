@@ -11,6 +11,7 @@ import {
   copyDirectory,
   copyImage,
   copyPublicDirectory,
+  createNestedDirectory,
   getDynamicSlugs,
   modifyFile,
 } from "./helpers";
@@ -360,14 +361,8 @@ export async function generate(
   const prismaSchema = await readFileAsync(prismaSchemaPath, "utf-8");
 
   // Create the output directory
-  if (fs.existsSync(outputDirectory)) {
-    if (modelsOnly === false) {
-      fs.rmSync(outputDirectory, { recursive: true });
-      fs.mkdirSync(outputDirectory);
-    }
-  } else {
-    fs.mkdirSync(outputDirectory);
-  }
+  console.log("generate - create output dir", { modelsOnly });
+  createNestedDirectory(outputDirectory);
 
   // Main section to build the app from the modelTree
   const dmmf = await getDMMF({ datamodel: prismaSchema });
@@ -390,19 +385,18 @@ export async function generate(
       "Generating directories for your models..."
     )} ${chalk.gray("(For deeply-nested schemas, this may take a moment)")}`
   );
+
   // Create files in main directory
   if (modelsOnly === false) {
-    // Create the app directory
-    directoryToOutputFiles = path.join(outputDirectory, "app");
-    fs.mkdirSync(directoryToOutputFiles);
-
-    // Copy all files from the root dir except for app. (package.json, next.config, etc)
     copyDirectory(
       path.join(__dirname, "templateRoot"),
       outputDirectory,
       true,
       "app"
     );
+
+    // Create the app directory
+    directoryToOutputFiles = path.join(outputDirectory, "app");
 
     // Try copying over public folder
     await copyPublicDirectory(
@@ -424,9 +418,7 @@ export async function generate(
       path.join(outputDirectory, "app")
     );
 
-    if (!fs.existsSync(path.join(outputDirectory, "prisma"))) {
-      fs.mkdirSync(path.join(outputDirectory, "prisma"));
-    }
+    createNestedDirectory(path.join(outputDirectory, "prisma"));
 
     // Copy over the user's prisma schema and rename it to schema.prisma
     copyAndRenameFile(
@@ -463,8 +455,8 @@ export async function generate(
 
     // page.tsx
     await modifyFile(
-      path.join(directoryToOutputFiles, "page.tsx"),
-      path.join(path.join(outputDirectory, "app", "page.tsx")),
+      path.join(path.join(__dirname, "templateRoot", "app", "page.tsx")),
+      path.join(path.join(directoryToOutputFiles, "page.tsx")),
       [
         {
           startComment: "{/* @nexquik routeList start */}",
@@ -498,7 +490,7 @@ export async function generate(
     // layout.tsx
     await modifyFile(
       path.join(path.join(__dirname, "templateRoot", "app", "layout.tsx")),
-      path.join(path.join(outputDirectory, "app", "layout.tsx")),
+      path.join(path.join(directoryToOutputFiles, "layout.tsx")),
       [
         {
           startComment: "{/* //@nexquik routeSidebar start */}",
@@ -508,6 +500,64 @@ export async function generate(
       ]
     );
   } else {
+    // Copy all files from the root dir except for app. (package.json, next.config, etc)
+    copyDirectory(
+      path.join(__dirname, "templateRoot", "app"),
+      directoryToOutputFiles,
+      true,
+      "app"
+    );
+
+    // Home route list
+    const modelNames = modelTree.map((m) => m.model.name);
+
+    const routeList = generateRouteList(modelTree.map((m) => m.model.name));
+    await modifyFile(
+      path.join(path.join(__dirname, "templateRoot", "app", "page.tsx")),
+      path.join(path.join(directoryToOutputFiles, "page.tsx")),
+      [
+        {
+          startComment: "{/* @nexquik routeList start */}",
+          endComment: "{/* @nexquik routeList stop */}",
+          insertString: routeList,
+        },
+      ]
+    );
+
+    // Route sidebar
+    let routeSidebar = "";
+    for (const model of modelNames) {
+      const lowerCase = model.charAt(0).toLowerCase() + model.slice(1);
+      routeSidebar += `<li className="mt-4">
+
+                      <a
+                      href="/${lowerCase}"
+                      className="pl-2 mb-8 lg:mb-1 font-semibold dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-600"
+                    >
+                    ${model}
+                    </a>
+
+
+                    
+
+</li>
+
+`;
+    }
+
+    // layout.tsx
+    await modifyFile(
+      path.join(path.join(__dirname, "templateRoot", "app", "layout.tsx")),
+      path.join(path.join(directoryToOutputFiles, "layout.tsx")),
+      [
+        {
+          startComment: "{/* //@nexquik routeSidebar start */}",
+          endComment: "{/* //@nexquik routeSidebar stop */}",
+          insertString: routeSidebar,
+        },
+      ]
+    );
+
     await generateAppDirectoryFromModelTree(
       modelTree,
       directoryToOutputFiles,
@@ -787,23 +837,11 @@ export async function generateAppDirectoryFromModelTree(
 
     // Create base directory for this model under the app dir
     const baseModelDirectory = path.join(outputDirectory, route);
-    const baseParts = baseModelDirectory
-      .split(path.sep)
-      .filter((item) => item !== "");
-
-    let currentBasePath = "";
-    for (const part of baseParts) {
-      currentBasePath = path.join(currentBasePath, part);
-      if (!fs.existsSync(currentBasePath)) {
-        fs.mkdirSync(currentBasePath);
-      }
-    }
+    createNestedDirectory(baseModelDirectory);
 
     if (baseModelDirectory !== "app/") {
       // Create create directory
-      if (!fs.existsSync(path.join(baseModelDirectory, "create"))) {
-        fs.mkdirSync(path.join(baseModelDirectory, "create"));
-      }
+      createNestedDirectory(path.join(baseModelDirectory, "create"));
 
       const templateModelDirectory = path.join(
         __dirname,
@@ -823,22 +861,11 @@ export async function generateAppDirectoryFromModelTree(
       slugsForThisModel.forEach((parentSlug) => {
         route += `[${parentSlug}]/`;
       });
-      const dynamicOutputDirectory = path.join(outputDirectory, route);
-      const parts = dynamicOutputDirectory
-        .split(path.sep)
-        .filter((item) => item !== "");
-      let currentPath = "";
-      for (const part of parts) {
-        currentPath = path.join(currentPath, part);
-        if (!fs.existsSync(currentPath)) {
-          fs.mkdirSync(currentPath);
-        }
-      }
 
-      // Create edit directory
-      if (!fs.existsSync(path.join(dynamicOutputDirectory, "edit"))) {
-        fs.mkdirSync(path.join(dynamicOutputDirectory, "edit"));
-      }
+      // Create dynamic and edit directory
+      const dynamicOutputDirectory = path.join(outputDirectory, route);
+      createNestedDirectory(dynamicOutputDirectory);
+      createNestedDirectory(path.join(dynamicOutputDirectory, "edit"));
 
       const templateDynamicDirectory = path.join(
         __dirname,
@@ -1358,7 +1385,7 @@ take: limit`;
               maxAllowedDepth
             );
           } catch (error) {
-            console.error("An error occurred:", error);
+            console.error("An error occurred in childLoopPromises:", error);
           }
         })
       );
@@ -1381,7 +1408,7 @@ take: limit`;
         maxAllowedDepth
       );
     } catch (error) {
-      console.error("An error occurred:", error);
+      console.error("An error occurred in mainLoopPromises:", error);
     }
   });
 
