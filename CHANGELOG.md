@@ -1,3 +1,11 @@
+## [2.2.1](https://github.com/bcanfield/nexquik/compare/v2.2.0...v2.2.1) (2023-08-21)
+
+
+### Bug Fixes
+
+* Remove nexquik .tar dependency ([6cfbcf3](https://github.com/bcanfield/nexquik/commit/6cfbcf39955d031d6c78db87d4c73bcd151a05f8))
+* Testing and Organization Improvements ([#69](https://github.com/bcanfield/nexquik/issues/69)) ([2fa6e3d](https://github.com/bcanfield/nexquik/commit/2fa6e3ddf44ab9cf5462b2e280c9912784a7404f))
+
 # [2.2.0](https://github.com/bcanfield/nexquik/compare/v2.1.3...v2.2.0) (2023-08-17)
 
 
