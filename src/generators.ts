@@ -424,7 +424,9 @@ export async function generate(
       path.join(outputDirectory, "app")
     );
 
-    fs.mkdirSync(path.join(outputDirectory, "prisma"));
+    if (!fs.existsSync(path.join(outputDirectory, "prisma"))) {
+      fs.mkdirSync(path.join(outputDirectory, "prisma"));
+    }
 
     // Copy over the user's prisma schema and rename it to schema.prisma
     copyAndRenameFile(
@@ -504,6 +506,14 @@ export async function generate(
           insertString: routeSidebar,
         },
       ]
+    );
+  } else {
+    await generateAppDirectoryFromModelTree(
+      modelTree,
+      directoryToOutputFiles,
+      enums,
+      maxAllowedDepth,
+      modelsOnly
     );
   }
 
