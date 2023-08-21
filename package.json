@@ -16,7 +16,7 @@
     "install-locally": "npm-run-all install-locally:*",
     "install-locally:1": "npm run build",
     "install-locally:2": "rm -f ./nexquik.tgz",
-    "install-locally:3": "npm pack",
+    "install-locally:3": "npm pack --force",
     "install-locally:4": "mv \"$(ls *.tgz)\" \"nexquik.tgz\"",
     "install-locally:5": "npm i && npm i --save-dev ./nexquik.tgz",
     "dev": "nodemon",
