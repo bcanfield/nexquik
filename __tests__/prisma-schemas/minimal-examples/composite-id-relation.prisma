@@ -1,0 +1,28 @@
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+model Post {
+    postId1  Int
+    postId2  Int
+    name     String
+    bookings User   @relation(fields: [postId1, postId2], references: [userId1, userId2], onDelete: Cascade)
+    userId1  Int
+    userId2  Int
+
+    @@id([postId1, postId2])
+}
+
+model User {
+    userId1 Int
+    userId2 Int
+    name    String
+    posts   Post[]
+
+    @@id([userId1, userId2])
+}
