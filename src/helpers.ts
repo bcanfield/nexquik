@@ -1,5 +1,5 @@
 import path from "path";
-import fs from "fs";
+import fs, { mkdirSync } from "fs";
 import prettier from "prettier";
 import { RouteObject } from "./generators";
 import { ESLint } from "eslint";
@@ -23,7 +23,7 @@ export function copyAndRenameFile(
     // Copy the source file to the destination
     fs.copyFileSync(sourceFilePath, destinationFilePath);
   } catch (error) {
-    console.error(`An error occurred: ${error}`);
+    console.error(`An error occurred in copyAndRenameFile: ${error}`);
   }
 }
 
@@ -143,7 +143,9 @@ export async function copyPublicDirectory(
       }
     }
   } catch (error) {
-    console.error(chalk.red("An error occurred:", error));
+    console.error(
+      chalk.red("An error occurred in copyPublicDirectory:", error)
+    );
   }
 }
 
@@ -174,7 +176,7 @@ export async function copyImage(
       await waitForEvent(srcStream, "end");
     }
   } catch (error) {
-    console.error(chalk.red("An error occurred:", error));
+    console.error(chalk.red("An error occurred in copyImage:", error));
   }
 }
 
@@ -226,13 +228,28 @@ export async function modifyFile(
         modelName
       );
     }
+
     // Write the modified content to the destination file
-    fs.promises.writeFile(destinationFilePath, modifiedContent);
+    await fs.promises.writeFile(destinationFilePath, modifiedContent);
+
+    return;
   } catch (error) {
-    console.error("An error occurred:", error);
+    console.error("An error occurred in modifyFile:", error);
   }
 }
 
+export function createNestedDirectory(directory: string) {
+  const baseParts = directory.split(path.sep).filter((item) => item !== "");
+
+  let currentBasePath = "";
+  for (const part of baseParts) {
+    currentBasePath = path.join(currentBasePath, part);
+    if (!fs.existsSync(currentBasePath)) {
+      fs.mkdirSync(currentBasePath);
+    }
+  }
+  return;
+}
 // copy files from one directory to another
 // copy files from one directory to another
 export function copyDirectory(
@@ -241,17 +258,13 @@ export function copyDirectory(
   toReplace = false,
   skipChildDir?: string
 ): void {
-  // console.log(
-  //   chalk.yellowBright(`Copying directory: ${sourceDir} to ${destinationDir}`)
-  // );
-
   try {
     if (toReplace && fs.existsSync(destinationDir)) {
       fs.rmSync(destinationDir, { recursive: true });
     }
 
     if (!fs.existsSync(destinationDir)) {
-      fs.mkdirSync(destinationDir);
+      createNestedDirectory(destinationDir);
     }
 
     const files = fs.readdirSync(sourceDir, { withFileTypes: true });
@@ -274,7 +287,7 @@ export function copyDirectory(
       }
     });
   } catch (error) {
-    console.error(chalk.red("An error occurred:", error));
+    console.error(chalk.red("An error occurred in copyDirectory:", error));
   }
 }
 
