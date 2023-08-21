@@ -10,6 +10,6 @@ updates:
     schedule:
       interval: "daily"
   - package-ecosystem: "npm" # See documentation for possible values
-    directory: "/templateRoot" # Location of package manifests
+    directory: "/src/templateRoot" # Location of package manifests
     schedule:
       interval: "daily"

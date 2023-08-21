@@ -17,7 +17,7 @@
   },
   "exclude": [
     "dist/*",
-    "templateRoot/*",
+    "src/templateRoot/*",
     "devNexquikApp/*",
     "nexquikApp/*",
     "__tests__"
