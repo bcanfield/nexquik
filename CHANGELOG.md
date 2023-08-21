@@ -1,3 +1,11 @@
+## [2.2.2](https://github.com/bcanfield/nexquik/compare/v2.2.1...v2.2.2) (2023-08-21)
+
+
+### Bug Fixes
+
+* Models only ([fd10673](https://github.com/bcanfield/nexquik/commit/fd106731e7c3c661aeed5a449e530deef13f4bbb))
+* Prevent app dir generation from being called twice ([d989fa2](https://github.com/bcanfield/nexquik/commit/d989fa22d1b31627f2a06dd72656b1dd08ae5fb6))
+
 ## [2.2.1](https://github.com/bcanfield/nexquik/compare/v2.2.0...v2.2.1) (2023-08-21)
 
 
