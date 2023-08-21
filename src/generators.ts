@@ -405,7 +405,7 @@ export async function generate(
     );
 
     // Try copying over public folder
-    copyPublicDirectory(
+    await copyPublicDirectory(
       path.join(__dirname, "templateRoot", "public"),
       path.join(outputDirectory, "public"),
       true,
@@ -413,12 +413,12 @@ export async function generate(
     );
 
     // copy over images
-    copyImage(
+    await copyImage(
       path.join(__dirname, "templateRoot", "app"),
       "favicon.ico",
       path.join(outputDirectory, "app")
     );
-    copyImage(
+    await copyImage(
       path.join(__dirname, "templateRoot", "app"),
       "icon.png",
       path.join(outputDirectory, "app")
@@ -460,7 +460,7 @@ export async function generate(
     const routeList = generateRouteList(modelTree.map((m) => m.model.name));
 
     // page.tsx
-    modifyFile(
+    await modifyFile(
       path.join(directoryToOutputFiles, "page.tsx"),
       path.join(path.join(outputDirectory, "app", "page.tsx")),
       [
@@ -506,14 +506,6 @@ export async function generate(
       ]
     );
   }
-
-  await generateAppDirectoryFromModelTree(
-    modelTree,
-    directoryToOutputFiles,
-    enums,
-    maxAllowedDepth,
-    modelsOnly
-  );
 
   return;
 }
