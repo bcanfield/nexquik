@@ -56,8 +56,8 @@ export async function run(options?: GeneratorOptions) {
         "5"
       )
       .option(
-        "-modelsOnly",
-        "Output only the model directories in your desired output location, excluding the main directory files."
+        "-routeGroupOnly",
+        "Outputs the built app as a route group, and excludes config files found in next.js root directory"
       )
       .parse(process.argv);
 
@@ -70,8 +70,10 @@ export async function run(options?: GeneratorOptions) {
       ? String(options.generator.config.include).split(",")
       : [];
     const maxDepth = parseInt(options?.generator.config.depth || cliArgs.Depth);
-    const modelsOnly =
-      options?.generator.config.modelsOnly || cliArgs.ModelsOnly || false;
+    const routeGroupOnly =
+      options?.generator.config.routeGroupOnly ||
+      cliArgs.RouteGroupOnly ||
+      false;
     const excludedModels =
       includedModels.length > 0
         ? []
@@ -92,7 +94,7 @@ export async function run(options?: GeneratorOptions) {
       excludedModels,
       includedModels,
       maxDepth,
-      modelsOnly
+      routeGroupOnly
     );
 
     // await formatDirectory(outputDirectory);

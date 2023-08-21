@@ -22,7 +22,7 @@ test.each(readdirSync(prismaSchemaDirectory))(
       `node ${nexquikMain} -schema ${path.join(
         prismaSchemaDirectory,
         schemaPath
-      )} -output ${testOutputDirectory} -modelsOnly`
+      )} -output ${testOutputDirectory} -routeGroupOnly`
     );
     console.log(`Schema Test: ${schemaPath}`);
     expect(isDirectoryNotEmpty(testOutputDirectory)).toBeTruthy();

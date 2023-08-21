@@ -49,7 +49,7 @@ npx prisma generate
 | include \<value\> | Comma-separated list of model names to include from the top-level of the generated app |   | false  |
 | exclude \<value\>  | Comma-separated list of model names to exclude from the top-level of the generated app (NOTE: If the 'include' option is used, this exclusion list will be ignored) |               | false    |
 | depth \<value\>  | Maximum recursion depth for your models. (Changing this for large data models is not recommended, unless you filter down your models with the 'include' or 'exclude' flags also.) |     5          | false    |
-| modelsOnly   | Output only the model directories in your desired output location, excluding the main directory files. |               | false    |
+| routeGroupOnly   | Outputs the built app as a route group, and excludes config files found in next.js root directory. |               | false    |
 
 ### Disabled
 To disable Nexquik from generating during a Prisma generate, add the following environmental variable.
@@ -63,7 +63,7 @@ Nexquik is built to help you throughout the entire lifecycle of your project.
 It allows you to choose pieces of your application to be generated, while leaving other pieces un-touched. 
 
 ```zsh
-nexquik -output ./nexquikApp/app -modelsOnly -include User,Admin,Role
+nexquik -output ./nexquikApp/app -routeGroupOnly -include User,Admin,Role
 ```
 
 This has proven to be extremely useful for portions of your app that rely on simple CRUD operations. Here are some prime use-cases for this type of system.
