@@ -9,6 +9,7 @@ export interface CliArgs {
   outputDirectory: string;
 }
 export const defaultOutputDirectory = "nexquikApp";
+
 const defaultPrismaSchemaPath = "schema.prisma";
 
 export async function run(options?: GeneratorOptions) {
@@ -40,6 +41,7 @@ export async function run(options?: GeneratorOptions) {
         "Path to output directory",
         defaultOutputDirectory
       )
+      .option("-routeGroup <value>", "Name for the route group", "")
       .option(
         "-exclude <value>",
         "Comma-separated list of model names to exclude from the top-level of the generated app. (NOTE: If the -include is passed, this exclusion list will be ignored)",
@@ -70,6 +72,9 @@ export async function run(options?: GeneratorOptions) {
       ? String(options.generator.config.include).split(",")
       : [];
     const maxDepth = parseInt(options?.generator.config.depth || cliArgs.Depth);
+    const routeGroup =
+      options?.generator.config.routeGroup || cliArgs.RouteGroup;
+
     const routeGroupOnly =
       options?.generator.config.routeGroupOnly ||
       cliArgs.RouteGroupOnly ||
@@ -94,7 +99,8 @@ export async function run(options?: GeneratorOptions) {
       excludedModels,
       includedModels,
       maxDepth,
-      routeGroupOnly
+      routeGroupOnly,
+      routeGroup
     );
 
     // await formatDirectory(outputDirectory);
