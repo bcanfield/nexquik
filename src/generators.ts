@@ -572,7 +572,6 @@ export async function generate(
       ]
     );
   } else {
-    console.log({ outputGroupedRoute });
     outputGroupedRoute = path.join(outputDirectory, nexquikRouteGroupName);
     createNestedDirectory(outputGroupedRoute);
 
@@ -668,7 +667,7 @@ export async function generate(
 
     await generateAppDirectoryFromModelTree(
       modelTree,
-      outputGroupedAppDir,
+      outputGroupedRoute,
       enums,
       maxAllowedDepth,
       routeGroupOnly,
@@ -818,8 +817,7 @@ function generateRouteList(modelNames: string[], routeGroup: string) {
       </a>
       <a className="${blueTextClass}" href="${
       routeGroup && "/" + routeGroup
-    }/${lowerCase}">
-      List 
+    }/${lowerCase}">      List 
       </a>
     </td>
   
@@ -939,13 +937,23 @@ export async function generateAppDirectoryFromModelTree(
     });
 
     const baseRoute = route;
+    // const createRedirectForm = `${
+    //   routeGroup && "/" + routeGroup
+    // }${convertRouteToRedirectUrl(baseRoute)}`;
     const createRedirectForm = convertRouteToRedirectUrl(baseRoute);
 
+    // href="${
+    //   routeGroup && "/" + routeGroup
+    // }/${lowerCase}/create"
+    // console.log({ baseRoute, createRedirectForm });
     // Create base directory for this model under the app dir
     const baseModelDirectory = path.join(outputDirectory, route);
     createNestedDirectory(baseModelDirectory);
 
-    if (baseModelDirectory !== "app/") {
+    if (
+      baseModelDirectory !== "app/" &&
+      baseModelDirectory !== `${routeGroup}/`
+    ) {
       // Create create directory
       createNestedDirectory(path.join(baseModelDirectory, "create"));
 
@@ -1507,7 +1515,8 @@ take: limit`;
       await generateRoutes(
         modelTree,
         {
-          name: "/",
+          // name: "/",
+          name: `${routeGroup && "/" + routeGroup}/`,
           uniqueIdentifierField: [],
         },
         0,
