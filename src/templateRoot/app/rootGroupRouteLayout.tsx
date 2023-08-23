@@ -2,6 +2,8 @@ import "./globals.css";
 import Link from "next/link";
 import { Roboto } from "next/font/google";
 import Image from "next/image";
+import background from "./images/backdrop.png";
+import logo from "./images/logo.png";
 
 const roboto = Roboto({
   weight: "400",
@@ -18,16 +20,15 @@ export default function RootLayout({
       className={`${roboto.className} dark [--scroll-mt:9.875rem] lg:[--scroll-mt:6.3125rem] js-focus-visible`}
     >
       <body className="antialiased text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900">
-        Nested Group route layout
         {/* Start Backdrop Blur */}
         <div className="absolute z-20 top-0 inset-x-0 flex justify-center overflow-hidden pointer-events-none">
           <div className="w-[108rem] flex-none flex justify-end">
             <Image
-              src="/backdrop2.png"
+              src={background}
               width={500}
               height={500}
               className="w-[90rem] flex-none max-w-none hidden dark:block"
-              alt="Picture of the author"
+              alt="background"
             />
           </div>
         </div>
@@ -38,15 +39,15 @@ export default function RootLayout({
             <div className="py-4 border-b border-slate-900/10 lg:px-8 lg:border-0 dark:border-slate-300/10 mx-4 lg:mx-0">
               <div className="relative flex items-center">
                 <a className="flex items-center justify-between">
-                  {/* <span className="box-sizing: border-box; display: inline-block; overflow: hidden; width: initial; height: initial; background: none; opacity: 1; border: 0px; margin: 0px; padding: 0px; position: relative; max-width: 100%;">
+                  <span className="box-sizing: border-box; display: inline-block; overflow: hidden; width: initial; height: initial; background: none; opacity: 1; border: 0px; margin: 0px; padding: 0px; position: relative; max-width: 100%;">
                     <Image
                       alt="Nexquik Logo"
-                      src="/logo.png"
+                      src={logo}
                       width="35"
                       height="35"
                     ></Image>
-                  </span> */}
-                  <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
+                  </span>
+                  <span className="self-center text-2xl ml-2 font-semibold whitespace-nowrap dark:text-white">
                     App
                   </span>
                 </a>
