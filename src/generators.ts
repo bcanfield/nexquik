@@ -457,40 +457,6 @@ export async function generate(
         }
       }
     );
-    // copyAndRenameFile(
-    //   path.join(__dirname, "templateRoot", "app", "layout.tsx"),
-    //   path.join(outputAppDirectory),
-    //   "layout.tsx"
-    // );
-    // copyAndRenameFile(
-    //   path.join(__dirname, "templateRoot", "app", "page.tsx"),
-    //   path.join(outputAppDirectory),
-    //   "page.tsx"
-    // );
-
-    // await modifyFile(
-    //   path.join(__dirname, "templateRoot", "app", "layout.tsx"),
-    //   path.join(outputAppDirectory, "layout.tsx"),
-    //   [
-    //     {
-    //       startComment: "{/* @nexquik routeList start */}",
-    //       endComment: "{/* @nexquik routeList stop */}",
-    //       insertString: "",
-    //     },
-    //   ]
-    // );
-
-    // await modifyFile(
-    //   path.join(__dirname, "templateRoot", "app", "page.tsx"),
-    //   path.join(outputAppDirectory, "page.tsx"),
-    //   [
-    //     {
-    //       startComment: "{/* @nexquik routeList start */}",
-    //       endComment: "{/* @nexquik routeList stop */}",
-    //       insertString: "",
-    //     },
-    //   ]
-    // );
   }
 
   // Create grouped route directories
@@ -508,20 +474,16 @@ export async function generate(
       rootName,
       name
     );
-    // createNestedDirectory(thisOutputRouteGroupPath);
     await generateAppDirectoryFromModelTree(
       modelTree,
       outputAppDirectory,
       enums,
       maxAllowedDepth,
-      // name
       thisGroupPath
     );
 
-    // Home route list
-    // const modelNames = modelTree.map((m) => m.model.name);
-    const modelNames: string[] = [];
-
+    // Nested Group Home route list
+    const modelNames = modelTree.map((m) => m.model.name);
     const routeList = generateRouteList(modelNames, rootName);
 
     await modifyFile(
@@ -535,44 +497,9 @@ export async function generate(
         },
       ]
     );
-
-    // Route sidebar
-    let routeSidebar = "";
-    for (const model of modelNames) {
-      const lowerCase = model.charAt(0).toLowerCase() + model.slice(1);
-      routeSidebar += `<li className="mt-4">
-
-                      <a
-                      href="${lowerCase}"
-                      className="pl-2 mb-8 lg:mb-1 font-semibold dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-600"
-                    >
-                    ${model}
-                    </a>       
-
-</li>
-
-`;
-    }
-
-    // layout.tsx
-    await modifyFile(
-      path.join(__dirname, "templateRoot", "app", "groupRouteLayout.tsx"),
-      path.join(path.join(thisOutputRouteGroupPath, "layout.tsx")),
-      [
-        {
-          startComment: "{/* //@nexquik routeSidebar start */}",
-          endComment: "{/* //@nexquik routeSidebar stop */}",
-          insertString: routeSidebar,
-        },
-      ]
-    );
   });
 
   // END GROUP LOOP
-
-  // Home route list
-  // const modelNames = modelTree.map((m) => m.model.name);
-  const modelNames: string[] = [];
   // globals.css
   fs.copyFile(
     path.join(__dirname, "templateRoot", "app", "globals.css"),
@@ -588,15 +515,14 @@ export async function generate(
 
   // Route sidebar
   let routeSidebar = "";
-  for (const model of modelNames) {
-    const lowerCase = model.charAt(0).toLowerCase() + model.slice(1);
+  for (const group of groups) {
     routeSidebar += `<li className="mt-4">
 
                       <a
-                      href="${lowerCase}"
+                      href="/${rootName}/${group.name}"
                       className="pl-2 mb-8 lg:mb-1 font-semibold dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-600"
                     >
-                    ${model}
+                    ${group.name}
                     </a>      
 </li>
 
