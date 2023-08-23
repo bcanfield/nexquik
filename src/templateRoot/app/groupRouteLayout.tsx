@@ -18,8 +18,8 @@ export default function RootLayout({
       className={`${roboto.className} dark [--scroll-mt:9.875rem] lg:[--scroll-mt:6.3125rem] js-focus-visible`}
     >
       <body className="antialiased text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900">
+        Nested Group route layout
         {/* Start Backdrop Blur */}
-
         <div className="absolute z-20 top-0 inset-x-0 flex justify-center overflow-hidden pointer-events-none">
           <div className="w-[108rem] flex-none flex justify-end">
             <Image
@@ -32,7 +32,6 @@ export default function RootLayout({
           </div>
         </div>
         {/* End Backdrop Blur */}
-
         {/* Navbar */}
         <div className="sticky top-0 z-40 w-full backdrop-blur flex-none transition-colors duration-500 lg:z-50 lg:border-b lg:border-slate-900/10 dark:border-slate-50/[0.06] bg-white supports-backdrop-blur:bg-white/95 dark:bg-transparent">
           <div className="max-w-8xl mx-auto">
@@ -122,7 +121,6 @@ export default function RootLayout({
         </div>
         {/* End Navbar */}
         {/* Page Content Start*/}
-
         <div className="w-full px-4 mx-auto max-w-8xl ">
           <div className="lg:flex">
             {/* Side Nav */}
