@@ -61,7 +61,11 @@ export async function run(options?: GeneratorOptions) {
         "Outputs the built app as a route group, and excludes config files found in next.js root directory"
       )
       .option("-init", "Initializes a full next.js app")
-      .option("-rootName <value>", "Name for the root app to be created");
+      .option(
+        "-rootName <value>",
+        "Name for the root app to be created",
+        "gen"
+      );
 
     program
       .command("generate")

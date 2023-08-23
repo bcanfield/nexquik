@@ -503,16 +503,25 @@ export async function generate(
     }
   );
 
+  const entries = fs.readdirSync(outputRouteGroup, { withFileTypes: true });
+
+  // Filter only directory entries
+  const directories = entries
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+
+  // console.log("Directories in", directoryPath, ":", directories);
+
   // Route sidebar
   let routeSidebar = "";
-  for (const group of groups) {
+  for (const dir of directories) {
     routeSidebar += `<li className="mt-4">
 
                       <a
-                      href="/${rootName}/${group.name}"
+                      href="/${rootName}/${dir}"
                       className="pl-2 mb-8 lg:mb-1 font-semibold dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-600"
                     >
-                    ${group.name}
+                    ${dir}
                     </a>      
 </li>
 
@@ -534,7 +543,7 @@ export async function generate(
     ]
   );
 
-  const routeGroupList = generateRouteGroupList(rootName, groups);
+  const routeGroupList = generateRouteGroupList(rootName, directories);
 
   await modifyFile(
     path.join(__dirname, "templateRoot", "app", "rootGroupRouteHome.tsx"),
@@ -663,9 +672,9 @@ export async function generateShowForm(
   return reactComponentTemplate;
 }
 
-function generateRouteGroupList(rootName: string, groups: Group[]) {
+function generateRouteGroupList(rootName: string, dirs: string[]) {
   const routeLinks = [];
-  for (const { name } of groups) {
+  for (const name of dirs) {
     // const lowerCase = model.charAt(0).toLowerCase() + model.slice(1);
     routeLinks.push(`<tr>
    
