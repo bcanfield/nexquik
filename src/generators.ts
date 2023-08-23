@@ -358,7 +358,8 @@ export async function generate(
   maxAllowedDepth: number,
   init: boolean,
   rootName: string,
-  groups: Group[]
+  groups: Group[],
+  extendOnly: boolean
 ) {
   console.log(
     `${chalk.blue.bold(
@@ -380,14 +381,17 @@ export async function generate(
 
   // Remove the directory if it exists
   // Check if the directory exists
-  if (fse.existsSync(outputRouteGroup)) {
-    // Remove the directory and its contents
-    fse.removeSync(outputRouteGroup);
-    console.log(`Removing and re-creating directory '${outputRouteGroup}'.`);
+  if (extendOnly === false) {
+    if (fse.existsSync(outputRouteGroup)) {
+      // Remove the directory and its contents
+      fse.removeSync(outputRouteGroup);
+      console.log(`Removing and re-creating directory '${outputRouteGroup}'.`);
+    } else {
+      console.log(`Creating directory '${outputRouteGroup}' from scratch.`);
+    }
   } else {
-    console.log(`Creating directory '${outputRouteGroup}' from scratch.`);
+    console.log(`Extending directory '${outputRouteGroup}'.`);
   }
-
   createNestedDirectory(path.join(outputAppDirectory, rootName));
 
   const enums = getEnums(dmmf.datamodel);
@@ -434,8 +438,6 @@ export async function generate(
       (err) => {
         if (err) {
           console.error("An error occurred while copying the file:", err);
-        } else {
-          console.log(`File copied to ${outputDirectory}`);
         }
       }
     );
@@ -448,8 +450,6 @@ export async function generate(
       (err) => {
         if (err) {
           console.error("An error occurred while copying the file:", err);
-        } else {
-          console.log(`File copied to ${outputDirectory}`);
         }
       }
     );
@@ -460,8 +460,6 @@ export async function generate(
       (err) => {
         if (err) {
           console.error("An error occurred while copying the file:", err);
-        } else {
-          console.log(`File copied to ${outputDirectory}`);
         }
       }
     );
@@ -482,6 +480,26 @@ export async function generate(
       rootName,
       name
     );
+    // Create base directory for this model under the app dir
+    if (fse.existsSync(path.join(outputAppDirectory, rootName, name))) {
+      // Remove the directory and its contents
+      fse.removeSync(path.join(outputAppDirectory, rootName, name));
+      console.log(
+        `Removing and re-creating group directory '${path.join(
+          outputAppDirectory,
+          rootName,
+          name
+        )}'.`
+      );
+    } else {
+      console.log(
+        `Creating group directory '${path.join(
+          outputAppDirectory,
+          rootName,
+          name
+        )}' from scratch.`
+      );
+    }
     await generateAppDirectoryFromModelTree(
       modelTree,
       outputAppDirectory,
@@ -520,8 +538,6 @@ export async function generate(
     (err) => {
       if (err) {
         console.error("An error occurred while copying the file:", err);
-      } else {
-        console.log(`File copied to ${outputDirectory}`);
       }
     }
   );
@@ -834,6 +850,7 @@ export async function generateAppDirectoryFromModelTree(
       maxDepth = depth;
     }
     process.stdout.write(`\u001b[2K\r${modelTree.model.name} - Depth ${depth}`);
+    process.stdout.write(`\u001b[2K\r`);
 
     let childLoopPromises: Promise<void>[] = [];
     directoryCount += 3;
@@ -889,12 +906,10 @@ export async function generateAppDirectoryFromModelTree(
     const baseRoute = route;
     const createRedirectForm = convertRouteToRedirectUrl(baseRoute);
 
-    // Create base directory for this model under the app dir
     const baseModelDirectory = path.join(outputDirectory, route);
     createNestedDirectory(baseModelDirectory);
 
     if (true) {
-      console.log(`Not first pass for ${route}`);
       // Create create directory
       createNestedDirectory(path.join(baseModelDirectory, "create"));
 
