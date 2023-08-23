@@ -2,6 +2,7 @@ import * as child_process from "child_process";
 import { readdirSync } from "fs";
 import path from "path";
 import { isDirectoryNotEmpty } from "../utils";
+import { error } from "console";
 
 const nexquikMain = "./dist/index.js";
 const testOutputDirectory = path.join(
@@ -24,8 +25,9 @@ test.each(readdirSync(prismaSchemaDirectory))(
       `node ${nexquikMain} -schema ${path.join(
         prismaSchemaDirectory,
         schemaPath
-      )} -output ${testOutputDirectory}`
+      )} generate --group TestGroup -init -output ${testOutputDirectory}`
     );
+
     console.log(`Schema Test: ${schemaPath}`);
     expect(isDirectoryNotEmpty(testOutputDirectory)).toBeTruthy();
     try {
@@ -35,6 +37,11 @@ test.each(readdirSync(prismaSchemaDirectory))(
       });
       // Run prisma generate
       child_process.execSync(`node ${prismaMain} generate`, {
+        stdio: "inherit",
+        cwd: testOutputDirectory,
+      });
+      // Run build
+      child_process.execSync("npm run build", {
         stdio: "inherit",
         cwd: testOutputDirectory,
       });
