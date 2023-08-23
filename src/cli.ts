@@ -61,9 +61,12 @@ export async function run(options?: GeneratorOptions) {
         "-routeGroupOnly",
         "Outputs the built app as a route group, and excludes config files found in next.js root directory"
       )
+      .option("-init", "Initializes a full next.js app")
+      .option("-rootName <value>", "Name for the root app to be created")
       .parse(process.argv);
 
     const cliArgs = program.opts();
+    console.log({ cliArgs });
     const prismaSchemaPath = options?.schemaPath || cliArgs.Schema;
     const outputDirectory = options?.generator?.output?.value || cliArgs.Output;
     const includedModels = cliArgs.Include
@@ -74,6 +77,8 @@ export async function run(options?: GeneratorOptions) {
     const maxDepth = parseInt(options?.generator.config.depth || cliArgs.Depth);
     const routeGroup =
       options?.generator.config.routeGroup || cliArgs.RouteGroup;
+    const rootName = options?.generator.config.rootName || cliArgs.RootName;
+    const init = options?.generator.config.init || cliArgs.Init || false;
 
     const routeGroupOnly =
       options?.generator.config.routeGroupOnly ||
@@ -100,7 +105,9 @@ export async function run(options?: GeneratorOptions) {
       includedModels,
       maxDepth,
       routeGroupOnly,
-      routeGroup
+      routeGroup,
+      rootName,
+      init
     );
 
     // await formatDirectory(outputDirectory);
