@@ -380,12 +380,23 @@ export async function generate(
 
   const enums = getEnums(dmmf.datamodel);
 
+  const imagesDirectoryName = "images";
   // Create files in main directory if we are initializing a new app
   if (init === true) {
     copyDirectory(path.join(__dirname, "templateRoot"), outputDirectory, true, [
       "app",
       "public",
     ]);
+
+    createNestedDirectory(
+      path.join(outputDirectory, "app", rootName, imagesDirectoryName)
+    );
+
+    copyDirectory(
+      path.join(__dirname, "templateRoot", "public"),
+      path.join(outputDirectory, "app", rootName, imagesDirectoryName),
+      true
+    );
 
     // Try copying over public folder
     await copyPublicDirectory(
@@ -507,7 +518,9 @@ export async function generate(
 
   // Filter only directory entries
   const directories = entries
-    .filter((entry) => entry.isDirectory())
+    .filter(
+      (entry) => entry.isDirectory() && entry.name !== imagesDirectoryName
+    )
     .map((entry) => entry.name);
 
   // console.log("Directories in", directoryPath, ":", directories);
