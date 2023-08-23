@@ -21,9 +21,6 @@ import {
   getParentReferenceField,
 } from "./modelTree";
 
-const nexquikRouteGroupName = "(nexquik)";
-// const routeGroupAppDirName = "generated";
-
 const blueButtonClass =
   "px-2 py-1 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-sky-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-sky-600 dark:focus:ring-blue-500 dark:focus:text-white";
 const grayButtonClass =
@@ -359,14 +356,15 @@ export async function generate(
   includedModels: string[],
   maxAllowedDepth: number,
   routeGroupOnly: boolean,
-  routeGroup: string
+  routeGroup: string,
+  rootName: string,
+  init: boolean
 ) {
   // Read the Prisma schema file
   const prismaSchema = await readFileAsync(prismaSchemaPath, "utf-8");
 
   // Create the output directory
   console.log("generate - create output dir", { routeGroupOnly });
-  createNestedDirectory(outputDirectory);
 
   // Main section to build the app from the modelTree
   const dmmf = await getDMMF({ datamodel: prismaSchema });
@@ -377,19 +375,16 @@ export async function generate(
     excludedModels,
     includedModels
   );
+
   if (modelTree.length === 0) {
     console.log(chalk.red("No valid models detected in schema"));
     throw new Error("No valid models detected in schema");
   }
 
-  // let directoryToOutputFiles = outputDirectory;
-  let outputGroupedRoute =
-    routeGroupOnly === false
-      ? path.join(outputDirectory, "app", nexquikRouteGroupName)
-      : path.join(outputDirectory, nexquikRouteGroupName);
-  const outputGroupedAppDir = routeGroup
-    ? path.join(outputGroupedRoute, routeGroup)
-    : outputGroupedRoute;
+  const outputAppDirectory = path.join(outputDirectory, "app");
+  const outputRouteGroup = path.join(outputAppDirectory, rootName);
+  createNestedDirectory(outputRouteGroup);
+
   const enums = getEnums(dmmf.datamodel);
   console.log(
     `${chalk.blue.bold(
@@ -397,23 +392,14 @@ export async function generate(
     )} ${chalk.gray("(For deeply-nested schemas, this may take a moment)")}`
   );
 
-  // Create files in main directory
-  if (routeGroupOnly === false) {
-    outputGroupedRoute = path.join(
-      outputDirectory,
-      "app",
-      nexquikRouteGroupName
-    );
-
+  // Create files in main directory if we are initializing a new app
+  if (init === true) {
     copyDirectory(
       path.join(__dirname, "templateRoot"),
       outputDirectory,
       true,
       "app"
     );
-
-    // Create the app directory
-    const outputRootAppDirectory = path.join(outputDirectory, "app");
 
     // Try copying over public folder
     await copyPublicDirectory(
@@ -459,32 +445,31 @@ export async function generate(
 
     await generateAppDirectoryFromModelTree(
       modelTree,
-      outputGroupedAppDir,
+      outputAppDirectory,
       enums,
       maxAllowedDepth,
       routeGroupOnly,
-      routeGroup
+      routeGroup,
+      rootName
     );
 
-    if (routeGroup != "") {
-      // Copy over root page
-      fs.copyFile(
-        path.join(__dirname, "templateRoot", "app", "groupRouteHome.tsx"),
-        path.join(outputRootAppDirectory, "page.tsx"),
-        (err) => {
-          if (err) {
-            console.error("An error occurred while copying the file:", err);
-          } else {
-            console.log(`File copied to ${outputDirectory}`);
-          }
+    // Copy over root page
+    fs.copyFile(
+      path.join(__dirname, "templateRoot", "app", "groupRouteHome.tsx"),
+      path.join(outputRouteGroup, "page.tsx"),
+      (err) => {
+        if (err) {
+          console.error("An error occurred while copying the file:", err);
+        } else {
+          console.log(`File copied to ${outputDirectory}`);
         }
-      );
-    }
+      }
+    );
 
     // Copy over root layout
     fs.copyFile(
       path.join(__dirname, "templateRoot", "app", "layout.tsx"),
-      path.join(outputRootAppDirectory, "layout.tsx"),
+      path.join(outputRouteGroup, "layout.tsx"),
       (err) => {
         if (err) {
           console.error("An error occurred while copying the file:", err);
@@ -495,14 +480,13 @@ export async function generate(
     );
     // Home route list
     const modelNames = modelTree.map((m) => m.model.name);
-
     const routeList = generateRouteList(
       modelTree.map((m) => m.model.name),
-      routeGroup
+      rootName
     );
     await modifyFile(
       path.join(__dirname, "templateRoot", "app", "groupRouteHome.tsx"),
-      path.join(path.join(outputGroupedAppDir, "page.tsx")),
+      path.join(path.join(outputRouteGroup, "page.tsx")),
       [
         {
           startComment: "{/* @nexquik routeList start */}",
@@ -512,9 +496,10 @@ export async function generate(
       ]
     );
 
+    // globals.css
     fs.copyFile(
       path.join(__dirname, "templateRoot", "app", "globals.css"),
-      path.join(outputGroupedRoute, "globals.css"),
+      path.join(outputRouteGroup, "globals.css"),
       (err) => {
         if (err) {
           console.error("An error occurred while copying the file:", err);
@@ -531,38 +516,22 @@ export async function generate(
       routeSidebar += `<li className="mt-4">
 
                       <a
-                      href="/${lowerCase}"
+                      href="${lowerCase}"
                       className="pl-2 mb-8 lg:mb-1 font-semibold dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-600"
                     >
                     ${model}
-                    </a>
-
-
-                    
-
+                    </a>      
 </li>
 
 `;
     }
-    // page.tsx
-    await modifyFile(
-      path.join(__dirname, "templateRoot", "app", "groupRouteHome.tsx"),
-      path.join(path.join(outputGroupedAppDir, "page.tsx")),
-      [
-        {
-          startComment: "{/* @nexquik routeList start */}",
-          endComment: "{/* @nexquik routeList stop */}",
-          insertString: routeList,
-        },
-      ]
-    );
 
     // layout.tsx
     await modifyFile(
       path.join(
         path.join(__dirname, "templateRoot", "app", "groupRouteLayout.tsx")
       ),
-      path.join(path.join(outputGroupedRoute, "layout.tsx")),
+      path.join(path.join(outputRouteGroup, "layout.tsx")),
       [
         {
           startComment: "{/* //@nexquik routeSidebar start */}",
@@ -571,13 +540,36 @@ export async function generate(
         },
       ]
     );
-  } else {
-    outputGroupedRoute = path.join(outputDirectory, nexquikRouteGroupName);
-    createNestedDirectory(outputGroupedRoute);
+    // Root page of main app dir
+    fs.copyFile(
+      path.join(__dirname, "templateRoot", "app", "page.tsx"),
+      path.join(outputAppDirectory, "page.tsx"),
+      (err) => {
+        if (err) {
+          console.error("An error occurred while copying the file:", err);
+        } else {
+          console.log(`File copied to ${outputDirectory}`);
+        }
+      }
+    );
 
+    // Root layout of main app dir
+    fs.copyFile(
+      path.join(__dirname, "templateRoot", "app", "layout.tsx"),
+      path.join(outputAppDirectory, "layout.tsx"),
+      (err) => {
+        if (err) {
+          console.error("An error occurred while copying the file:", err);
+        } else {
+          console.log(`File copied to ${outputDirectory}`);
+        }
+      }
+    );
+  } else {
+    // INIT === false
     fs.copyFile(
       path.join(__dirname, "templateRoot", "app", "globals.css"),
-      path.join(outputGroupedRoute, "globals.css"),
+      path.join(outputRouteGroup, "globals.css"),
       (err) => {
         if (err) {
           console.error("An error occurred while copying the file:", err);
@@ -589,7 +581,7 @@ export async function generate(
 
     fs.copyFile(
       path.join(__dirname, "templateRoot", "app", "not-found.tsx"),
-      path.join(outputGroupedRoute, "not-found.tsx"),
+      path.join(outputRouteGroup, "not-found.tsx"),
       (err) => {
         if (err) {
           console.error("An error occurred while copying the file:", err);
@@ -598,30 +590,18 @@ export async function generate(
         }
       }
     );
-    // fs.copyFile(
-    //   path.join(__dirname, "templateRoot", "app", "groupRouteHome.tsx"),
-    //   path.join(outputGroupedRoute, "page.tsx"),
-    //   (err) => {
-    //     if (err) {
-    //       console.error("An error occurred while copying the file:", err);
-    //     } else {
-    //       console.log(`File copied to ${outputDirectory}`);
-    //     }
-    //   }
-    // );
 
     // Home route list
     const modelNames = modelTree.map((m) => m.model.name);
 
     const routeList = generateRouteList(
       modelTree.map((m) => m.model.name),
-      routeGroup
+      rootName
     );
-    createNestedDirectory(outputGroupedAppDir);
 
     await modifyFile(
       path.join(__dirname, "templateRoot", "app", "groupRouteHome.tsx"),
-      path.join(path.join(outputGroupedAppDir, "page.tsx")),
+      path.join(path.join(outputRouteGroup, "page.tsx")),
       [
         {
           startComment: "{/* @nexquik routeList start */}",
@@ -638,7 +618,7 @@ export async function generate(
       routeSidebar += `<li className="mt-4">
 
                       <a
-                      href="/${lowerCase}"
+                      href="${lowerCase}"
                       className="pl-2 mb-8 lg:mb-1 font-semibold dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-600"
                     >
                     ${model}
@@ -655,7 +635,7 @@ export async function generate(
     // layout.tsx
     await modifyFile(
       path.join(__dirname, "templateRoot", "app", "groupRouteLayout.tsx"),
-      path.join(path.join(outputGroupedRoute, "layout.tsx")),
+      path.join(path.join(outputRouteGroup, "layout.tsx")),
       [
         {
           startComment: "{/* //@nexquik routeSidebar start */}",
@@ -667,11 +647,24 @@ export async function generate(
 
     await generateAppDirectoryFromModelTree(
       modelTree,
-      outputGroupedRoute,
+      outputAppDirectory,
       enums,
       maxAllowedDepth,
       routeGroupOnly,
-      routeGroup
+      routeGroup,
+      rootName
+    );
+    // Home page of grouped route
+    fs.copyFile(
+      path.join(__dirname, "templateRoot", "app", "page.tsx"),
+      path.join(outputRouteGroup, "page.tsx"),
+      (err) => {
+        if (err) {
+          console.error("An error occurred while copying the file:", err);
+        } else {
+          console.log(`File copied to ${outputDirectory}`);
+        }
+      }
     );
   }
 
@@ -687,7 +680,7 @@ export async function generateShowForm(
 
   let linkRoute = routeUrl;
   uniqueFields.forEach((f) => {
-    linkRoute += `/\${nexquikTemplateModel?.${f?.name}}`;
+    linkRoute += `\${nexquikTemplateModel?.${f?.name}}/`;
   });
   const reactComponentTemplate = `
   
@@ -791,7 +784,6 @@ export async function generateShowForm(
 }
 
 function generateRouteList(modelNames: string[], routeGroup: string) {
-  console.log({ routeGroup });
   const routeLinks = [];
   for (const model of modelNames) {
     const lowerCase = model.charAt(0).toLowerCase() + model.slice(1);
@@ -858,7 +850,8 @@ export async function generateAppDirectoryFromModelTree(
   enums: Record<string, string[]>,
   maxAllowedDepth: number,
   routeGroupOnly: boolean,
-  routeGroup: string
+  routeGroup: string,
+  rootName: string
 ): Promise<RouteObject[]> {
   const routes: RouteObject[] = [];
   let fileCount = 0;
@@ -937,23 +930,13 @@ export async function generateAppDirectoryFromModelTree(
     });
 
     const baseRoute = route;
-    // const createRedirectForm = `${
-    //   routeGroup && "/" + routeGroup
-    // }${convertRouteToRedirectUrl(baseRoute)}`;
     const createRedirectForm = convertRouteToRedirectUrl(baseRoute);
 
-    // href="${
-    //   routeGroup && "/" + routeGroup
-    // }/${lowerCase}/create"
-    // console.log({ baseRoute, createRedirectForm });
     // Create base directory for this model under the app dir
     const baseModelDirectory = path.join(outputDirectory, route);
     createNestedDirectory(baseModelDirectory);
 
-    if (
-      baseModelDirectory !== "app/" &&
-      baseModelDirectory !== `${routeGroup}/`
-    ) {
+    if (baseRoute !== `${rootName}/`) {
       // Create create directory
       createNestedDirectory(path.join(baseModelDirectory, "create"));
 
@@ -1515,8 +1498,7 @@ take: limit`;
       await generateRoutes(
         modelTree,
         {
-          // name: "/",
-          name: `${routeGroup && "/" + routeGroup}/`,
+          name: `/${rootName}/`,
           uniqueIdentifierField: [],
         },
         0,
@@ -1655,7 +1637,8 @@ export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
 
   const convertToPrismaInputLines = fieldsToConvert.map(
     ({ name, type, kind }) => {
-      let typecastValue = `formData.get('${name}')`;
+      const nonTypecastValue = `formData.get('${name}')`;
+      let typecastValue = nonTypecastValue;
       if (kind === "enum") {
         typecastValue += ` as ${type}`;
       } else {
@@ -1669,7 +1652,7 @@ export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
           typecastValue = `String(${typecastValue})`;
         }
       }
-      return `    ${name}: ${typecastValue},`;
+      return `    ${name}: ${nonTypecastValue} ? ${typecastValue} : undefined,`;
     }
   );
 
@@ -1685,8 +1668,9 @@ export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
           const fieldType2 = modelTree.model.fields.find(
             (f) => f.name === rf
           )?.type;
+          const nonTypecastValue = `formData.get('${relationFrom}')`;
 
-          let typecastValue = `formData.get('${relationFrom}')`;
+          let typecastValue = nonTypecastValue;
           if (fieldType2 === "Int" || fieldType2 === "Float") {
             typecastValue = `Number(${typecastValue})`;
           } else if (fieldType2 === "Boolean") {
@@ -1698,7 +1682,7 @@ export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
           }
 
           convertToPrismaInputLines.push(
-            `    ${relationFrom}: ${typecastValue},`
+            `    ${relationFrom}: ${nonTypecastValue} ? ${typecastValue} : undefined,`
           );
         });
       }
