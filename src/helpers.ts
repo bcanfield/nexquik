@@ -123,7 +123,12 @@ export async function copyPublicDirectory(
       const destinationFile = path.join(destinationDir, file);
 
       if (entry.isDirectory()) {
-        copyDirectory(sourceFile, destinationFile, toReplace, skipChildDir);
+        copyDirectory(
+          sourceFile,
+          destinationFile,
+          toReplace,
+          skipChildDir !== undefined ? [skipChildDir] : undefined
+        );
       } else {
         if (!fs.existsSync(destinationFile)) {
           // fse.copyFileSync(sourceFile, destinationFile);
@@ -251,12 +256,11 @@ export function createNestedDirectory(directory: string) {
   return;
 }
 // copy files from one directory to another
-// copy files from one directory to another
 export function copyDirectory(
   sourceDir: string,
   destinationDir: string,
   toReplace = false,
-  skipChildDir?: string
+  skipChildDirs: string[] = [] // Change the parameter name and set it as an array of strings
 ): void {
   try {
     if (toReplace && fs.existsSync(destinationDir)) {
@@ -271,7 +275,8 @@ export function copyDirectory(
     files.forEach((entry) => {
       const file = entry.name;
 
-      if (file === skipChildDir) {
+      if (skipChildDirs.includes(file)) {
+        // Check if the file is in the skipChildDirs array
         return;
       }
 
@@ -279,7 +284,7 @@ export function copyDirectory(
       const destinationFile = path.join(destinationDir, file);
 
       if (entry.isDirectory()) {
-        copyDirectory(sourceFile, destinationFile, toReplace, skipChildDir);
+        copyDirectory(sourceFile, destinationFile, toReplace, skipChildDirs);
       } else {
         if (!fs.existsSync(destinationFile)) {
           fs.copyFileSync(sourceFile, destinationFile);

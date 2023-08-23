@@ -376,18 +376,16 @@ export async function generate(
   // i.e. devNexquikApp/app/gen
   const outputRouteGroup = path.join(outputAppDirectory, rootName);
 
-  createNestedDirectory(outputRouteGroup);
+  createNestedDirectory(path.join(outputAppDirectory, rootName));
 
   const enums = getEnums(dmmf.datamodel);
 
   // Create files in main directory if we are initializing a new app
   if (init === true) {
-    copyDirectory(
-      path.join(__dirname, "templateRoot"),
-      outputDirectory,
-      true,
-      "app"
-    );
+    copyDirectory(path.join(__dirname, "templateRoot"), outputDirectory, true, [
+      "app",
+      "public",
+    ]);
 
     // Try copying over public folder
     await copyPublicDirectory(
@@ -396,18 +394,6 @@ export async function generate(
       true,
       "app"
     );
-
-    // copy over images
-    // await copyImage(
-    //   path.join(__dirname, "templateRoot", "app"),
-    //   "favicon.ico",
-    //   path.join(outputDirectory, "app")
-    // );
-    // await copyImage(
-    //   path.join(__dirname, "templateRoot", "app"),
-    //   "icon.png",
-    //   path.join(outputDirectory, "app")
-    // );
 
     createNestedDirectory(path.join(outputDirectory, "prisma"));
 
@@ -430,7 +416,6 @@ export async function generate(
         }
       }
     );
-    console.log({ outputDirectory, outputAppDirectory });
     createNestedDirectory(path.join(outputDirectory, "app"));
 
     // Copy over root app layout
