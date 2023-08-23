@@ -2,6 +2,8 @@ import { DMMF } from "@prisma/generator-helper";
 import { getDMMF } from "@prisma/internals";
 import chalk from "chalk";
 import fs from "fs";
+import * as fse from "fs-extra";
+
 import path from "path";
 
 import { promisify } from "util";
@@ -375,6 +377,16 @@ export async function generate(
 
   // i.e. devNexquikApp/app/gen
   const outputRouteGroup = path.join(outputAppDirectory, rootName);
+
+  // Remove the directory if it exists
+  // Check if the directory exists
+  if (fse.existsSync(outputRouteGroup)) {
+    // Remove the directory and its contents
+    fse.removeSync(outputRouteGroup);
+    console.log(`Removing and re-creating directory '${outputRouteGroup}'.`);
+  } else {
+    console.log(`Creating directory '${outputRouteGroup}' from scratch.`);
+  }
 
   createNestedDirectory(path.join(outputAppDirectory, rootName));
 
