@@ -1,3 +1,18 @@
+# [2.3.0-beta.1](https://github.com/bcanfield/nexquik/compare/v2.2.1...v2.3.0-beta.1) (2023-08-23)
+
+
+### Bug Fixes
+
+* Dependency ([6b16114](https://github.com/bcanfield/nexquik/commit/6b161140d572a0052bceb2cb48bbf03a2226c4f7))
+* Models only ([fd10673](https://github.com/bcanfield/nexquik/commit/fd106731e7c3c661aeed5a449e530deef13f4bbb))
+* Prevent app dir generation from being called twice ([d989fa2](https://github.com/bcanfield/nexquik/commit/d989fa22d1b31627f2a06dd72656b1dd08ae5fb6))
+* Update github workflow trigger ([ec41b33](https://github.com/bcanfield/nexquik/commit/ec41b33737711f405734c4092dfa98a0d41679b4))
+
+
+### Features
+
+* Existing app integration improvements ([#78](https://github.com/bcanfield/nexquik/issues/78)) ([360a1df](https://github.com/bcanfield/nexquik/commit/360a1dffda437f292f102544271fb49b3a05da34))
+
 ## [2.2.1](https://github.com/bcanfield/nexquik/compare/v2.2.0...v2.2.1) (2023-08-21)
 
 
