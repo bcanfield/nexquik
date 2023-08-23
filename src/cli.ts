@@ -62,6 +62,10 @@ export async function run(options?: GeneratorOptions) {
       )
       .option("-init", "Initializes a full next.js app")
       .option(
+        "-extendOnly",
+        "Only creates the models specified in the current command, and leaves previously created ones alone."
+      )
+      .option(
         "-rootName <value>",
         "Name for the root app to be created",
         "gen"
@@ -104,6 +108,9 @@ export async function run(options?: GeneratorOptions) {
     const maxDepth = parseInt(options?.generator.config.depth || cliArgs.Depth);
     const rootName = options?.generator.config.rootName || cliArgs.RootName;
     const init = options?.generator.config.init || cliArgs.Init || false;
+    const extendOnly =
+      options?.generator.config.extendOnly || cliArgs.ExtendOnly || false;
+
     console.log(
       chalk.gray(
         `Fetching schema from ${prismaSchemaPath}\nOutputting to ${outputDirectory}\n`
@@ -115,7 +122,8 @@ export async function run(options?: GeneratorOptions) {
       maxDepth,
       init,
       rootName,
-      groups
+      groups,
+      extendOnly
     );
 
     // await formatDirectory(outputDirectory);
