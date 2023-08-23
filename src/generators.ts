@@ -484,7 +484,7 @@ export async function generate(
 
     // Nested Group Home route list
     const modelNames = modelTree.map((m) => m.model.name);
-    const routeList = generateRouteList(modelNames, rootName);
+    const routeList = generateRouteList(modelNames, rootName, name);
 
     await modifyFile(
       path.join(__dirname, "templateRoot", "app", "groupRouteHome.tsx"),
@@ -720,7 +720,11 @@ ${routeLinks.join("\n")}
 `;
 }
 
-function generateRouteList(modelNames: string[], routeGroup: string) {
+function generateRouteList(
+  modelNames: string[],
+  routeGroup: string,
+  groupName: string
+) {
   const routeLinks = [];
   for (const model of modelNames) {
     const lowerCase = model.charAt(0).toLowerCase() + model.slice(1);
@@ -736,17 +740,14 @@ function generateRouteList(modelNames: string[], routeGroup: string) {
       translate="no"
       className="py-2 pr-2 font-medium text-sm leading-6 whitespace-nowrap "
     >
-    <a className="${blueTextClass}" href="${
-      routeGroup && "/" + routeGroup
-    }/${lowerCase}/create">
+
+    <a className="${blueTextClass}" href="/${routeGroup}/${groupName}/${lowerCase}/create">
       Create 
       </a>
       <a className="${darkTextClass}">
       {' '} / {' '}
       </a>
-      <a className="${blueTextClass}" href="${
-      routeGroup && "/" + routeGroup
-    }/${lowerCase}">      List 
+      <a className="${blueTextClass}" href="/${routeGroup}/${groupName}/${lowerCase}">      List 
       </a>
     </td>
   
