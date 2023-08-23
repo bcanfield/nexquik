@@ -15,6 +15,7 @@ import {
   copyPublicDirectory,
   createNestedDirectory,
   getDynamicSlugs,
+  installPackages,
   modifyFile,
 } from "./helpers";
 import {
@@ -359,7 +360,8 @@ export async function generate(
   init: boolean,
   rootName: string,
   groups: Group[],
-  extendOnly: boolean
+  extendOnly: boolean,
+  deps: boolean
 ) {
   console.log(
     `${chalk.blue.bold(
@@ -439,6 +441,37 @@ export async function generate(
     fs.copyFile(
       path.join(__dirname, "templateRoot", "app", "page.tsx"),
       path.join(outputDirectory, "app", "page.tsx"),
+      (err) => {
+        if (err) {
+          console.error("An error occurred while copying the file:", err);
+        }
+      }
+    );
+  } else if (deps === true) {
+    // Install deps in output directory
+    try {
+      installPackages({
+        sourcePackageJson: path.join(__dirname, "templateRoot", "package.json"),
+        destinationDirectory: outputDirectory,
+      });
+      console.log("Dependencies installed successfully.");
+    } catch (error) {
+      console.error("Error installing dependencies:", error);
+    }
+    // Copy over tailwind.config.js and postcss.config
+    fs.copyFile(
+      path.join(__dirname, "templateRoot", "tailwind.config.js"),
+      path.join(outputDirectory, "tailwind.config.js"),
+      (err) => {
+        if (err) {
+          console.error("An error occurred while copying the file:", err);
+        }
+      }
+    );
+
+    fs.copyFile(
+      path.join(__dirname, "templateRoot", "postcss.config.js"),
+      path.join(outputDirectory, "postcss.config.js"),
       (err) => {
         if (err) {
           console.error("An error occurred while copying the file:", err);
