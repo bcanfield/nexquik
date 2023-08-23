@@ -12,5 +12,5 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>APP DIR LAYOUT{children}</>;
+  return <>{children}</>;
 }

@@ -495,6 +495,11 @@ export async function generate(
           endComment: "{/* @nexquik routeList stop */}",
           insertString: routeList,
         },
+        {
+          startComment: "{/* @nexquik routeGroupName start */}",
+          endComment: "{/* @nexquik routeGroupName start */}",
+          insertString: name,
+        },
       ]
     );
   });
@@ -543,17 +548,19 @@ export async function generate(
       },
     ]
   );
-  // Root page of main app dir
-  fs.copyFile(
+
+  const routeGroupList = generateRouteGroupList(rootName, groups);
+
+  await modifyFile(
     path.join(__dirname, "templateRoot", "app", "rootGroupRouteHome.tsx"),
     path.join(outputRouteGroup, "page.tsx"),
-    (err) => {
-      if (err) {
-        console.error("An error occurred while copying the file:", err);
-      } else {
-        console.log(`File copied to ${outputDirectory}`);
-      }
-    }
+    [
+      {
+        startComment: "{/* @nexquik routeGroupList start */}",
+        endComment: "{/* @nexquik routeGroupList stop */}",
+        insertString: routeGroupList,
+      },
+    ]
   );
 
   return;
@@ -669,6 +676,48 @@ export async function generateShowForm(
   `;
 
   return reactComponentTemplate;
+}
+
+function generateRouteGroupList(rootName: string, groups: Group[]) {
+  const routeLinks = [];
+  for (const { name } of groups) {
+    // const lowerCase = model.charAt(0).toLowerCase() + model.slice(1);
+    routeLinks.push(`<tr>
+   
+    <td
+      translate="no"
+      className="py-2 pr-2 font-medium text-sm leading-6 whitespace-nowrap "
+    >
+
+    
+      <a                       className=" mb-8 lg:mb-1 font-semibold dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-600"
+      href="/${rootName}/${name}">   ${name} 
+      </a>
+    </td>
+  
+    </tr>
+    `);
+  }
+
+  return `
+
+  <table className="min-w-full text-left border-collapse  ">
+  <thead>
+  <tr>
+    <th className="sticky z-10 top-0 text-sm leading-6 font-semibold  bg-white p-0 dark:bg-slate-900 ${darkTextClass}">
+      <div className="py-2 border-b border-slate-200 dark:border-slate-400/20">
+        Group
+      </div>
+    </th>
+  </tr>
+</thead>
+
+<tbody className="align-baseline">
+${routeLinks.join("\n")} 
+</tbody>
+</table>
+
+`;
 }
 
 function generateRouteList(modelNames: string[], routeGroup: string) {
