@@ -20,6 +20,7 @@ import {
   createModelTree,
   getParentReferenceField,
 } from "./modelTree";
+import { Group } from "./cli";
 
 const blueButtonClass =
   "px-2 py-1 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-sky-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-sky-600 dark:focus:ring-blue-500 dark:focus:text-white";
@@ -352,34 +353,19 @@ async function generateListForm(
 export async function generate(
   prismaSchemaPath: string,
   outputDirectory: string,
-  excludedModels: string[],
-  includedModels: string[],
   maxAllowedDepth: number,
-  routeGroupOnly: boolean,
-  routeGroup: string,
+  init: boolean,
   rootName: string,
-  init: boolean
+  groups: Group[]
 ) {
   // Read the Prisma schema file
   const prismaSchema = await readFileAsync(prismaSchemaPath, "utf-8");
 
   // Create the output directory
-  console.log("generate - create output dir", { routeGroupOnly });
+  // console.log("generate - create output dir", { routeGroupOnly });
 
   // Main section to build the app from the modelTree
   const dmmf = await getDMMF({ datamodel: prismaSchema });
-
-  // Create model tree and verify there is at least one valid model
-  const modelTree = createModelTree(
-    dmmf.datamodel,
-    excludedModels,
-    includedModels
-  );
-
-  if (modelTree.length === 0) {
-    console.log(chalk.red("No valid models detected in schema"));
-    throw new Error("No valid models detected in schema");
-  }
 
   const outputAppDirectory = path.join(outputDirectory, "app");
   const outputRouteGroup = path.join(outputAppDirectory, rootName);
@@ -443,15 +429,82 @@ export async function generate(
       }
     );
 
-    await generateAppDirectoryFromModelTree(
-      modelTree,
-      outputAppDirectory,
-      enums,
-      maxAllowedDepth,
-      routeGroupOnly,
-      routeGroup,
-      rootName
-    );
+    groups.forEach(async ({ name, include, exclude }) => {
+      console.log({ name, include, exclude });
+      // Create model tree and verify there is at least one valid model
+      const modelTree = createModelTree(dmmf.datamodel, exclude, include);
+      if (modelTree.length === 0) {
+        console.log(chalk.red(`No valid models detected for group: ${name}`));
+        throw new Error(`No valid models detected for group: ${name}`);
+      }
+      const thisGroupPath = `${rootName && rootName + "/"}${name}`;
+      const thisOutputRouteGroupPath = path.join(
+        outputAppDirectory,
+        rootName,
+        name
+      );
+      // createNestedDirectory(thisOutputRouteGroupPath);
+      await generateAppDirectoryFromModelTree(
+        modelTree,
+        outputAppDirectory,
+        enums,
+        maxAllowedDepth,
+        // name
+        thisGroupPath
+      );
+
+      // Home route list
+      // const modelNames = modelTree.map((m) => m.model.name);
+      const modelNames: string[] = [];
+
+      const routeList = generateRouteList(modelNames, rootName);
+
+      await modifyFile(
+        path.join(__dirname, "templateRoot", "app", "groupRouteHome.tsx"),
+        path.join(path.join(thisOutputRouteGroupPath, "page.tsx")),
+        [
+          {
+            startComment: "{/* @nexquik routeList start */}",
+            endComment: "{/* @nexquik routeList stop */}",
+            insertString: routeList,
+          },
+        ]
+      );
+
+      // Route sidebar
+      let routeSidebar = "";
+      for (const model of modelNames) {
+        const lowerCase = model.charAt(0).toLowerCase() + model.slice(1);
+        routeSidebar += `<li className="mt-4">
+
+                      <a
+                      href="${lowerCase}"
+                      className="pl-2 mb-8 lg:mb-1 font-semibold dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-600"
+                    >
+                    ${model}
+                    </a>
+
+
+                    
+
+</li>
+
+`;
+      }
+
+      // layout.tsx
+      await modifyFile(
+        path.join(__dirname, "templateRoot", "app", "groupRouteLayout.tsx"),
+        path.join(path.join(thisOutputRouteGroupPath, "layout.tsx")),
+        [
+          {
+            startComment: "{/* //@nexquik routeSidebar start */}",
+            endComment: "{/* //@nexquik routeSidebar stop */}",
+            insertString: routeSidebar,
+          },
+        ]
+      );
+    });
 
     // Copy over root page
     fs.copyFile(
@@ -479,11 +532,9 @@ export async function generate(
       }
     );
     // Home route list
-    const modelNames = modelTree.map((m) => m.model.name);
-    const routeList = generateRouteList(
-      modelTree.map((m) => m.model.name),
-      rootName
-    );
+    // const modelNames = modelTree.map((m) => m.model.name);
+    const modelNames: string[] = [];
+    const routeList = generateRouteList(modelNames, rootName);
     await modifyFile(
       path.join(__dirname, "templateRoot", "app", "groupRouteHome.tsx"),
       path.join(path.join(outputRouteGroup, "page.tsx")),
@@ -592,12 +643,10 @@ export async function generate(
     );
 
     // Home route list
-    const modelNames = modelTree.map((m) => m.model.name);
+    // const modelNames = modelTree.map((m) => m.model.name);
+    const modelNames: string[] = [];
 
-    const routeList = generateRouteList(
-      modelTree.map((m) => m.model.name),
-      rootName
-    );
+    const routeList = generateRouteList(modelNames, rootName);
 
     await modifyFile(
       path.join(__dirname, "templateRoot", "app", "groupRouteHome.tsx"),
@@ -645,27 +694,27 @@ export async function generate(
       ]
     );
 
-    await generateAppDirectoryFromModelTree(
-      modelTree,
-      outputAppDirectory,
-      enums,
-      maxAllowedDepth,
-      routeGroupOnly,
-      routeGroup,
-      rootName
-    );
-    // Home page of grouped route
-    fs.copyFile(
-      path.join(__dirname, "templateRoot", "app", "page.tsx"),
-      path.join(outputRouteGroup, "page.tsx"),
-      (err) => {
-        if (err) {
-          console.error("An error occurred while copying the file:", err);
-        } else {
-          console.log(`File copied to ${outputDirectory}`);
-        }
-      }
-    );
+    // await generateAppDirectoryFromModelTree(
+    //   modelTree,
+    //   outputAppDirectory,
+    //   enums,
+    //   maxAllowedDepth,
+    //   routeGroupOnly,
+    //   routeGroup,
+    //   rootName
+    // );
+    // // Home page of grouped route
+    // fs.copyFile(
+    //   path.join(__dirname, "templateRoot", "app", "page.tsx"),
+    //   path.join(outputRouteGroup, "page.tsx"),
+    //   (err) => {
+    //     if (err) {
+    //       console.error("An error occurred while copying the file:", err);
+    //     } else {
+    //       console.log(`File copied to ${outputDirectory}`);
+    //     }
+    //   }
+    // );
   }
 
   return;
@@ -849,10 +898,9 @@ export async function generateAppDirectoryFromModelTree(
   outputDirectory: string,
   enums: Record<string, string[]>,
   maxAllowedDepth: number,
-  routeGroupOnly: boolean,
-  routeGroup: string,
   rootName: string
 ): Promise<RouteObject[]> {
+  // console.log({ rootName });
   const routes: RouteObject[] = [];
   let fileCount = 0;
   let directoryCount = 0;
@@ -864,7 +912,8 @@ export async function generateAppDirectoryFromModelTree(
       uniqueIdentifierField: { name: string; type: string }[];
     },
     depth = 0,
-    maxAllowedDepth: number
+    maxAllowedDepth: number,
+    firstPass = false
   ) {
     if (depth > maxAllowedDepth) {
       maxDepth = maxAllowedDepth;
@@ -936,7 +985,8 @@ export async function generateAppDirectoryFromModelTree(
     const baseModelDirectory = path.join(outputDirectory, route);
     createNestedDirectory(baseModelDirectory);
 
-    if (baseRoute !== `${rootName}/`) {
+    if (true) {
+      console.log(`Not first pass for ${route}`);
       // Create create directory
       createNestedDirectory(path.join(baseModelDirectory, "create"));
 
@@ -1502,7 +1552,8 @@ take: limit`;
           uniqueIdentifierField: [],
         },
         0,
-        maxAllowedDepth
+        maxAllowedDepth,
+        true
       );
     } catch (error) {
       console.error("An error occurred in mainLoopPromises:", error);

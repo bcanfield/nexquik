@@ -9,7 +9,11 @@ export interface CliArgs {
   outputDirectory: string;
 }
 export const defaultOutputDirectory = "nexquikApp";
-
+export interface Group {
+  name: string;
+  include: string[];
+  exclude: string[];
+}
 const defaultPrismaSchemaPath = "schema.prisma";
 
 export async function run(options?: GeneratorOptions) {
@@ -28,6 +32,12 @@ export async function run(options?: GeneratorOptions) {
       )
     );
     const program = new Command();
+
+    // Create an array to collect group objects
+    const groups: Group[] = [];
+    let currentGroup:
+      | { name: string; include: string[]; exclude: string[] }
+      | undefined = undefined;
     program
       .version(require("../package.json").version)
       .description("Auto-generate a Next.js 13 app from your DB Schema")
@@ -41,17 +51,6 @@ export async function run(options?: GeneratorOptions) {
         "Path to output directory",
         defaultOutputDirectory
       )
-      .option("-routeGroup <value>", "Name for the route group", "")
-      .option(
-        "-exclude <value>",
-        "Comma-separated list of model names to exclude from the top-level of the generated app. (NOTE: If the -include is passed, this exclusion list will be ignored)",
-        ""
-      )
-      .option(
-        "-include <value>",
-        "Comma-separated list of model names to include from the top-level of the generated app.",
-        ""
-      )
       .option(
         "-depth <value>",
         "Maximum recursion depth for your models. (Changing this for large data models is not recommended, unless you filter down your models with the 'include' or 'exclude' flags also.)",
@@ -62,11 +61,42 @@ export async function run(options?: GeneratorOptions) {
         "Outputs the built app as a route group, and excludes config files found in next.js root directory"
       )
       .option("-init", "Initializes a full next.js app")
-      .option("-rootName <value>", "Name for the root app to be created")
-      .parse(process.argv);
+      .option("-rootName <value>", "Name for the root app to be created");
+
+    program
+      .command("generate")
+      // .description("Manage groups with include and exclude options")
+      .option("--group <name>", "Specify a group name", (name) => {
+        // Create a new group object for each group
+        currentGroup = { name, include: [], exclude: [] };
+        groups.push(currentGroup);
+      })
+      .option(
+        "--include <types>",
+        "Specify included types (comma-separated)",
+        (types) => {
+          // Add the included types to the current group
+          if (currentGroup) {
+            currentGroup.include = types.split(",");
+          }
+        }
+      )
+      .option(
+        "--exclude <types>",
+        "Specify excluded types (comma-separated)",
+        (types) => {
+          // Add the excluded types to the current group
+          if (currentGroup) {
+            currentGroup.exclude = types.split(",");
+          }
+        }
+      );
+
+    program.parse(process.argv);
 
     const cliArgs = program.opts();
-    console.log({ cliArgs });
+
+    console.log({ groups, cliArgs });
     const prismaSchemaPath = options?.schemaPath || cliArgs.Schema;
     const outputDirectory = options?.generator?.output?.value || cliArgs.Output;
     const includedModels = cliArgs.Include
@@ -101,13 +131,10 @@ export async function run(options?: GeneratorOptions) {
     await generate(
       prismaSchemaPath,
       outputDirectory,
-      excludedModels,
-      includedModels,
       maxDepth,
-      routeGroupOnly,
-      routeGroup,
+      init,
       rootName,
-      init
+      groups
     );
 
     // await formatDirectory(outputDirectory);
