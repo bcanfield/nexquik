@@ -3,12 +3,14 @@ import chalk from "chalk";
 import { Command } from "commander";
 import figlet from "figlet";
 import { generate } from "./generators";
+import { installPackages } from "./helpers";
+import path from "path";
 
 export interface CliArgs {
   prismaSchemaPath: string;
   outputDirectory: string;
 }
-export const defaultOutputDirectory = "nexquikApp";
+export const defaultOutputDirectory = "./";
 export interface Group {
   name: string;
   include: string[];
@@ -41,6 +43,11 @@ export async function run(options?: GeneratorOptions) {
         "-schema <value>",
         "Path to prisma schema file",
         defaultPrismaSchemaPath
+      )
+      .option(
+        "-deps",
+        "Auto npm install dependencies in your output directory.",
+        false
       )
       .option(
         "-output <value>",
@@ -105,6 +112,9 @@ export async function run(options?: GeneratorOptions) {
     }
 
     const cliArgs = program.opts();
+
+    const deps = cliArgs.Deps || false;
+
     const prismaSchemaPath = options?.schemaPath || cliArgs.Schema;
     const outputDirectory = cliArgs.Output;
     const maxDepth = parseInt(cliArgs.Depth);
@@ -129,7 +139,8 @@ export async function run(options?: GeneratorOptions) {
       init,
       rootName,
       groups,
-      extendOnly
+      extendOnly,
+      deps
     );
 
     // await formatDirectory(outputDirectory);
@@ -139,6 +150,7 @@ export async function run(options?: GeneratorOptions) {
         "✔ Success! Enjoy your new app at"
       )} ${outputDirectory}`
     );
+    return;
   } catch (error) {
     console.log(chalk.red.bold("Nexquik Error:\n"), error);
   }

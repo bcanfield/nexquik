@@ -1,10 +1,45 @@
+import chalk from "chalk";
+import fs from "fs";
 import path from "path";
-import fs, { mkdirSync } from "fs";
 import prettier from "prettier";
 import { RouteObject } from "./generators";
-import { ESLint } from "eslint";
-import chalk from "chalk";
 // import ora from "ora";
+import { execSync } from "child_process";
+
+interface PackageOptions {
+  sourcePackageJson: string;
+  destinationDirectory: string;
+}
+
+export function installPackages({
+  sourcePackageJson,
+  destinationDirectory,
+}: PackageOptions) {
+  const sourcePackageData = fs.readFileSync(sourcePackageJson, "utf8");
+  const sourcePackage = JSON.parse(sourcePackageData);
+
+  const dependencies = sourcePackage.dependencies || {};
+  const devDependencies = sourcePackage.devDependencies || {};
+
+  const installDeps = (deps: Record<string, string>, type: string) => {
+    const depArray = Object.keys(deps);
+    if (depArray.length > 0) {
+      const cmd = `npm install ${depArray.join(
+        " "
+      )} --prefix ${destinationDirectory} --${type}`;
+      try {
+        execSync(cmd, { stdio: "inherit" });
+        console.log(`${type} installed successfully.`);
+      } catch (error: any) {
+        console.error(`Error installing ${type}: ${error.message}`);
+        throw error;
+      }
+    }
+  };
+
+  installDeps(dependencies, "save");
+  installDeps(devDependencies, "save-dev");
+}
 
 export function copyAndRenameFile(
   sourceFilePath: string,
