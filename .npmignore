@@ -3,6 +3,7 @@ node_modules/
 prisma/
 prisma_large/
 prisma_non_working/
+devNexquikApp/
 templateRoot/
 .github/
 __tests__/

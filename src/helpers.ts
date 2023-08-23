@@ -1,10 +1,45 @@
-import path from "path";
+import chalk from "chalk";
 import fs from "fs";
+import path from "path";
 import prettier from "prettier";
 import { RouteObject } from "./generators";
-import { ESLint } from "eslint";
-import chalk from "chalk";
 // import ora from "ora";
+import { execSync } from "child_process";
+
+interface PackageOptions {
+  sourcePackageJson: string;
+  destinationDirectory: string;
+}
+
+export function installPackages({
+  sourcePackageJson,
+  destinationDirectory,
+}: PackageOptions) {
+  const sourcePackageData = fs.readFileSync(sourcePackageJson, "utf8");
+  const sourcePackage = JSON.parse(sourcePackageData);
+
+  const dependencies = sourcePackage.dependencies || {};
+  const devDependencies = sourcePackage.devDependencies || {};
+
+  const installDeps = (deps: Record<string, string>, type: string) => {
+    const depArray = Object.keys(deps);
+    if (depArray.length > 0) {
+      const cmd = `npm install ${depArray.join(
+        " "
+      )} --prefix ${destinationDirectory} --${type}`;
+      try {
+        execSync(cmd, { stdio: "inherit" });
+        console.log(`${type} installed successfully.`);
+      } catch (error: any) {
+        console.error(`Error installing ${type}: ${error.message}`);
+        throw error;
+      }
+    }
+  };
+
+  installDeps(dependencies, "save");
+  installDeps(devDependencies, "save-dev");
+}
 
 export function copyAndRenameFile(
   sourceFilePath: string,
@@ -23,7 +58,7 @@ export function copyAndRenameFile(
     // Copy the source file to the destination
     fs.copyFileSync(sourceFilePath, destinationFilePath);
   } catch (error) {
-    console.error(`An error occurred: ${error}`);
+    console.error(`An error occurred in copyAndRenameFile: ${error}`);
   }
 }
 
@@ -123,7 +158,12 @@ export async function copyPublicDirectory(
       const destinationFile = path.join(destinationDir, file);
 
       if (entry.isDirectory()) {
-        copyDirectory(sourceFile, destinationFile, toReplace, skipChildDir);
+        copyDirectory(
+          sourceFile,
+          destinationFile,
+          toReplace,
+          skipChildDir !== undefined ? [skipChildDir] : undefined
+        );
       } else {
         if (!fs.existsSync(destinationFile)) {
           // fse.copyFileSync(sourceFile, destinationFile);
@@ -143,7 +183,9 @@ export async function copyPublicDirectory(
       }
     }
   } catch (error) {
-    console.error(chalk.red("An error occurred:", error));
+    console.error(
+      chalk.red("An error occurred in copyPublicDirectory:", error)
+    );
   }
 }
 
@@ -174,7 +216,7 @@ export async function copyImage(
       await waitForEvent(srcStream, "end");
     }
   } catch (error) {
-    console.error(chalk.red("An error occurred:", error));
+    console.error(chalk.red("An error occurred in copyImage:", error));
   }
 }
 
@@ -226,39 +268,50 @@ export async function modifyFile(
         modelName
       );
     }
+
     // Write the modified content to the destination file
-    fs.promises.writeFile(destinationFilePath, modifiedContent);
+    await fs.promises.writeFile(destinationFilePath, modifiedContent);
+
+    return;
   } catch (error) {
-    console.error("An error occurred:", error);
+    console.error("An error occurred in modifyFile:", error);
   }
 }
 
-// copy files from one directory to another
+export function createNestedDirectory(directory: string) {
+  const baseParts = directory.split(path.sep).filter((item) => item !== "");
+
+  let currentBasePath = "";
+  for (const part of baseParts) {
+    currentBasePath = path.join(currentBasePath, part);
+    if (!fs.existsSync(currentBasePath)) {
+      fs.mkdirSync(currentBasePath);
+    }
+  }
+  return;
+}
 // copy files from one directory to another
 export function copyDirectory(
   sourceDir: string,
   destinationDir: string,
   toReplace = false,
-  skipChildDir?: string
+  skipChildDirs: string[] = [] // Change the parameter name and set it as an array of strings
 ): void {
-  // console.log(
-  //   chalk.yellowBright(`Copying directory: ${sourceDir} to ${destinationDir}`)
-  // );
-
   try {
     if (toReplace && fs.existsSync(destinationDir)) {
       fs.rmSync(destinationDir, { recursive: true });
     }
 
     if (!fs.existsSync(destinationDir)) {
-      fs.mkdirSync(destinationDir);
+      createNestedDirectory(destinationDir);
     }
 
     const files = fs.readdirSync(sourceDir, { withFileTypes: true });
     files.forEach((entry) => {
       const file = entry.name;
 
-      if (file === skipChildDir) {
+      if (skipChildDirs.includes(file)) {
+        // Check if the file is in the skipChildDirs array
         return;
       }
 
@@ -266,7 +319,7 @@ export function copyDirectory(
       const destinationFile = path.join(destinationDir, file);
 
       if (entry.isDirectory()) {
-        copyDirectory(sourceFile, destinationFile, toReplace, skipChildDir);
+        copyDirectory(sourceFile, destinationFile, toReplace, skipChildDirs);
       } else {
         if (!fs.existsSync(destinationFile)) {
           fs.copyFileSync(sourceFile, destinationFile);
@@ -274,7 +327,7 @@ export function copyDirectory(
       }
     });
   } catch (error) {
-    console.error(chalk.red("An error occurred:", error));
+    console.error(chalk.red("An error occurred in copyDirectory:", error));
   }
 }
 
