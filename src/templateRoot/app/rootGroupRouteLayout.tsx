@@ -38,16 +38,16 @@ export default function RootLayout({
             <div className="py-4 border-b border-slate-900/10 lg:px-8 lg:border-0 dark:border-slate-300/10 mx-4 lg:mx-0">
               <div className="relative flex items-center">
                 <a className="flex items-center justify-between">
-                  <span className="box-sizing: border-box; display: inline-block; overflow: hidden; width: initial; height: initial; background: none; opacity: 1; border: 0px; margin: 0px; padding: 0px; position: relative; max-width: 100%;">
+                  {/* <span className="box-sizing: border-box; display: inline-block; overflow: hidden; width: initial; height: initial; background: none; opacity: 1; border: 0px; margin: 0px; padding: 0px; position: relative; max-width: 100%;">
                     <Image
                       alt="Nexquik Logo"
                       src="/logo.png"
                       width="35"
                       height="35"
                     ></Image>
-                  </span>
-                  <span className="self-center ml-3 text-2xl font-semibold whitespace-nowrap dark:text-white">
-                    Nexquik
+                  </span> */}
+                  <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
+                    App
                   </span>
                 </a>
 

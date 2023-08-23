@@ -95,34 +95,11 @@ export async function run(options?: GeneratorOptions) {
     program.parse(process.argv);
 
     const cliArgs = program.opts();
-
-    console.log({ groups, cliArgs });
     const prismaSchemaPath = options?.schemaPath || cliArgs.Schema;
     const outputDirectory = options?.generator?.output?.value || cliArgs.Output;
-    const includedModels = cliArgs.Include
-      ? cliArgs.Include.split(",")
-      : options?.generator.config.include
-      ? String(options.generator.config.include).split(",")
-      : [];
     const maxDepth = parseInt(options?.generator.config.depth || cliArgs.Depth);
-    const routeGroup =
-      options?.generator.config.routeGroup || cliArgs.RouteGroup;
     const rootName = options?.generator.config.rootName || cliArgs.RootName;
     const init = options?.generator.config.init || cliArgs.Init || false;
-
-    const routeGroupOnly =
-      options?.generator.config.routeGroupOnly ||
-      cliArgs.RouteGroupOnly ||
-      false;
-    const excludedModels =
-      includedModels.length > 0
-        ? []
-        : cliArgs?.Exclude
-        ? cliArgs.Exclude.split(",")
-        : options?.generator.config.exclude
-        ? String(options?.generator.config.exclude).split(",")
-        : [];
-
     console.log(
       chalk.gray(
         `Fetching schema from ${prismaSchemaPath}\nOutputting to ${outputDirectory}\n`
