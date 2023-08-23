@@ -18,10 +18,6 @@ const defaultPrismaSchemaPath = "schema.prisma";
 
 export async function run(options?: GeneratorOptions) {
   try {
-    const disabled = process.env.DISABLE_NEXQUIK === "true";
-    if (disabled) {
-      return console.log("Nexquik generation disabled due to env var");
-    }
     console.log(
       chalk.bgYellow.blue.bold(
         figlet.textSync("Nexquik", {
@@ -65,11 +61,8 @@ export async function run(options?: GeneratorOptions) {
         "-extendOnly",
         "Only creates the models specified in the current command, and leaves previously created ones alone."
       )
-      .option(
-        "-rootName <value>",
-        "Name for the root app to be created",
-        "gen"
-      );
+      .option("-rootName <value>", "Name for the root app to be created", "gen")
+      .option("-disabled <value>", "Disable the generator", false);
 
     program
       .command("generate")
@@ -100,16 +93,29 @@ export async function run(options?: GeneratorOptions) {
         }
       );
 
-    program.parse(process.argv);
+    if (options?.generator.config) {
+      try {
+        const genArgs = options?.generator.config.command.split(" ") || [];
+        program.parse(genArgs, { from: "user" });
+      } catch {
+        throw Error("Invalid args");
+      }
+    } else {
+      program.parse(process.argv);
+    }
 
     const cliArgs = program.opts();
     const prismaSchemaPath = options?.schemaPath || cliArgs.Schema;
-    const outputDirectory = options?.generator?.output?.value || cliArgs.Output;
-    const maxDepth = parseInt(options?.generator.config.depth || cliArgs.Depth);
-    const rootName = options?.generator.config.rootName || cliArgs.RootName;
-    const init = options?.generator.config.init || cliArgs.Init || false;
-    const extendOnly =
-      options?.generator.config.extendOnly || cliArgs.ExtendOnly || false;
+    const outputDirectory = cliArgs.Output;
+    const maxDepth = parseInt(cliArgs.Depth);
+    const rootName = cliArgs.RootName;
+    const init = cliArgs.Init || false;
+    const extendOnly = cliArgs.ExtendOnly || false;
+    const disabled =
+      process.env.DISABLE_NEXQUIK === "true" || cliArgs.Disabled === true;
+    if (disabled) {
+      return console.log("Nexquik generation disabled due to env var");
+    }
 
     console.log(
       chalk.gray(

@@ -9,7 +9,8 @@ generator client {
 
 generator nexquik {
     provider = "node ./dist/prismaGenerator.js"
-    output   = "testOutputDirectory"
+    command  = "generate --group Group1 --include Product,Foo --group Group2 --include Product,Foo -init -output __tests__/core-functionality-tests/testOutputDirectory"
+    disabled = env("DISABLE_NEXQUIK")
 }
 
 model Product {
