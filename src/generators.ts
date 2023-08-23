@@ -404,24 +404,6 @@ export async function generate(
       "public",
     ]);
 
-    createNestedDirectory(
-      path.join(outputDirectory, "app", rootName, imagesDirectoryName)
-    );
-
-    copyDirectory(
-      path.join(__dirname, "templateRoot", "public"),
-      path.join(outputDirectory, "app", rootName, imagesDirectoryName),
-      true
-    );
-
-    // Try copying over public folder
-    await copyPublicDirectory(
-      path.join(__dirname, "templateRoot", "public"),
-      path.join(outputDirectory, "public"),
-      true,
-      "app"
-    );
-
     createNestedDirectory(path.join(outputDirectory, "prisma"));
 
     // Copy over the user's prisma schema and rename it to schema.prisma
@@ -464,6 +446,16 @@ export async function generate(
       }
     );
   }
+
+  createNestedDirectory(
+    path.join(outputDirectory, "app", rootName, imagesDirectoryName)
+  );
+
+  copyDirectory(
+    path.join(__dirname, "templateRoot", "public"),
+    path.join(outputDirectory, "app", rootName, imagesDirectoryName),
+    true
+  );
 
   // Create grouped route directories
   groups.forEach(async ({ name, include, exclude }) => {
@@ -1490,7 +1482,7 @@ take: limit`;
   const duration = (endTime - startTime) / 1000;
   console.log(
     chalk.green(
-      `\n\nCreated ${fileCount} files and ${directoryCount} directories in ${duration} seconds.\nCreated ${modelTreeArray.length} model(s) with a max depth of ${maxDepth}`
+      `\n\nGroup: '${rootName}'\n Created ${fileCount} files and ${directoryCount} directories in ${duration} seconds.\nCreated ${modelTreeArray.length} model(s) with a max depth of ${maxDepth}`
     )
   );
 
