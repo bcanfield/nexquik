@@ -24,12 +24,12 @@ export function installPackages({
   const installDeps = (deps: Record<string, string>, type: string) => {
     const depArray = Object.keys(deps);
     if (depArray.length > 0) {
-      const cmd = `npm install ${depArray.join(
+      const cmd = `npm install --quiet ${depArray.join(
         " "
       )} --prefix ${destinationDirectory} --${type}`;
       try {
-        execSync(cmd, { stdio: "inherit" });
-        console.log(`${type} installed successfully.`);
+        execSync(cmd);
+        // console.log(`${type} installed successfully.`);
       } catch (error: any) {
         console.error(`Error installing ${type}: ${error.message}`);
         throw error;
