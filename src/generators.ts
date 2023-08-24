@@ -363,11 +363,6 @@ export async function generate(
   extendOnly: boolean,
   deps: boolean
 ) {
-  console.log(
-    `${chalk.blue.bold(
-      "Generating directories for your models..."
-    )} ${chalk.gray("(For deeply-nested schemas, this may take a moment)")}`
-  );
   // Read the Prisma schema file
   const prismaSchema = await readFileAsync(prismaSchemaPath, "utf-8");
 
@@ -387,9 +382,6 @@ export async function generate(
     if (fse.existsSync(outputRouteGroup)) {
       // Remove the directory and its contents
       fse.removeSync(outputRouteGroup);
-      console.log(`Removing and re-creating directory '${outputRouteGroup}'.`);
-    } else {
-      console.log(`Creating directory '${outputRouteGroup}' from scratch.`);
     }
   } else {
     console.log(`Extending directory '${outputRouteGroup}'.`);
@@ -450,11 +442,16 @@ export async function generate(
   } else if (deps === true) {
     // Install deps in output directory
     try {
+      console.log(
+        `${chalk.blue.bold("Installing dependencies...")} ${chalk.gray(
+          "(This may take a moment, and does not need to be run every time. Consider removing this parameter once it has completed once)"
+        )}`
+      );
       installPackages({
         sourcePackageJson: path.join(__dirname, "templateRoot", "package.json"),
         destinationDirectory: outputDirectory,
       });
-      console.log("Dependencies installed successfully.");
+      // console.log("Dependencies installed successfully.");
     } catch (error) {
       console.error("Error installing dependencies:", error);
     }
@@ -490,9 +487,13 @@ export async function generate(
     true
   );
 
+  console.log(
+    `${chalk.blue.bold(
+      "Generating directories for your models..."
+    )} ${chalk.gray("(For deeply-nested schemas, this may take a moment)")}`
+  );
   // Create grouped route directories
   groups.forEach(async ({ name, include, exclude }) => {
-    console.log({ name, include, exclude });
     // Create model tree and verify there is at least one valid model
     const modelTree = createModelTree(dmmf.datamodel, exclude, include);
     if (modelTree.length === 0) {
@@ -509,21 +510,6 @@ export async function generate(
     if (fse.existsSync(path.join(outputAppDirectory, rootName, name))) {
       // Remove the directory and its contents
       fse.removeSync(path.join(outputAppDirectory, rootName, name));
-      console.log(
-        `Removing and re-creating group directory '${path.join(
-          outputAppDirectory,
-          rootName,
-          name
-        )}'.`
-      );
-    } else {
-      console.log(
-        `Creating group directory '${path.join(
-          outputAppDirectory,
-          rootName,
-          name
-        )}' from scratch.`
-      );
     }
     await generateAppDirectoryFromModelTree(
       modelTree,
@@ -1514,9 +1500,11 @@ take: limit`;
   const endTime = new Date().getTime();
   const duration = (endTime - startTime) / 1000;
   console.log(
-    chalk.green(
-      `\n\nGroup: '${rootName}'\n Created ${fileCount} files and ${directoryCount} directories in ${duration} seconds.\nCreated ${modelTreeArray.length} model(s) with a max depth of ${maxDepth}`
-    )
+    `${chalk.blue.bold(
+      `\nCreated ${modelTreeArray.length} model(s) in Group: `
+    )}${chalk.yellow.bold(`'${rootName}'`)} ${chalk.gray(
+      `(Generated ${fileCount} files and ${directoryCount} directories in ${duration} seconds)`
+    )}`
   );
 
   return routes;

@@ -127,11 +127,6 @@ export async function run(options?: GeneratorOptions) {
       return console.log("Nexquik generation disabled due to env var");
     }
 
-    console.log(
-      chalk.gray(
-        `Fetching schema from ${prismaSchemaPath}\nOutputting to ${outputDirectory}\n`
-      )
-    );
     await generate(
       prismaSchemaPath,
       outputDirectory,
@@ -145,11 +140,7 @@ export async function run(options?: GeneratorOptions) {
 
     // await formatDirectory(outputDirectory);
 
-    console.log(
-      `${chalk.green.bold(
-        "✔ Success! Enjoy your new app at"
-      )} ${outputDirectory}`
-    );
+    console.log(`${chalk.green.bold("\n✔ Success!")}`);
     return;
   } catch (error) {
     console.log(chalk.red.bold("Nexquik Error:\n"), error);
