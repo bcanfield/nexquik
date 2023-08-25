@@ -1127,7 +1127,7 @@ take: limit`;
       {Array(Math.ceil(count / limit))
         .fill(0)
         .map((_, i) => (
-          <li>
+          <li key={i}>
             <Link
               href={{
                 pathname: \`${linkHref}\`,

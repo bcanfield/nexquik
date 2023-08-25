@@ -7,9 +7,10 @@ import { Enum } from "@prisma/client";
 //@nexquik prismaEnumImport stop
 
 export default async function EditNexquikTemplateModel({
+  // eslint-disable-next-line
   params,
 }: {
-  params: any;
+  params: { [key: string]: string | string[] | undefined };
 }) {
   const nexquikTemplateModel = await prisma.nexquikTemplateModel.findUnique({
     where:

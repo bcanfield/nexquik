@@ -3,9 +3,11 @@ import chalk from "chalk";
 import { Command } from "commander";
 import figlet from "figlet";
 import { generate } from "./generators";
-import { installPackages } from "./helpers";
+import { formatDirectory, installPackages } from "./helpers";
 import path from "path";
-
+import { spawnSync } from "child_process";
+import { ESLint } from "eslint";
+// require("eslint-plugin-unused-imports");
 export interface CliArgs {
   prismaSchemaPath: string;
   outputDirectory: string;
@@ -112,6 +114,7 @@ export async function run(options?: GeneratorOptions) {
     }
 
     const cliArgs = program.opts();
+    console.log({ cliArgs });
 
     const deps = cliArgs.Deps || false;
 
@@ -138,6 +141,41 @@ export async function run(options?: GeneratorOptions) {
       deps
     );
 
+    console.log("formatting NEW NEW");
+    // const eslint = spawnSync("eslint", ["--fix", outputDirectory]); // Replace 'src' with your desired directory
+    // if (eslint.error) {
+    //   console.error(`Error: ${eslint.error.message}`);
+    // }
+    const eslint = new ESLint({
+      fix: true,
+      useEslintrc: false,
+      overrideConfig: {
+        extends: [
+          "next/core-web-vitals",
+          "plugin:@typescript-eslint/recommended",
+        ],
+        plugins: ["@typescript-eslint", "unused-imports"],
+        rules: {
+          "unused-imports/no-unused-imports": "error",
+          "unused-imports/no-unused-vars": [
+            "error",
+            { vars: "all", args: "after-used", ignoreRestSiblings: false },
+          ],
+          "import/no-unused-modules": ["error"],
+          "no-unused-vars": [
+            "warn",
+            { varsIgnorePattern: "^_", argsIgnorePattern: "^_" },
+          ],
+        },
+      },
+    });
+    const results = await eslint.lintFiles([
+      `${outputDirectory}/app/${rootName}/**/*.tsx`,
+    ]);
+    console.log({ results });
+
+    await ESLint.outputFixes(results);
+    // console.log({ results });
     // await formatDirectory(outputDirectory);
 
     console.log(`${chalk.green.bold("\n✔ Success!")}`);
