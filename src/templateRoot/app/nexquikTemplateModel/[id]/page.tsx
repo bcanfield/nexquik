@@ -4,9 +4,10 @@ import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 
 export default async function ShowNexquikTemplateModel({
+  // eslint-disable-next-line
   params,
 }: {
-  params: any;
+  params: { [key: string]: string | string[] | undefined };
 }) {
   const nexquikTemplateModel = await prisma.nexquikTemplateModel.findUnique({
     where:

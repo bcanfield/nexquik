@@ -7,7 +7,6 @@ devNexquikApp/
 templateRoot/
 .github/
 __tests__/
-.eslintrc.json
 .gitattributes
 babel.config.js
 jest.config.js

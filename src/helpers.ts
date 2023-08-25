@@ -5,6 +5,7 @@ import prettier from "prettier";
 import { RouteObject } from "./generators";
 // import ora from "ora";
 import { execSync } from "child_process";
+import { ESLint } from "eslint";
 
 interface PackageOptions {
   sourcePackageJson: string;
@@ -268,8 +269,26 @@ export async function modifyFile(
         modelName
       );
     }
+    const eslint = new ESLint({ fix: true });
 
+    // let lintedText = "";
+    // // // const files = a wait getFilePaths(directoryPath);
+    // const results = await eslint.lintText(modifiedContent);
+    // if (
+    //   results.length > 0
+    //   // results[0].output?.includes("CreateParticipant(")
+    // ) {
+    //   // console.log({ results: results[0].output });
+    //   // console.log({ modifiedContent });
+    //   lintedText = results[0].output || "";
+    // }
+    // // const formatter = await eslint.loadFormatter("stylish");
+    // const resultText = await formatter.format(results);
     // Write the modified content to the destination file
+    // await fs.promises.writeFile(
+    //   destinationFilePath,
+    //   lintedText || modifiedContent
+    // );
     await fs.promises.writeFile(destinationFilePath, modifiedContent);
 
     return;
@@ -406,27 +425,27 @@ async function getFilePaths(directoryPath: string): Promise<string[]> {
 }
 
 export async function formatDirectory(directoryPath: string): Promise<void> {
-  const files = (await getFilePaths(directoryPath)).filter((filePath: string) =>
-    filePath.endsWith(".tsx")
-  );
-  // console.log(`${chalk.blue.bold(`Linting ${files.length} files...`)}`);
+  // const list = fs.readdirSync(directoryPath);
+  const eslint = new ESLint({ fix: true });
 
-  // const results = await eslint.lintFiles(files);
+  // const files = await getFilePaths(directoryPath);
+
+  const results = await eslint.lintFiles([`${directoryPath}/**/*.tsx`]);
+  await ESLint.outputFixes(results);
 
   // Format the files using Prettier
-  console.log(`${chalk.blue.bold(`Formatting ${files.length} files...`)}`);
-  const prettierConfig = await prettier.resolveConfig(directoryPath);
-  await Promise.all(
-    files.map(async (result) => {
-      const filePath = result;
-      const fileContent = await fs.promises.readFile(filePath, "utf-8");
-      const formattedContent = await prettier.format(fileContent, {
-        ...prettierConfig,
-        filepath: filePath,
-      });
-      await fs.promises.writeFile(filePath, formattedContent, "utf-8");
-    })
-  );
+  // const prettierConfig = await prettier.resolveConfig(directoryPath);
+  // await Promise.all(
+  //   results.map(async (result) => {
+  //     const filePath = result.filePath;
+  //     const fileContent = await fs.promises.readFile(filePath, "utf-8");
+  //     // const formattedContent = prettier.format(fileContent, {
+  //     //   ...prettierConfig,
+  //     //   filepath: filePath,
+  //     // });
+  //     await fs.promises.writeFile(filePath, fileContent, "utf-8");
+  //   })
+  // );
 }
 
 export function findAndReplaceInFile(

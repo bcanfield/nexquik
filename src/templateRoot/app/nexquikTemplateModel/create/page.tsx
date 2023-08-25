@@ -8,9 +8,10 @@ import { Enum } from "@prisma/client";
 //@nexquik prismaEnumImport stop
 
 export default async function CreateNexquikTemplateModel({
+  // eslint-disable-next-line
   params,
 }: {
-  params: any;
+  params: { [key: string]: string | string[] | undefined };
 }) {
   async function addNexquikTemplateModel(formData: FormData) {
     "use server";

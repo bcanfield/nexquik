@@ -4,10 +4,11 @@ import prisma from "@/lib/prisma";
 import clsx from "clsx";
 
 export default async function ListNexquikTemplateModels({
+  // eslint-disable-next-line
   params,
   searchParams,
 }: {
-  params: any;
+  params: { [key: string]: string | string[] | undefined };
   searchParams?: { [key: string]: string | string[] | undefined };
 }) {
   /* @nexquik listCount start */
