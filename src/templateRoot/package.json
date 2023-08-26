@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "reset": "prisma migrate reset --force",
+    "reset": "prisma migrate reset",
+    "push": "prisma db push --accept-data-loss",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
