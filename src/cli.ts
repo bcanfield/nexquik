@@ -114,7 +114,6 @@ export async function run(options?: GeneratorOptions) {
     }
 
     const cliArgs = program.opts();
-    console.log({ cliArgs });
 
     const deps = cliArgs.Deps || false;
 
@@ -141,17 +140,15 @@ export async function run(options?: GeneratorOptions) {
       deps
     );
 
-    console.log("formatting NEW NEW");
-    // const eslint = spawnSync("eslint", ["--fix", outputDirectory]); // Replace 'src' with your desired directory
-    // if (eslint.error) {
-    //   console.error(`Error: ${eslint.error.message}`);
-    // }
+    console.log(`${chalk.blue.bold("\nLinting Generated Files...")}`);
+    const startTime = new Date().getTime();
+
     const eslint = new ESLint({
       fix: true,
       useEslintrc: false,
       overrideConfig: {
         extends: [
-          "next/core-web-vitals",
+          // "next/core-web-vitals",
           "plugin:@typescript-eslint/eslint-recommended",
           "plugin:@typescript-eslint/recommended",
         ],
@@ -165,10 +162,6 @@ export async function run(options?: GeneratorOptions) {
           "no-unused-vars": "off",
           "@typescript-eslint/no-unused-vars": "error",
           "unused-imports/no-unused-imports": "error",
-          // "unused-imports/no-unused-vars": [
-          //   "error",
-          //   { vars: "all", args: "after-used", ignoreRestSiblings: false },
-          // ],
           "import/no-unused-modules": ["error"],
         },
       },
@@ -176,12 +169,11 @@ export async function run(options?: GeneratorOptions) {
     const results = await eslint.lintFiles([
       `${outputDirectory}/app/${rootName}/**/*.tsx`,
     ]);
-    console.log({ results });
 
     await ESLint.outputFixes(results);
-    // console.log({ results });
-    // await formatDirectory(outputDirectory);
-
+    const endTime = new Date().getTime();
+    const duration = (endTime - startTime) / 1000;
+    console.log(chalk.gray(`(Linted in ${duration} seconds)`));
     console.log(`${chalk.green.bold("\n✔ Success!")}`);
     return;
   } catch (error) {
