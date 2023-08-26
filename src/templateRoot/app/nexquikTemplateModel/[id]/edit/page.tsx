@@ -7,7 +7,6 @@ import { Enum } from "@prisma/client";
 //@nexquik prismaEnumImport stop
 
 export default async function EditNexquikTemplateModel({
-  // eslint-disable-next-line
   params,
 }: {
   params: { [key: string]: string | string[] | undefined };
@@ -21,16 +20,18 @@ export default async function EditNexquikTemplateModel({
 
   async function editNexquikTemplateModel(formData: FormData) {
     "use server";
-    await prisma.nexquikTemplateModel.update({
-      where:
-        //@nexquik prismaWhereInput start
-        { id: params.id },
-      //@nexquik prismaWhereInput stop
-      data:
-        //@nexquik prismaEditDataInput start
-        { name: formData.get("name") },
-      //@nexquik prismaEditDataInput stop
-    });
+    if (formData) {
+      await prisma.nexquikTemplateModel.update({
+        where:
+          //@nexquik prismaWhereInput start
+          { id: params.id },
+        //@nexquik prismaWhereInput stop
+        data:
+          //@nexquik prismaEditDataInput start
+          { name: formData.get("name") },
+        //@nexquik prismaEditDataInput stop
+      });
+    }
     //@nexquik editRedirect start
     redirect(`/nexquikTemplateModel/${params.id}`);
     //@nexquik editRedirect stop

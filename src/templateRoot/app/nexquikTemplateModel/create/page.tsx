@@ -7,12 +7,20 @@ import prisma from "@/lib/prisma";
 import { Enum } from "@prisma/client";
 //@nexquik prismaEnumImport stop
 
-export default async function CreateNexquikTemplateModel({
-  // eslint-disable-next-line
-  params,
-}: {
-  params: { [key: string]: string | string[] | undefined };
-}) {
+export default async function CreateNexquikTemplateModel(
+  //@nexquik props start
+  {
+    params,
+  }: {
+    params: { [key: string]: string | string[] | undefined };
+  }
+  //@nexquik props stop
+) 
+  
+
+{
+  
+
   async function addNexquikTemplateModel(formData: FormData) {
     "use server";
     const created = await prisma.nexquikTemplateModel.create({
