@@ -1,0 +1,13 @@
+version: "3"
+
+services:
+  db:
+    container_name: nexquik-db
+    image: postgres:11
+    restart: always
+    ports:
+      - 5444:5432
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: nexquik
+      POSTGRES_DB: nexquik-db
