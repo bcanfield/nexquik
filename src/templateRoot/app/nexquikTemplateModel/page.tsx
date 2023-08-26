@@ -3,14 +3,17 @@ import Link from "next/link";
 import prisma from "@/lib/prisma";
 import clsx from "clsx";
 
-export default async function ListNexquikTemplateModels({
-  // eslint-disable-next-line
+export default async function ListNexquikTemplateModels(
+  //@nexquik listProps start
+  {
   params,
   searchParams,
 }: {
   params: { [key: string]: string | string[] | undefined };
   searchParams?: { [key: string]: string | string[] | undefined };
-}) {
+}
+ //@nexquik listProps stop
+) {
   /* @nexquik listCount start */
 
   /* @nexquik listCount stop */

@@ -1188,6 +1188,28 @@ take: limit`;
             ""
           )
         : ``;
+      const props = modelTree.parent
+        ? `{
+    params,
+  }: {
+    params: { [key: string]: string | string[] | undefined };
+  }`
+        : "";
+
+      const listProps = modelTree.parent
+        ? ` {
+  params,
+  searchParams,
+}: {
+  params: { [key: string]: string | string[] | undefined };
+  searchParams?: { [key: string]: string | string[] | undefined };
+}`
+        : ` {
+  searchParams
+}: {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}`;
+
       const listCount = `
     const page =
     typeof searchParams?.page === "string" ? Number(searchParams?.page) : 1;
@@ -1367,6 +1389,11 @@ take: limit`;
           path.join(baseModelDirectory, "page.tsx"),
           [
             {
+              startComment: "//@nexquik listProps start",
+              endComment: "//@nexquik listProps stop",
+              insertString: listProps,
+            },
+            {
               startComment: "/* @nexquik listCount start */",
               endComment: "/* @nexquik listCount stop */",
               insertString: listCount,
@@ -1417,6 +1444,11 @@ take: limit`;
           path.join(templateModelDirectory, "create", "page.tsx"),
           path.join(baseModelDirectory, "create", "page.tsx"),
           [
+            {
+              startComment: "//@nexquik props start",
+              endComment: "//@nexquik props stop",
+              insertString: props,
+            },
             {
               startComment: "//@nexquik prismaEnumImport start",
               endComment: "//@nexquik prismaEnumImport stop",

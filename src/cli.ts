@@ -152,20 +152,24 @@ export async function run(options?: GeneratorOptions) {
       overrideConfig: {
         extends: [
           "next/core-web-vitals",
+          "plugin:@typescript-eslint/eslint-recommended",
           "plugin:@typescript-eslint/recommended",
         ],
-        plugins: ["@typescript-eslint", "unused-imports"],
+        plugins: [
+          "@typescript-eslint",
+          "unused-imports",
+          "react",
+          "react-hooks",
+        ],
         rules: {
+          "no-unused-vars": "off",
+          "@typescript-eslint/no-unused-vars": "error",
           "unused-imports/no-unused-imports": "error",
-          "unused-imports/no-unused-vars": [
-            "error",
-            { vars: "all", args: "after-used", ignoreRestSiblings: false },
-          ],
+          // "unused-imports/no-unused-vars": [
+          //   "error",
+          //   { vars: "all", args: "after-used", ignoreRestSiblings: false },
+          // ],
           "import/no-unused-modules": ["error"],
-          "no-unused-vars": [
-            "warn",
-            { varsIgnorePattern: "^_", argsIgnorePattern: "^_" },
-          ],
         },
       },
     });
