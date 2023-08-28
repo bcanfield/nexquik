@@ -1,3 +1,16 @@
+# [2.3.0-beta.2](https://github.com/bcanfield/nexquik/compare/v2.3.0-beta.1...v2.3.0-beta.2) (2023-08-28)
+
+
+### Bug Fixes
+
+* Deps ([395d153](https://github.com/bcanfield/nexquik/commit/395d153f6a855d78e5a0154c29508131866f399a))
+* Tests ([5fa4be7](https://github.com/bcanfield/nexquik/commit/5fa4be79b87a8883db9fa210076a831735929324))
+
+
+### Features
+
+* Db and new dev schema setup ([de1ea52](https://github.com/bcanfield/nexquik/commit/de1ea52f8757be0d93f39f648f1c15f5e913b0c8))
+
 # [2.3.0-beta.1](https://github.com/bcanfield/nexquik/compare/v2.2.1...v2.3.0-beta.1) (2023-08-23)
 
 
