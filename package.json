@@ -25,7 +25,7 @@
     "dev:2": "rm -rf ./devNexquikApp",
     "dev:3": "npm run nexquikInit",
     "dev:4": "cd ./devNexquikApp && npm i && npm run generate && npm run push --accept-data-loss && npm run dev",
-    "nexquikInit": "nexquik group --name Main -init -rootName gen -schema ./prisma/dev.prisma -output ./devNexquikApp",
+    "nexquikInit": "nexquik group --name Main --init --rootName gen --schema ./prisma/dev.prisma --output ./devNexquikApp",
     "nexquikHelp": "nexquik -h",
     "test": "jest --silent=false",
     "clean": "rimraf dist/",
