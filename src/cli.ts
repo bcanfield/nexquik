@@ -42,36 +42,36 @@ export async function run(options?: GeneratorOptions) {
       .version(require("../package.json").version)
       .description("Auto-generate a Next.js 13 app from your DB Schema")
       .option(
-        "-schema <schemaLocation>",
+        "--schema <schemaLocation>",
         "Path to prisma schema file",
         defaultPrismaSchemaPath
       )
       .option(
-        "-deps",
+        "--deps",
         "Auto npm install dependencies in your output directory.",
         false
       )
       .option(
-        "-output <outputDir>",
+        "--output <outputDir>",
         "Path to output directory",
         defaultOutputDirectory
       )
       .option(
-        "-depth <depthValue>",
+        "--depth <depthValue>",
         "Maximum recursion depth for your models. (Changing this for large data models is not recommended, unless you filter down your models with the 'include' or 'exclude' flags also.)",
         "5"
       )
-      .option("-init", "Initializes a full Next.js app from scratch")
+      .option("--init", "Initializes a full Next.js app from scratch")
       .option(
-        "-extendOnly",
+        "--extendOnly",
         "Only creates the models specified in the current command, and leaves previously created ones alone."
       )
       .option(
-        "-rootName <dirName>",
-        "Name for the root app dir to be created",
+        "--rootName <dirName>",
+        "Desired name for the root app dir for your generated groups (this is the first directory nested under your 'app' directory.",
         "gen"
       )
-      .option("-disabled", "Disable the generator", false);
+      .option("--disabled", "Disable the generator", false);
 
     program
       .command("group")
@@ -119,15 +119,15 @@ export async function run(options?: GeneratorOptions) {
 
     const cliArgs = program.opts();
 
-    const deps = cliArgs.Deps || false;
-    const prismaSchemaPath = options?.schemaPath || cliArgs.Schema;
-    const outputDirectory = cliArgs.Output;
+    const deps = cliArgs.deps || false;
+    const prismaSchemaPath = options?.schemaPath || cliArgs.schema;
+    const outputDirectory = cliArgs.output;
     const maxDepth = parseInt(cliArgs.Depth);
-    const rootName = cliArgs.RootName;
-    const init = cliArgs.Init || false;
-    const extendOnly = cliArgs.ExtendOnly || false;
+    const rootName = cliArgs.rootName;
+    const init = cliArgs.init || false;
+    const extendOnly = cliArgs.extendOnly || false;
     const disabled =
-      process.env.DISABLE_NEXQUIK === "true" || cliArgs.Disabled === true;
+      process.env.DISABLE_NEXQUIK === "true" || cliArgs.disabled === true;
     if (disabled) {
       return console.log("Nexquik generation disabled due to env var");
     }

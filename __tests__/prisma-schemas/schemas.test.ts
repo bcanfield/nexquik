@@ -24,10 +24,10 @@ async function runSchemaTest(schemaPath) {
   try {
     child_process.execSync(`rm -rf ${testOutputDirectory}`);
     child_process.execSync(
-      `node ${nexquikMain} group --name MainGroup -init -rootName gen -schema ${path.join(
+      `node ${nexquikMain} group --name MainGroup --init --rootName gen --schema ${path.join(
         prismaSchemaDirectory,
         schemaPath
-      )} -output ${testOutputDirectory}`
+      )} --output ${testOutputDirectory}`
     );
 
     console.log(`Schema Test: ${schemaPath}`);
