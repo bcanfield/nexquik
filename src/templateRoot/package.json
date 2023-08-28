@@ -10,8 +10,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc",
-    "generate": "prisma generate",
-    "auto-generate": "nexquik -output ./app"
+    "generate": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "5.1.1",

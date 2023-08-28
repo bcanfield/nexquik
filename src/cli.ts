@@ -42,7 +42,7 @@ export async function run(options?: GeneratorOptions) {
       .version(require("../package.json").version)
       .description("Auto-generate a Next.js 13 app from your DB Schema")
       .option(
-        "-schema <value>",
+        "-schema <schemaLocation>",
         "Path to prisma schema file",
         defaultPrismaSchemaPath
       )
@@ -52,56 +52,59 @@ export async function run(options?: GeneratorOptions) {
         false
       )
       .option(
-        "-output <value>",
+        "-output <outputDir>",
         "Path to output directory",
         defaultOutputDirectory
       )
       .option(
-        "-depth <value>",
+        "-depth <depthValue>",
         "Maximum recursion depth for your models. (Changing this for large data models is not recommended, unless you filter down your models with the 'include' or 'exclude' flags also.)",
         "5"
       )
-      .option(
-        "-routeGroupOnly",
-        "Outputs the built app as a route group, and excludes config files found in next.js root directory"
-      )
-      .option("-init", "Initializes a full next.js app")
+      .option("-init", "Initializes a full Next.js app from scratch")
       .option(
         "-extendOnly",
         "Only creates the models specified in the current command, and leaves previously created ones alone."
       )
-      .option("-rootName <value>", "Name for the root app to be created", "gen")
-      .option("-disabled <value>", "Disable the generator", false);
+      .option(
+        "-rootName <dirName>",
+        "Name for the root app dir to be created",
+        "gen"
+      )
+      .option("-disabled", "Disable the generator", false);
 
     program
-      .command("generate")
-      // .description("Manage groups with include and exclude options")
-      .option("--group <name>", "Specify a group name", (name) => {
+      .command("group")
+      .description(
+        "Create a group to organize your models into route groups. You may create One-to-many of these."
+      )
+      .option("--name <groupName>", "Specify a group name", (groupName) => {
         // Create a new group object for each group
-        currentGroup = { name, include: [], exclude: [] };
+        currentGroup = { name: groupName, include: [], exclude: [] };
         groups.push(currentGroup);
       })
       .option(
-        "--include <types>",
+        "--include <modelNames>",
         "Specify included types (comma-separated)",
-        (types) => {
+        (modelNames) => {
           // Add the included types to the current group
           if (currentGroup) {
-            currentGroup.include = types.split(",");
+            currentGroup.include = modelNames.split(",");
           }
         }
       )
       .option(
-        "--exclude <types>",
+        "--exclude <modelNames>",
         "Specify excluded types (comma-separated)",
-        (types) => {
+        (modelNames) => {
           // Add the excluded types to the current group
           if (currentGroup) {
-            currentGroup.exclude = types.split(",");
+            currentGroup.exclude = modelNames.split(",");
           }
         }
       );
 
+    // If prisma generator, parse the cli args from the generator config
     if (options?.generator.config) {
       try {
         const genArgs = options?.generator.config.command.split(" ") || [];
@@ -110,13 +113,13 @@ export async function run(options?: GeneratorOptions) {
         throw Error("Invalid args");
       }
     } else {
+      // Else, parse from cli args
       program.parse(process.argv);
     }
 
     const cliArgs = program.opts();
 
     const deps = cliArgs.Deps || false;
-
     const prismaSchemaPath = options?.schemaPath || cliArgs.Schema;
     const outputDirectory = cliArgs.Output;
     const maxDepth = parseInt(cliArgs.Depth);
