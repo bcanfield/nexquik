@@ -969,7 +969,7 @@ export async function generateAppDirectoryFromModelTree(
         });
         select += "}, ";
       }
-      select += ` skip: page,
+      select += ` skip: (page - 1) * limit,
 take: limit`;
       const listFormCode = await generateListForm(
         modelTree,
@@ -1095,84 +1095,33 @@ take: limit`;
 
       const listPagination = `
 
-      <ul className="flex items-center -space-x-px h-8 text-sm mt-4">
-      <li>
-        <Link
-          href={{
+
+      <div className="flex flex-col mt-2">
+      <span className="text-sm text-gray-700 dark:text-gray-400">
+          Showing <span className="font-semibold text-gray-900 dark:text-white">{(page - 1) * limit + 1}</span> to <span className="font-semibold text-gray-900 dark:text-white">{Math.min(page * limit, count)}</span> of <span className="font-semibold text-gray-900 dark:text-white">{count}</span> Entries
+      </span>
+      <div className="inline-flex mt-2 xs:mt-0">
+          <Link  href={{
             pathname: \`${linkHref}\`,
             query: {
               page: page != 1 ? page - 1 : 1,
             },
-          }}
-          className="flex items-center justify-center px-3 h-8 ml-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-        >
-          <span className="sr-only">Previous</span>
-          <svg
-            className="w-2.5 h-2.5"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 6 10"
-          >
-            <path
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M5 1 1 5l4 4"
-            />
-          </svg>
-        </Link>
-      </li>
-      {Array(Math.ceil(count / limit))
-        .fill(0)
-        .map((_, i) => (
-          <li key={i}>
-            <Link
-              href={{
-                pathname: \`${linkHref}\`,
-                query: {
-                  page: i + 1,
-                },
-              }}
-              className={clsx(
-                "flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white",
-                page === i + 1 && "pointer-events-none opacity-50"
-              )}
-            >
-              {i + 1}
-            </Link>
-          </li>
-        ))}
-      <li>
-        <Link
-          href={{
+          }} className="flex items-center justify-center px-3 h-8 text-sm font-medium text-white bg-gray-800 rounded-l hover:bg-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
+              Prev
+          </Link>
+          <Link href={{
             pathname: \`${linkHref}\`,
             query: {
               page: page >= Math.ceil(count / limit) ? page : page + 1,
             },
-          }}
-          className="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-        >
-          <span className="sr-only">Next</span>
-          <svg
-            className="w-2.5 h-2.5"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 6 10"
-          >
-            <path
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="m1 9 4-4-4-4"
-            />
-          </svg>
-        </Link>
-      </li>
-    </ul>
+          }} className="flex items-center justify-center px-3 h-8 text-sm font-medium text-white bg-gray-800 border-0 border-l border-gray-700 rounded-r hover:bg-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
+              Next
+          </Link>
+      </div>
+          </div>
+
+
+
     
     
     `;
