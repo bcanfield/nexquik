@@ -1,3 +1,10 @@
+# [2.3.0-beta.3](https://github.com/bcanfield/nexquik/compare/v2.3.0-beta.2...v2.3.0-beta.3) (2023-08-28)
+
+
+### Bug Fixes
+
+* Format cli args ([497d32e](https://github.com/bcanfield/nexquik/commit/497d32ebc06ce4923cf7cc68b2c58bdf1e2a265b))
+
 # [2.3.0-beta.2](https://github.com/bcanfield/nexquik/compare/v2.3.0-beta.1...v2.3.0-beta.2) (2023-08-28)
 
 
