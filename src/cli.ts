@@ -47,34 +47,35 @@ export async function run(options?: GeneratorOptions) {
         defaultPrismaSchemaPath
       )
       .option(
-        "--appTitle <title>",
-        "Title to be used in the header of your app",
-        "App"
-      )
-      .option(
-        "--deps",
-        "Auto npm install dependencies in your output directory.",
-        false
-      )
-      .option(
         "--output <outputDir>",
         "Path to output directory",
         defaultOutputDirectory
       )
-      .option(
-        "--depth <depthValue>",
-        "Maximum recursion depth for your models. (Changing this for large data models is not recommended, unless you filter down your models with the 'include' or 'exclude' flags also.)",
-        "5"
-      )
+
       .option("--init", "Initializes a full Next.js app from scratch")
       .option(
         "--extendOnly",
         "Only creates the models specified in the current command, and leaves previously created ones alone."
       )
       .option(
+        "--appTitle <title>",
+        "Title to be used in the header of your app",
+        "App"
+      )
+      .option(
         "--rootName <dirName>",
         "Desired name for the root app dir for your generated groups (this is the first directory nested under your 'app' directory.",
         "gen"
+      )
+      .option(
+        "--deps",
+        "Auto npm install dependencies in your output directory. (Not necessary when using --init)",
+        false
+      )
+      .option(
+        "--depth <depthValue>",
+        "Maximum recursion depth for your models. (Changing this for large data models is not recommended, unless you filter down your models with the 'include' or 'exclude' flags also.)",
+        "5"
       )
       .option(
         "--prismaImport <prismaImportString>",
