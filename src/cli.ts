@@ -71,6 +71,11 @@ export async function run(options?: GeneratorOptions) {
         "Desired name for the root app dir for your generated groups (this is the first directory nested under your 'app' directory.",
         "gen"
       )
+      .option(
+        "--prismaImport <prismaImportString>",
+        "Import location for your prisma client if it differs from the standard setup.",
+        'import prisma from "@/lib/prisma";'
+      )
       .option("--disabled", "Disable the generator", false);
 
     program
@@ -124,6 +129,7 @@ export async function run(options?: GeneratorOptions) {
     const outputDirectory = cliArgs.output;
     const maxDepth = parseInt(cliArgs.Depth);
     const rootName = cliArgs.rootName;
+    const prismaImportString = cliArgs.prismaImport;
     const init = cliArgs.init || false;
     const extendOnly = cliArgs.extendOnly || false;
     const disabled =
@@ -132,6 +138,7 @@ export async function run(options?: GeneratorOptions) {
       return console.log("Nexquik generation disabled due to env var");
     }
 
+    console.log({ cliArgs });
     await generate(
       prismaSchemaPath,
       outputDirectory,
@@ -140,7 +147,8 @@ export async function run(options?: GeneratorOptions) {
       rootName,
       groups,
       extendOnly,
-      deps
+      deps,
+      prismaImportString
     );
 
     console.log(`${chalk.blue.bold("\nLinting Generated Files...")}`);
@@ -151,7 +159,6 @@ export async function run(options?: GeneratorOptions) {
       useEslintrc: false,
       overrideConfig: {
         extends: [
-          // "next/core-web-vitals",
           "plugin:@typescript-eslint/eslint-recommended",
           "plugin:@typescript-eslint/recommended",
         ],

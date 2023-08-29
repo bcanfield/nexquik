@@ -1,7 +1,9 @@
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+//@nexquik prismaImport start
 import prisma from "@/lib/prisma";
+//@nexquik prismaImport stop
 
 export default async function ShowNexquikTemplateModel({
   params,
