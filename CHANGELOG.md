@@ -1,3 +1,10 @@
+# [2.3.0-beta.4](https://github.com/bcanfield/nexquik/compare/v2.3.0-beta.3...v2.3.0-beta.4) (2023-08-28)
+
+
+### Bug Fixes
+
+* Pagination style fix ([b5ef1ce](https://github.com/bcanfield/nexquik/commit/b5ef1cef7ddafff340744b6c1ec8904a63a199a6))
+
 # [2.3.0-beta.3](https://github.com/bcanfield/nexquik/compare/v2.3.0-beta.2...v2.3.0-beta.3) (2023-08-28)
 
 
