@@ -362,7 +362,8 @@ export async function generate(
   groups: Group[],
   extendOnly: boolean,
   deps: boolean,
-  prismaImportString: string
+  prismaImportString: string,
+  appTitle: string
 ) {
   // Read the Prisma schema file
   const prismaSchema = await readFileAsync(prismaSchemaPath, "utf-8");
@@ -439,6 +440,17 @@ export async function generate(
           console.error("An error occurred while copying the file:", err);
         }
       }
+    );
+    await modifyFile(
+      path.join(__dirname, "templateRoot", "app", "page.tsx"),
+      path.join(outputDirectory, "app", "page.tsx"),
+      [
+        {
+          startComment: "// @nexquik homeRedirect start",
+          endComment: "// @nexquik homeRedirect stop",
+          insertString: `redirect("/${rootName}")`,
+        },
+      ]
     );
   } else if (deps === true) {
     // Install deps in output directory
@@ -589,6 +601,11 @@ export async function generate(
     ),
     path.join(path.join(outputRouteGroup, "layout.tsx")),
     [
+      {
+        startComment: "{/* @nexquik appTitle start */}",
+        endComment: "{/* @nexquik appTitle stop */}",
+        insertString: appTitle,
+      },
       {
         startComment: "{/* //@nexquik routeSidebar start */}",
         endComment: "{/* //@nexquik routeSidebar stop */}",
@@ -838,8 +855,6 @@ export async function generateAppDirectoryFromModelTree(
   rootName: string,
   prismaImportString: string
 ): Promise<RouteObject[]> {
-  console.log({ prismaImportString });
-  // console.log({ rootName });
   const routes: RouteObject[] = [];
   let fileCount = 0;
   let directoryCount = 0;
