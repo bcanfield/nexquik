@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+//@nexquik prismaImport start
 import prisma from "@/lib/prisma";
+//@nexquik prismaImport stop
 
 //@nexquik prismaEnumImport start
 import { Enum } from "@prisma/client";

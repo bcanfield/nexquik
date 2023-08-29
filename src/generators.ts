@@ -361,7 +361,8 @@ export async function generate(
   rootName: string,
   groups: Group[],
   extendOnly: boolean,
-  deps: boolean
+  deps: boolean,
+  prismaImportString: string
 ) {
   // Read the Prisma schema file
   const prismaSchema = await readFileAsync(prismaSchemaPath, "utf-8");
@@ -516,7 +517,8 @@ export async function generate(
       outputAppDirectory,
       enums,
       maxAllowedDepth,
-      thisGroupPath
+      thisGroupPath,
+      prismaImportString
     );
 
     // Nested Group Home route list
@@ -833,8 +835,10 @@ export async function generateAppDirectoryFromModelTree(
   outputDirectory: string,
   enums: Record<string, string[]>,
   maxAllowedDepth: number,
-  rootName: string
+  rootName: string,
+  prismaImportString: string
 ): Promise<RouteObject[]> {
+  console.log({ prismaImportString });
   // console.log({ rootName });
   const routes: RouteObject[] = [];
   let fileCount = 0;
@@ -1256,6 +1260,11 @@ take: limit`;
           path.join(dynamicOutputDirectory, "edit", "page.tsx"),
           [
             {
+              startComment: "//@nexquik prismaImport start",
+              endComment: "//@nexquik prismaImport stop",
+              insertString: prismaImportString,
+            },
+            {
               startComment: "//@nexquik prismaEnumImport start",
               endComment: "//@nexquik prismaEnumImport stop",
               insertString: enumImport,
@@ -1297,6 +1306,11 @@ take: limit`;
           path.join(dynamicOutputDirectory, "page.tsx"),
           [
             {
+              startComment: "//@nexquik prismaImport start",
+              endComment: "//@nexquik prismaImport stop",
+              insertString: prismaImportString,
+            },
+            {
               startComment: "//@nexquik prismaWhereInput start",
               endComment: "//@nexquik prismaWhereInput stop",
               insertString: whereClause,
@@ -1337,6 +1351,11 @@ take: limit`;
           path.join(templateModelDirectory, "page.tsx"),
           path.join(baseModelDirectory, "page.tsx"),
           [
+            {
+              startComment: "//@nexquik prismaImport start",
+              endComment: "//@nexquik prismaImport stop",
+              insertString: prismaImportString,
+            },
             {
               startComment: "//@nexquik listProps start",
               endComment: "//@nexquik listProps stop",
@@ -1393,6 +1412,11 @@ take: limit`;
           path.join(templateModelDirectory, "create", "page.tsx"),
           path.join(baseModelDirectory, "create", "page.tsx"),
           [
+            {
+              startComment: "//@nexquik prismaImport start",
+              endComment: "//@nexquik prismaImport stop",
+              insertString: prismaImportString,
+            },
             {
               startComment: "//@nexquik props start",
               endComment: "//@nexquik props stop",
