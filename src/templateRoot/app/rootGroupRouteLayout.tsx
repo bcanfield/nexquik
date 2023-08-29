@@ -48,7 +48,9 @@ export default function RootLayout({
                     ></Image>
                   </span>
                   <span className="self-center text-2xl ml-2 font-semibold whitespace-nowrap dark:text-white">
+                    {/* @nexquik appTitle start */}
                     App
+                    {/* @nexquik appTitle stop */}
                   </span>
                 </a>
 

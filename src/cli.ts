@@ -47,6 +47,11 @@ export async function run(options?: GeneratorOptions) {
         defaultPrismaSchemaPath
       )
       .option(
+        "--appTitle <title>",
+        "Title to be used in the header of your app",
+        "App"
+      )
+      .option(
         "--deps",
         "Auto npm install dependencies in your output directory.",
         false
@@ -134,6 +139,7 @@ export async function run(options?: GeneratorOptions) {
     const extendOnly = cliArgs.extendOnly || false;
     const disabled =
       process.env.DISABLE_NEXQUIK === "true" || cliArgs.disabled === true;
+    const appTitle = cliArgs.appTitle;
     if (disabled) {
       return console.log("Nexquik generation disabled due to env var");
     }
@@ -148,7 +154,8 @@ export async function run(options?: GeneratorOptions) {
       groups,
       extendOnly,
       deps,
-      prismaImportString
+      prismaImportString,
+      appTitle
     );
 
     console.log(`${chalk.blue.bold("\nLinting Generated Files...")}`);
