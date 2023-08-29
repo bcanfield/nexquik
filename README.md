@@ -12,7 +12,7 @@
     </strong>
     </p>
      <p align="center">
-     Auto-generate select portions of your app, allowing you to focus on refining your more custom components.
+     Auto-generate pieces of your app, allowing you to focus on refining your more custom components.
     </p>
 </p>
 <p align="center">
