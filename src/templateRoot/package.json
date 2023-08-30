@@ -4,13 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "reset": "prisma migrate reset --force",
+    "reset": "prisma migrate reset",
+    "push": "prisma db push --accept-data-loss",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc",
-    "generate": "prisma generate",
-    "auto-generate": "nexquik -output ./app"
+    "generate": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "5.1.1",

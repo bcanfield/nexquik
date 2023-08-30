@@ -1,15 +1,21 @@
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
+//@nexquik prismaImport start
 import prisma from "@/lib/prisma";
+//@nexquik prismaImport stop
 import clsx from "clsx";
 
-export default async function ListNexquikTemplateModels({
+export default async function ListNexquikTemplateModels(
+  //@nexquik listProps start
+  {
   params,
   searchParams,
 }: {
-  params: any;
+  params: { [key: string]: string | string[] | undefined };
   searchParams?: { [key: string]: string | string[] | undefined };
-}) {
+}
+ //@nexquik listProps stop
+) {
   /* @nexquik listCount start */
 
   /* @nexquik listCount stop */

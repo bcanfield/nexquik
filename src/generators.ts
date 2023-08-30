@@ -2,6 +2,8 @@ import { DMMF } from "@prisma/generator-helper";
 import { getDMMF } from "@prisma/internals";
 import chalk from "chalk";
 import fs from "fs";
+import * as fse from "fs-extra";
+
 import path from "path";
 
 import { promisify } from "util";
@@ -11,7 +13,9 @@ import {
   copyDirectory,
   copyImage,
   copyPublicDirectory,
+  createNestedDirectory,
   getDynamicSlugs,
+  installPackages,
   modifyFile,
 } from "./helpers";
 import {
@@ -19,6 +23,7 @@ import {
   createModelTree,
   getParentReferenceField,
 } from "./modelTree";
+import { Group } from "./cli";
 
 const blueButtonClass =
   "px-2 py-1 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-sky-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-sky-600 dark:focus:ring-blue-500 dark:focus:text-white";
@@ -63,14 +68,21 @@ function splitTheRoute(route: string): RouteSegment[] {
 }
 function generateBreadCrumb(route: string) {
   let routeCrumbs = "";
-  splitTheRoute(route).forEach(({ segment, fullRoute }) => {
+  splitTheRoute(route).forEach(({ segment, fullRoute }, index) => {
     routeCrumbs += `
       
        <li>
           <div className="flex items-center">
-            <svg className="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-              <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 9 4-4-4-4"/>
-            </svg>
+          ${
+            index === 0
+              ? `<svg className="w-3 h-3 mr-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+          <path d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z"/>
+        </svg>`
+              : `<svg className="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 9 4-4-4-4"/>
+      </svg>`
+          }
+            
             <Link href={\`${fullRoute}\`} className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">${segment}</Link>
           </div>
         </li>`;
@@ -78,14 +90,7 @@ function generateBreadCrumb(route: string) {
   const breadCrumb = `
     <nav className="flex" aria-label="Breadcrumb">
     <ol className="inline-flex items-center space-x-1 md:space-x-3">
-    <li className="inline-flex items-center">
-    <Link href="/" className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
-      <svg className="w-3 h-3 mr-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-        <path d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z"/>
-      </svg>
-      Home
-    </Link>
-  </li>
+ 
        ${routeCrumbs}
 
         </ol>
@@ -351,82 +356,51 @@ async function generateListForm(
 export async function generate(
   prismaSchemaPath: string,
   outputDirectory: string,
-  excludedModels: string[],
-  includedModels: string[],
   maxAllowedDepth: number,
-  modelsOnly: boolean
+  init: boolean,
+  rootName: string,
+  groups: Group[],
+  extendOnly: boolean,
+  deps: boolean,
+  prismaImportString: string,
+  appTitle: string
 ) {
   // Read the Prisma schema file
   const prismaSchema = await readFileAsync(prismaSchemaPath, "utf-8");
 
-  // Create the output directory
-  if (fs.existsSync(outputDirectory)) {
-    if (modelsOnly === false) {
-      fs.rmSync(outputDirectory, { recursive: true });
-      fs.mkdirSync(outputDirectory);
-    }
-  } else {
-    fs.mkdirSync(outputDirectory);
-  }
-
   // Main section to build the app from the modelTree
   const dmmf = await getDMMF({ datamodel: prismaSchema });
 
-  // Create model tree and verify there is at least one valid model
-  const modelTree = createModelTree(
-    dmmf.datamodel,
-    excludedModels,
-    includedModels
-  );
-  if (modelTree.length === 0) {
-    console.log(chalk.red("No valid models detected in schema"));
-    throw new Error("No valid models detected in schema");
-  }
+  // i.e. devNexquikApp/app
+  const outputAppDirectory = path.join(outputDirectory, "app");
+  createNestedDirectory(outputAppDirectory);
 
-  let directoryToOutputFiles = outputDirectory;
-  const enums = getEnums(dmmf.datamodel);
-  console.log(
-    `${chalk.blue.bold(
-      "Generating directories for your models..."
-    )} ${chalk.gray("(For deeply-nested schemas, this may take a moment)")}`
-  );
-  // Create files in main directory
-  if (modelsOnly === false) {
-    // Create the app directory
-    directoryToOutputFiles = path.join(outputDirectory, "app");
-    fs.mkdirSync(directoryToOutputFiles);
+  // i.e. devNexquikApp/app/gen
+  const outputRouteGroup = path.join(outputAppDirectory, rootName);
 
-    // Copy all files from the root dir except for app. (package.json, next.config, etc)
-    copyDirectory(
-      path.join(__dirname, "templateRoot"),
-      outputDirectory,
-      true,
-      "app"
-    );
-
-    // Try copying over public folder
-    await copyPublicDirectory(
-      path.join(__dirname, "templateRoot", "public"),
-      path.join(outputDirectory, "public"),
-      true,
-      "app"
-    );
-
-    // copy over images
-    await copyImage(
-      path.join(__dirname, "templateRoot", "app"),
-      "favicon.ico",
-      path.join(outputDirectory, "app")
-    );
-    await copyImage(
-      path.join(__dirname, "templateRoot", "app"),
-      "icon.png",
-      path.join(outputDirectory, "app")
-    );
-
-    if (!fs.existsSync(path.join(outputDirectory, "prisma"))) {
-      fs.mkdirSync(path.join(outputDirectory, "prisma"));
+  // Remove the directory if it exists
+  // Check if the directory exists
+  if (extendOnly === false) {
+    if (fse.existsSync(outputRouteGroup)) {
+      // Remove the directory and its contents
+      fse.removeSync(outputRouteGroup);
     }
+  } else {
+    console.log(`Extending directory '${outputRouteGroup}'.`);
+  }
+  createNestedDirectory(path.join(outputAppDirectory, rootName));
+
+  const enums = getEnums(dmmf.datamodel);
+
+  const imagesDirectoryName = "images";
+  // Create files in main directory if we are initializing a new app
+  if (init === true) {
+    copyDirectory(path.join(__dirname, "templateRoot"), outputDirectory, true, [
+      "app",
+      "public",
+    ]);
+
+    createNestedDirectory(path.join(outputDirectory, "prisma"));
 
     // Copy over the user's prisma schema and rename it to schema.prisma
     copyAndRenameFile(
@@ -442,80 +416,217 @@ export async function generate(
       (err) => {
         if (err) {
           console.error("An error occurred while copying the file:", err);
-        } else {
-          console.log(`File copied to ${outputDirectory}`);
+        }
+      }
+    );
+    createNestedDirectory(path.join(outputDirectory, "app"));
+
+    // Copy over root app layout
+    fs.copyFile(
+      path.join(__dirname, "templateRoot", "app", "layout.tsx"),
+      path.join(outputDirectory, "app", "layout.tsx"),
+      (err) => {
+        if (err) {
+          console.error("An error occurred while copying the file:", err);
         }
       }
     );
 
-    await generateAppDirectoryFromModelTree(
-      modelTree,
-      directoryToOutputFiles,
-      enums,
-      maxAllowedDepth,
-      modelsOnly
+    fs.copyFile(
+      path.join(__dirname, "templateRoot", "app", "page.tsx"),
+      path.join(outputDirectory, "app", "page.tsx"),
+      (err) => {
+        if (err) {
+          console.error("An error occurred while copying the file:", err);
+        }
+      }
+    );
+    await modifyFile(
+      path.join(__dirname, "templateRoot", "app", "page.tsx"),
+      path.join(outputDirectory, "app", "page.tsx"),
+      [
+        {
+          startComment: "// @nexquik homeRedirect start",
+          endComment: "// @nexquik homeRedirect stop",
+          insertString: `redirect("/${rootName}")`,
+        },
+      ]
+    );
+  } else if (deps === true) {
+    // Install deps in output directory
+    try {
+      console.log(
+        `${chalk.blue.bold("Installing dependencies...")} ${chalk.gray(
+          "(This may take a moment, and does not need to be run every time. Consider removing this parameter once it has completed once)"
+        )}`
+      );
+      installPackages({
+        sourcePackageJson: path.join(__dirname, "templateRoot", "package.json"),
+        destinationDirectory: outputDirectory,
+      });
+      // console.log("Dependencies installed successfully.");
+    } catch (error) {
+      console.error("Error installing dependencies:", error);
+    }
+    // Copy over tailwind.config.js and postcss.config
+    fs.copyFile(
+      path.join(__dirname, "templateRoot", "tailwind.config.js"),
+      path.join(outputDirectory, "tailwind.config.js"),
+      (err) => {
+        if (err) {
+          console.error("An error occurred while copying the file:", err);
+        }
+      }
     );
 
-    // Home route list
+    fs.copyFile(
+      path.join(__dirname, "templateRoot", "postcss.config.js"),
+      path.join(outputDirectory, "postcss.config.js"),
+      (err) => {
+        if (err) {
+          console.error("An error occurred while copying the file:", err);
+        }
+      }
+    );
+  }
+
+  createNestedDirectory(
+    path.join(outputDirectory, "app", rootName, imagesDirectoryName)
+  );
+
+  copyDirectory(
+    path.join(__dirname, "templateRoot", "public"),
+    path.join(outputDirectory, "app", rootName, imagesDirectoryName),
+    true
+  );
+
+  console.log(
+    `${chalk.blue.bold(
+      "Generating directories for your models..."
+    )} ${chalk.gray("(For deeply-nested schemas, this may take a moment)")}`
+  );
+  // Create grouped route directories
+  groups.forEach(async ({ name, include, exclude }) => {
+    // Create model tree and verify there is at least one valid model
+    const modelTree = createModelTree(dmmf.datamodel, exclude, include);
+    if (modelTree.length === 0) {
+      console.log(chalk.red(`No valid models detected for group: ${name}`));
+      throw new Error(`No valid models detected for group: ${name}`);
+    }
+    const thisGroupPath = `${rootName && rootName + "/"}${name}`;
+    const thisOutputRouteGroupPath = path.join(
+      outputAppDirectory,
+      rootName,
+      name
+    );
+    // Create base directory for this model under the app dir
+    if (fse.existsSync(path.join(outputAppDirectory, rootName, name))) {
+      // Remove the directory and its contents
+      fse.removeSync(path.join(outputAppDirectory, rootName, name));
+    }
+    await generateAppDirectoryFromModelTree(
+      modelTree,
+      outputAppDirectory,
+      enums,
+      maxAllowedDepth,
+      thisGroupPath,
+      prismaImportString
+    );
+
+    // Nested Group Home route list
     const modelNames = modelTree.map((m) => m.model.name);
+    const routeList = generateRouteList(modelNames, rootName, name);
 
-    const routeList = generateRouteList(modelTree.map((m) => m.model.name));
-
-    // page.tsx
     await modifyFile(
-      path.join(directoryToOutputFiles, "page.tsx"),
-      path.join(path.join(outputDirectory, "app", "page.tsx")),
+      path.join(__dirname, "templateRoot", "app", "groupRouteHome.tsx"),
+      path.join(path.join(thisOutputRouteGroupPath, "page.tsx")),
       [
         {
           startComment: "{/* @nexquik routeList start */}",
           endComment: "{/* @nexquik routeList stop */}",
           insertString: routeList,
         },
-      ]
-    );
-
-    // Route sidebar
-    let routeSidebar = "";
-    for (const model of modelNames) {
-      const lowerCase = model.charAt(0).toLowerCase() + model.slice(1);
-      routeSidebar += `<li className="mt-4">
-
-                      <a
-                      href="/${lowerCase}"
-                      className="pl-2 mb-8 lg:mb-1 font-semibold dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-600"
-                    >
-                    ${model}
-                    </a>
-
-
-                    
-
-</li>
-
-`;
-    }
-
-    // layout.tsx
-    await modifyFile(
-      path.join(path.join(__dirname, "templateRoot", "app", "layout.tsx")),
-      path.join(path.join(outputDirectory, "app", "layout.tsx")),
-      [
         {
-          startComment: "{/* //@nexquik routeSidebar start */}",
-          endComment: "{/* //@nexquik routeSidebar stop */}",
-          insertString: routeSidebar,
+          startComment: "{/* @nexquik routeGroupName start */}",
+          endComment: "{/* @nexquik routeGroupName start */}",
+          insertString: name,
         },
       ]
     );
-  } else {
-    await generateAppDirectoryFromModelTree(
-      modelTree,
-      directoryToOutputFiles,
-      enums,
-      maxAllowedDepth,
-      modelsOnly
-    );
+  });
+
+  // END GROUP LOOP
+  // globals.css
+  fs.copyFile(
+    path.join(__dirname, "templateRoot", "app", "globals.css"),
+    path.join(outputRouteGroup, "globals.css"),
+    (err) => {
+      if (err) {
+        console.error("An error occurred while copying the file:", err);
+      }
+    }
+  );
+
+  const entries = fs.readdirSync(outputRouteGroup, { withFileTypes: true });
+
+  // Filter only directory entries
+  const directories = entries
+    .filter(
+      (entry) => entry.isDirectory() && entry.name !== imagesDirectoryName
+    )
+    .map((entry) => entry.name);
+
+  // console.log("Directories in", directoryPath, ":", directories);
+
+  // Route sidebar
+  let routeSidebar = "";
+  for (const dir of directories) {
+    routeSidebar += `<li className="mt-4">
+
+                      <a
+                      href="/${rootName}/${dir}"
+                      className="pl-2 mb-8 lg:mb-1 font-semibold dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-600"
+                    >
+                    ${dir}
+                    </a>      
+</li>
+
+`;
   }
+
+  // layout.tsx
+  await modifyFile(
+    path.join(
+      path.join(__dirname, "templateRoot", "app", "rootGroupRouteLayout.tsx")
+    ),
+    path.join(path.join(outputRouteGroup, "layout.tsx")),
+    [
+      {
+        startComment: "{/* @nexquik appTitle start */}",
+        endComment: "{/* @nexquik appTitle stop */}",
+        insertString: appTitle,
+      },
+      {
+        startComment: "{/* //@nexquik routeSidebar start */}",
+        endComment: "{/* //@nexquik routeSidebar stop */}",
+        insertString: routeSidebar,
+      },
+    ]
+  );
+
+  const routeGroupList = generateRouteGroupList(rootName, directories);
+
+  await modifyFile(
+    path.join(__dirname, "templateRoot", "app", "rootGroupRouteHome.tsx"),
+    path.join(outputRouteGroup, "page.tsx"),
+    [
+      {
+        startComment: "{/* @nexquik routeGroupList start */}",
+        endComment: "{/* @nexquik routeGroupList stop */}",
+        insertString: routeGroupList,
+      },
+    ]
+  );
 
   return;
 }
@@ -529,7 +640,7 @@ export async function generateShowForm(
 
   let linkRoute = routeUrl;
   uniqueFields.forEach((f) => {
-    linkRoute += `/\${nexquikTemplateModel?.${f?.name}}`;
+    linkRoute += `\${nexquikTemplateModel?.${f?.name}}/`;
   });
   const reactComponentTemplate = `
   
@@ -632,7 +743,53 @@ export async function generateShowForm(
   return reactComponentTemplate;
 }
 
-function generateRouteList(modelNames: string[]) {
+function generateRouteGroupList(rootName: string, dirs: string[]) {
+  const routeLinks = [];
+  for (const name of dirs) {
+    // const lowerCase = model.charAt(0).toLowerCase() + model.slice(1);
+    routeLinks.push(`<tr>
+   
+    <td
+      translate="no"
+      className="py-2 pr-2 font-medium text-sm leading-6 whitespace-nowrap "
+    >
+
+    
+      <a                       className=" mb-8 lg:mb-1 font-semibold dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-600"
+      href="/${rootName}/${name}">   ${name} 
+      </a>
+    </td>
+  
+    </tr>
+    `);
+  }
+
+  return `
+
+  <table className="min-w-full text-left border-collapse  ">
+  <thead>
+  <tr>
+    <th className="sticky z-10 top-0 text-sm leading-6 font-semibold  bg-white p-0 dark:bg-slate-900 ${darkTextClass}">
+      <div className="py-2 border-b border-slate-200 dark:border-slate-400/20">
+        Group
+      </div>
+    </th>
+  </tr>
+</thead>
+
+<tbody className="align-baseline">
+${routeLinks.join("\n")} 
+</tbody>
+</table>
+
+`;
+}
+
+function generateRouteList(
+  modelNames: string[],
+  routeGroup: string,
+  groupName: string
+) {
   const routeLinks = [];
   for (const model of modelNames) {
     const lowerCase = model.charAt(0).toLowerCase() + model.slice(1);
@@ -648,14 +805,14 @@ function generateRouteList(modelNames: string[]) {
       translate="no"
       className="py-2 pr-2 font-medium text-sm leading-6 whitespace-nowrap "
     >
-    <a className="${blueTextClass}" href="/${lowerCase}/create">
+
+    <a className="${blueTextClass}" href="/${routeGroup}/${groupName}/${lowerCase}/create">
       Create 
       </a>
       <a className="${darkTextClass}">
       {' '} / {' '}
       </a>
-      <a className="${blueTextClass}" href="/${lowerCase}">
-      List 
+      <a className="${blueTextClass}" href="/${routeGroup}/${groupName}/${lowerCase}">      List 
       </a>
     </td>
   
@@ -695,7 +852,8 @@ export async function generateAppDirectoryFromModelTree(
   outputDirectory: string,
   enums: Record<string, string[]>,
   maxAllowedDepth: number,
-  modelsOnly: boolean
+  rootName: string,
+  prismaImportString: string
 ): Promise<RouteObject[]> {
   const routes: RouteObject[] = [];
   let fileCount = 0;
@@ -708,7 +866,8 @@ export async function generateAppDirectoryFromModelTree(
       uniqueIdentifierField: { name: string; type: string }[];
     },
     depth = 0,
-    maxAllowedDepth: number
+    maxAllowedDepth: number,
+    firstPass = false
   ) {
     if (depth > maxAllowedDepth) {
       maxDepth = maxAllowedDepth;
@@ -721,6 +880,7 @@ export async function generateAppDirectoryFromModelTree(
       maxDepth = depth;
     }
     process.stdout.write(`\u001b[2K\r${modelTree.model.name} - Depth ${depth}`);
+    process.stdout.write(`\u001b[2K\r`);
 
     let childLoopPromises: Promise<void>[] = [];
     directoryCount += 3;
@@ -733,15 +893,6 @@ export async function generateAppDirectoryFromModelTree(
 
     let route = parentRoute.name;
 
-    if (modelsOnly === false && route === "/") {
-      // Copy over the files in the template app dir, skipping the model directory. (globals.css, layout.tsx, page.tsx)
-      copyDirectory(
-        path.join(__dirname, "templateRoot", "app"),
-        outputDirectory,
-        false,
-        "nexquikTemplateModel"
-      );
-    }
     route += modelName.charAt(0).toLowerCase() + modelName.slice(1) + "/";
 
     routes.push({
@@ -785,25 +936,12 @@ export async function generateAppDirectoryFromModelTree(
     const baseRoute = route;
     const createRedirectForm = convertRouteToRedirectUrl(baseRoute);
 
-    // Create base directory for this model under the app dir
     const baseModelDirectory = path.join(outputDirectory, route);
-    const baseParts = baseModelDirectory
-      .split(path.sep)
-      .filter((item) => item !== "");
+    createNestedDirectory(baseModelDirectory);
 
-    let currentBasePath = "";
-    for (const part of baseParts) {
-      currentBasePath = path.join(currentBasePath, part);
-      if (!fs.existsSync(currentBasePath)) {
-        fs.mkdirSync(currentBasePath);
-      }
-    }
-
-    if (baseModelDirectory !== "app/") {
+    if (true) {
       // Create create directory
-      if (!fs.existsSync(path.join(baseModelDirectory, "create"))) {
-        fs.mkdirSync(path.join(baseModelDirectory, "create"));
-      }
+      createNestedDirectory(path.join(baseModelDirectory, "create"));
 
       const templateModelDirectory = path.join(
         __dirname,
@@ -823,22 +961,11 @@ export async function generateAppDirectoryFromModelTree(
       slugsForThisModel.forEach((parentSlug) => {
         route += `[${parentSlug}]/`;
       });
-      const dynamicOutputDirectory = path.join(outputDirectory, route);
-      const parts = dynamicOutputDirectory
-        .split(path.sep)
-        .filter((item) => item !== "");
-      let currentPath = "";
-      for (const part of parts) {
-        currentPath = path.join(currentPath, part);
-        if (!fs.existsSync(currentPath)) {
-          fs.mkdirSync(currentPath);
-        }
-      }
 
-      // Create edit directory
-      if (!fs.existsSync(path.join(dynamicOutputDirectory, "edit"))) {
-        fs.mkdirSync(path.join(dynamicOutputDirectory, "edit"));
-      }
+      // Create dynamic and edit directory
+      const dynamicOutputDirectory = path.join(outputDirectory, route);
+      createNestedDirectory(dynamicOutputDirectory);
+      createNestedDirectory(path.join(dynamicOutputDirectory, "edit"));
 
       const templateDynamicDirectory = path.join(
         __dirname,
@@ -861,7 +988,7 @@ export async function generateAppDirectoryFromModelTree(
         });
         select += "}, ";
       }
-      select += ` skip: page,
+      select += ` skip: (page - 1) * limit,
 take: limit`;
       const listFormCode = await generateListForm(
         modelTree,
@@ -987,84 +1114,33 @@ take: limit`;
 
       const listPagination = `
 
-      <ul className="flex items-center -space-x-px h-8 text-sm mt-4">
-      <li>
-        <Link
-          href={{
+
+      <div className="flex flex-col mt-2">
+      <span className="text-sm text-gray-700 dark:text-gray-400">
+          Showing <span className="font-semibold text-gray-900 dark:text-white">{(page - 1) * limit + 1}</span> to <span className="font-semibold text-gray-900 dark:text-white">{Math.min(page * limit, count)}</span> of <span className="font-semibold text-gray-900 dark:text-white">{count}</span> Entries
+      </span>
+      <div className="inline-flex mt-2 xs:mt-0">
+          <Link  href={{
             pathname: \`${linkHref}\`,
             query: {
               page: page != 1 ? page - 1 : 1,
             },
-          }}
-          className="flex items-center justify-center px-3 h-8 ml-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-        >
-          <span className="sr-only">Previous</span>
-          <svg
-            className="w-2.5 h-2.5"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 6 10"
-          >
-            <path
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M5 1 1 5l4 4"
-            />
-          </svg>
-        </Link>
-      </li>
-      {Array(Math.ceil(count / limit))
-        .fill(0)
-        .map((_, i) => (
-          <li>
-            <Link
-              href={{
-                pathname: \`${linkHref}\`,
-                query: {
-                  page: i + 1,
-                },
-              }}
-              className={clsx(
-                "flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white",
-                page === i + 1 && "pointer-events-none opacity-50"
-              )}
-            >
-              {i + 1}
-            </Link>
-          </li>
-        ))}
-      <li>
-        <Link
-          href={{
+          }} className="flex items-center justify-center px-3 h-8 text-sm font-medium text-white bg-gray-800 rounded-l hover:bg-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
+              Prev
+          </Link>
+          <Link href={{
             pathname: \`${linkHref}\`,
             query: {
               page: page >= Math.ceil(count / limit) ? page : page + 1,
             },
-          }}
-          className="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-        >
-          <span className="sr-only">Next</span>
-          <svg
-            className="w-2.5 h-2.5"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 6 10"
-          >
-            <path
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="m1 9 4-4-4-4"
-            />
-          </svg>
-        </Link>
-      </li>
-    </ul>
+          }} className="flex items-center justify-center px-3 h-8 text-sm font-medium text-white bg-gray-800 border-0 border-l border-gray-700 rounded-r hover:bg-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
+              Next
+          </Link>
+      </div>
+          </div>
+
+
+
     
     
     `;
@@ -1080,6 +1156,28 @@ take: limit`;
             ""
           )
         : ``;
+      const props = modelTree.parent
+        ? `{
+    params,
+  }: {
+    params: { [key: string]: string | string[] | undefined };
+  }`
+        : "";
+
+      const listProps = modelTree.parent
+        ? ` {
+  params,
+  searchParams,
+}: {
+  params: { [key: string]: string | string[] | undefined };
+  searchParams?: { [key: string]: string | string[] | undefined };
+}`
+        : ` {
+  searchParams
+}: {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}`;
+
       const listCount = `
     const page =
     typeof searchParams?.page === "string" ? Number(searchParams?.page) : 1;
@@ -1177,6 +1275,11 @@ take: limit`;
           path.join(dynamicOutputDirectory, "edit", "page.tsx"),
           [
             {
+              startComment: "//@nexquik prismaImport start",
+              endComment: "//@nexquik prismaImport stop",
+              insertString: prismaImportString,
+            },
+            {
               startComment: "//@nexquik prismaEnumImport start",
               endComment: "//@nexquik prismaEnumImport stop",
               insertString: enumImport,
@@ -1218,6 +1321,11 @@ take: limit`;
           path.join(dynamicOutputDirectory, "page.tsx"),
           [
             {
+              startComment: "//@nexquik prismaImport start",
+              endComment: "//@nexquik prismaImport stop",
+              insertString: prismaImportString,
+            },
+            {
               startComment: "//@nexquik prismaWhereInput start",
               endComment: "//@nexquik prismaWhereInput stop",
               insertString: whereClause,
@@ -1258,6 +1366,16 @@ take: limit`;
           path.join(templateModelDirectory, "page.tsx"),
           path.join(baseModelDirectory, "page.tsx"),
           [
+            {
+              startComment: "//@nexquik prismaImport start",
+              endComment: "//@nexquik prismaImport stop",
+              insertString: prismaImportString,
+            },
+            {
+              startComment: "//@nexquik listProps start",
+              endComment: "//@nexquik listProps stop",
+              insertString: listProps,
+            },
             {
               startComment: "/* @nexquik listCount start */",
               endComment: "/* @nexquik listCount stop */",
@@ -1310,6 +1428,16 @@ take: limit`;
           path.join(baseModelDirectory, "create", "page.tsx"),
           [
             {
+              startComment: "//@nexquik prismaImport start",
+              endComment: "//@nexquik prismaImport stop",
+              insertString: prismaImportString,
+            },
+            {
+              startComment: "//@nexquik props start",
+              endComment: "//@nexquik props stop",
+              insertString: props,
+            },
+            {
               startComment: "//@nexquik prismaEnumImport start",
               endComment: "//@nexquik prismaEnumImport stop",
               insertString: enumImport,
@@ -1358,7 +1486,7 @@ take: limit`;
               maxAllowedDepth
             );
           } catch (error) {
-            console.error("An error occurred:", error);
+            console.error("An error occurred in childLoopPromises:", error);
           }
         })
       );
@@ -1374,14 +1502,15 @@ take: limit`;
       await generateRoutes(
         modelTree,
         {
-          name: "/",
+          name: `/${rootName}/`,
           uniqueIdentifierField: [],
         },
         0,
-        maxAllowedDepth
+        maxAllowedDepth,
+        true
       );
     } catch (error) {
-      console.error("An error occurred:", error);
+      console.error("An error occurred in mainLoopPromises:", error);
     }
   });
 
@@ -1391,9 +1520,11 @@ take: limit`;
   const endTime = new Date().getTime();
   const duration = (endTime - startTime) / 1000;
   console.log(
-    chalk.green(
-      `\n\nCreated ${fileCount} files and ${directoryCount} directories in ${duration} seconds.\nCreated ${modelTreeArray.length} model(s) with a max depth of ${maxDepth}`
-    )
+    `${chalk.blue.bold(
+      `\nCreated ${modelTreeArray.length} model(s) in Group: `
+    )}${chalk.yellow.bold(`'${rootName}'`)} ${chalk.gray(
+      `(Generated ${fileCount} files and ${directoryCount} directories in ${duration} seconds)`
+    )}`
   );
 
   return routes;
@@ -1513,7 +1644,8 @@ export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
 
   const convertToPrismaInputLines = fieldsToConvert.map(
     ({ name, type, kind }) => {
-      let typecastValue = `formData.get('${name}')`;
+      const nonTypecastValue = `formData.get('${name}')`;
+      let typecastValue = nonTypecastValue;
       if (kind === "enum") {
         typecastValue += ` as ${type}`;
       } else {
@@ -1527,7 +1659,7 @@ export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
           typecastValue = `String(${typecastValue})`;
         }
       }
-      return `    ${name}: ${typecastValue},`;
+      return `    ${name}: ${nonTypecastValue} ? ${typecastValue} : undefined,`;
     }
   );
 
@@ -1543,8 +1675,9 @@ export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
           const fieldType2 = modelTree.model.fields.find(
             (f) => f.name === rf
           )?.type;
+          const nonTypecastValue = `formData.get('${relationFrom}')`;
 
-          let typecastValue = `formData.get('${relationFrom}')`;
+          let typecastValue = nonTypecastValue;
           if (fieldType2 === "Int" || fieldType2 === "Float") {
             typecastValue = `Number(${typecastValue})`;
           } else if (fieldType2 === "Boolean") {
@@ -1556,7 +1689,7 @@ export function generateConvertToPrismaInputCode(modelTree: ModelTree): string {
           }
 
           convertToPrismaInputLines.push(
-            `    ${relationFrom}: ${typecastValue},`
+            `    ${relationFrom}: ${nonTypecastValue} ? ${typecastValue} : undefined,`
           );
         });
       }

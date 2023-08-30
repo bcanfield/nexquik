@@ -1,17 +1,28 @@
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+//@nexquik prismaImport start
 import prisma from "@/lib/prisma";
+//@nexquik prismaImport stop
 
 //@nexquik prismaEnumImport start
 import { Enum } from "@prisma/client";
 //@nexquik prismaEnumImport stop
 
-export default async function CreateNexquikTemplateModel({
-  params,
-}: {
-  params: any;
-}) {
+export default async function CreateNexquikTemplateModel(
+  //@nexquik props start
+  {
+    params,
+  }: {
+    params: { [key: string]: string | string[] | undefined };
+  }
+  //@nexquik props stop
+) 
+  
+
+{
+  
+
   async function addNexquikTemplateModel(formData: FormData) {
     "use server";
     const created = await prisma.nexquikTemplateModel.create({

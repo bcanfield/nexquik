@@ -53,8 +53,6 @@ export function createModelTree(
   includedModels: string[]
 ): ModelTree[] {
   const models = dataModel.models;
-  // console.log("Creating model tree");
-  // console.log({ models });
 
   // Create a map of models for efficient lookup
   const modelMap: Record<string, DMMF.Model> = {};

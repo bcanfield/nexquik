@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+//@nexquik prismaImport start
 import prisma from "@/lib/prisma";
+//@nexquik prismaImport stop
 
 //@nexquik prismaEnumImport start
 import { Enum } from "@prisma/client";
@@ -9,7 +11,7 @@ import { Enum } from "@prisma/client";
 export default async function EditNexquikTemplateModel({
   params,
 }: {
-  params: any;
+  params: { [key: string]: string | string[] | undefined };
 }) {
   const nexquikTemplateModel = await prisma.nexquikTemplateModel.findUnique({
     where:
@@ -20,16 +22,18 @@ export default async function EditNexquikTemplateModel({
 
   async function editNexquikTemplateModel(formData: FormData) {
     "use server";
-    await prisma.nexquikTemplateModel.update({
-      where:
-        //@nexquik prismaWhereInput start
-        { id: params.id },
-      //@nexquik prismaWhereInput stop
-      data:
-        //@nexquik prismaEditDataInput start
-        { name: formData.get("name") },
-      //@nexquik prismaEditDataInput stop
-    });
+    if (formData) {
+      await prisma.nexquikTemplateModel.update({
+        where:
+          //@nexquik prismaWhereInput start
+          { id: params.id },
+        //@nexquik prismaWhereInput stop
+        data:
+          //@nexquik prismaEditDataInput start
+          { name: formData.get("name") },
+        //@nexquik prismaEditDataInput stop
+      });
+    }
     //@nexquik editRedirect start
     redirect(`/nexquikTemplateModel/${params.id}`);
     //@nexquik editRedirect stop
