@@ -1,44 +1,10 @@
-# [2.3.0-beta.4](https://github.com/bcanfield/nexquik/compare/v2.3.0-beta.3...v2.3.0-beta.4) (2023-08-28)
+## [2.2.2](https://github.com/bcanfield/nexquik/compare/v2.2.1...v2.2.2) (2023-08-21)
 
 
 ### Bug Fixes
 
-* Pagination style fix ([b5ef1ce](https://github.com/bcanfield/nexquik/commit/b5ef1cef7ddafff340744b6c1ec8904a63a199a6))
-
-# [2.3.0-beta.3](https://github.com/bcanfield/nexquik/compare/v2.3.0-beta.2...v2.3.0-beta.3) (2023-08-28)
-
-
-### Bug Fixes
-
-* Format cli args ([497d32e](https://github.com/bcanfield/nexquik/commit/497d32ebc06ce4923cf7cc68b2c58bdf1e2a265b))
-
-# [2.3.0-beta.2](https://github.com/bcanfield/nexquik/compare/v2.3.0-beta.1...v2.3.0-beta.2) (2023-08-28)
-
-
-### Bug Fixes
-
-* Deps ([395d153](https://github.com/bcanfield/nexquik/commit/395d153f6a855d78e5a0154c29508131866f399a))
-* Tests ([5fa4be7](https://github.com/bcanfield/nexquik/commit/5fa4be79b87a8883db9fa210076a831735929324))
-
-
-### Features
-
-* Db and new dev schema setup ([de1ea52](https://github.com/bcanfield/nexquik/commit/de1ea52f8757be0d93f39f648f1c15f5e913b0c8))
-
-# [2.3.0-beta.1](https://github.com/bcanfield/nexquik/compare/v2.2.1...v2.3.0-beta.1) (2023-08-23)
-
-
-### Bug Fixes
-
-* Dependency ([6b16114](https://github.com/bcanfield/nexquik/commit/6b161140d572a0052bceb2cb48bbf03a2226c4f7))
 * Models only ([fd10673](https://github.com/bcanfield/nexquik/commit/fd106731e7c3c661aeed5a449e530deef13f4bbb))
 * Prevent app dir generation from being called twice ([d989fa2](https://github.com/bcanfield/nexquik/commit/d989fa22d1b31627f2a06dd72656b1dd08ae5fb6))
-* Update github workflow trigger ([ec41b33](https://github.com/bcanfield/nexquik/commit/ec41b33737711f405734c4092dfa98a0d41679b4))
-
-
-### Features
-
-* Existing app integration improvements ([#78](https://github.com/bcanfield/nexquik/issues/78)) ([360a1df](https://github.com/bcanfield/nexquik/commit/360a1dffda437f292f102544271fb49b3a05da34))
 
 ## [2.2.1](https://github.com/bcanfield/nexquik/compare/v2.2.0...v2.2.1) (2023-08-21)
 
