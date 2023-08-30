@@ -1,3 +1,10 @@
+# [2.3.0-beta.5](https://github.com/bcanfield/nexquik/compare/v2.3.0-beta.4...v2.3.0-beta.5) (2023-08-30)
+
+
+### Bug Fixes
+
+* Add tests for cli args ([a7d84fd](https://github.com/bcanfield/nexquik/commit/a7d84fd95c37b681df39b28200faa3e60e1b414a))
+
 ## [2.2.2](https://github.com/bcanfield/nexquik/compare/v2.2.1...v2.2.2) (2023-08-21)
 
 
