@@ -1,0 +1,43 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "ecmaVersion": 2020,
+    "sourceType": "module"
+  },
+  "extends": ["next/core-web-vitals", "plugin:@typescript-eslint/recommended"],
+  "plugins": ["prettier", "@typescript-eslint", "unused-imports"],
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    // all prettier file errors
+    // "prettier/prettier": "error",
+    // "@typescript-eslint/explicit-module-boundary-types": 0,
+    // "@typescript-eslint/ban-ts-ignore": 0,
+    // "@typescript-eslint/ban-ts-comment": 0,
+    // "@typescript-eslint/no-unused-vars": 2,
+    // "@typescript-eslint/no-explicit-any": 1,
+    // "no-console": 1,
+    "unused-imports/no-unused-imports": "error",
+    "unused-imports/no-unused-vars": [
+      "error",
+      { "vars": "all", "args": "after-used", "ignoreRestSiblings": false }
+    ],
+    "import/no-unused-modules": [
+      "error",
+      {
+        "missingExports": true,
+        "unusedExports": true
+      }
+    ],
+    "no-unused-vars": [
+      "warn",
+      { "varsIgnorePattern": "^_", "argsIgnorePattern": "^_" }
+    ]
+  },
+  //   "ignorePatterns": ["src/server/*.js"],
+  "globals": {
+    "React": "writable"
+  }
+}
