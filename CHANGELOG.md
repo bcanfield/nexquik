@@ -1,3 +1,15 @@
+# [3.0.0](https://github.com/bcanfield/nexquik/compare/v2.2.2...v3.0.0) (2023-08-30)
+
+
+### Features
+
+* Integrate into continuous workflow of existing Next.js projects ([#84](https://github.com/bcanfield/nexquik/issues/84)) ([bc2f137](https://github.com/bcanfield/nexquik/commit/bc2f1372ca2ec0823cbcedcf6509e96a25ecc8b8))
+
+
+### BREAKING CHANGES
+
+* Re-structuring the tool to better fit into the continuous workflow of existing apps
+
 # [2.3.0-beta.5](https://github.com/bcanfield/nexquik/compare/v2.3.0-beta.4...v2.3.0-beta.5) (2023-08-30)
 
 
