@@ -145,7 +145,7 @@ export async function run(options?: GeneratorOptions) {
       return console.log("Nexquik generation disabled due to env var");
     }
 
-    console.log({ cliArgs });
+    // console.log({ cliArgs });
     await generate(
       prismaSchemaPath,
       outputDirectory,
