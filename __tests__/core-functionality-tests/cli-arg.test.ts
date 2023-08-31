@@ -30,7 +30,7 @@ const commands: {
   },
   // Deps
   {
-    command: `node ${nexquikMain} group --name MainGroup --deps --rootName gen --schema ${schemaPath} --output ${testOutputDirectory}`,
+    command: `node ${nexquikMain} deps --output ${testOutputDirectory}`,
     removePreviousDirectory: false,
     name: "Deps",
   },
