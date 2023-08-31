@@ -1,3 +1,10 @@
+# [3.1.0](https://github.com/bcanfield/nexquik/compare/v3.0.0...v3.1.0) (2023-08-31)
+
+
+### Features
+
+* Installing Deps in existing Next.js project ([#88](https://github.com/bcanfield/nexquik/issues/88)) ([ce2f8de](https://github.com/bcanfield/nexquik/commit/ce2f8deaf5a9ad7d747787ab27098079f78c4749))
+
 # [3.0.0](https://github.com/bcanfield/nexquik/compare/v2.2.2...v3.0.0) (2023-08-30)
 
 
