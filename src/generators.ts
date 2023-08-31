@@ -457,7 +457,7 @@ export async function generate(
     try {
       console.log(
         `${chalk.blue.bold("Installing dependencies...")} ${chalk.gray(
-          "(This may take a moment, and does not need to be run every time. Consider removing this parameter once it has completed once)"
+          "(This may take a moment, and only needs to be run once in your peoject."
         )}`
       );
       installPackages({
@@ -490,98 +490,99 @@ export async function generate(
     );
   }
 
-  createNestedDirectory(
-    path.join(outputDirectory, "app", rootName, imagesDirectoryName)
-  );
-
-  copyDirectory(
-    path.join(__dirname, "templateRoot", "public"),
-    path.join(outputDirectory, "app", rootName, imagesDirectoryName),
-    true
-  );
-
-  console.log(
-    `${chalk.blue.bold(
-      "Generating directories for your models..."
-    )} ${chalk.gray("(For deeply-nested schemas, this may take a moment)")}`
-  );
-  // Create grouped route directories
-  groups.forEach(async ({ name, include, exclude }) => {
-    // Create model tree and verify there is at least one valid model
-    const modelTree = createModelTree(dmmf.datamodel, exclude, include);
-    if (modelTree.length === 0) {
-      console.log(chalk.red(`No valid models detected for group: ${name}`));
-      throw new Error(`No valid models detected for group: ${name}`);
-    }
-    const thisGroupPath = `${rootName && rootName + "/"}${name}`;
-    const thisOutputRouteGroupPath = path.join(
-      outputAppDirectory,
-      rootName,
-      name
-    );
-    // Create base directory for this model under the app dir
-    if (fse.existsSync(path.join(outputAppDirectory, rootName, name))) {
-      // Remove the directory and its contents
-      fse.removeSync(path.join(outputAppDirectory, rootName, name));
-    }
-    await generateAppDirectoryFromModelTree(
-      modelTree,
-      outputAppDirectory,
-      enums,
-      maxAllowedDepth,
-      thisGroupPath,
-      prismaImportString
+  if (groups.length > 0) {
+    createNestedDirectory(
+      path.join(outputDirectory, "app", rootName, imagesDirectoryName)
     );
 
-    // Nested Group Home route list
-    const modelNames = modelTree.map((m) => m.model.name);
-    const routeList = generateRouteList(modelNames, rootName, name);
-
-    await modifyFile(
-      path.join(__dirname, "templateRoot", "app", "groupRouteHome.tsx"),
-      path.join(path.join(thisOutputRouteGroupPath, "page.tsx")),
-      [
-        {
-          startComment: "{/* @nexquik routeList start */}",
-          endComment: "{/* @nexquik routeList stop */}",
-          insertString: routeList,
-        },
-        {
-          startComment: "{/* @nexquik routeGroupName start */}",
-          endComment: "{/* @nexquik routeGroupName start */}",
-          insertString: name,
-        },
-      ]
+    copyDirectory(
+      path.join(__dirname, "templateRoot", "public"),
+      path.join(outputDirectory, "app", rootName, imagesDirectoryName),
+      true
     );
-  });
 
-  // END GROUP LOOP
-  // globals.css
-  fs.copyFile(
-    path.join(__dirname, "templateRoot", "app", "globals.css"),
-    path.join(outputRouteGroup, "globals.css"),
-    (err) => {
-      if (err) {
-        console.error("An error occurred while copying the file:", err);
+    console.log(
+      `${chalk.blue.bold(
+        "Generating directories for your models..."
+      )} ${chalk.gray("(For deeply-nested schemas, this may take a moment)")}`
+    );
+    // Create grouped route directories
+    groups.forEach(async ({ name, include, exclude }) => {
+      // Create model tree and verify there is at least one valid model
+      const modelTree = createModelTree(dmmf.datamodel, exclude, include);
+      if (modelTree.length === 0) {
+        console.log(chalk.red(`No valid models detected for group: ${name}`));
+        throw new Error(`No valid models detected for group: ${name}`);
       }
-    }
-  );
+      const thisGroupPath = `${rootName && rootName + "/"}${name}`;
+      const thisOutputRouteGroupPath = path.join(
+        outputAppDirectory,
+        rootName,
+        name
+      );
+      // Create base directory for this model under the app dir
+      if (fse.existsSync(path.join(outputAppDirectory, rootName, name))) {
+        // Remove the directory and its contents
+        fse.removeSync(path.join(outputAppDirectory, rootName, name));
+      }
+      await generateAppDirectoryFromModelTree(
+        modelTree,
+        outputAppDirectory,
+        enums,
+        maxAllowedDepth,
+        thisGroupPath,
+        prismaImportString
+      );
 
-  const entries = fs.readdirSync(outputRouteGroup, { withFileTypes: true });
+      // Nested Group Home route list
+      const modelNames = modelTree.map((m) => m.model.name);
+      const routeList = generateRouteList(modelNames, rootName, name);
 
-  // Filter only directory entries
-  const directories = entries
-    .filter(
-      (entry) => entry.isDirectory() && entry.name !== imagesDirectoryName
-    )
-    .map((entry) => entry.name);
+      await modifyFile(
+        path.join(__dirname, "templateRoot", "app", "groupRouteHome.tsx"),
+        path.join(path.join(thisOutputRouteGroupPath, "page.tsx")),
+        [
+          {
+            startComment: "{/* @nexquik routeList start */}",
+            endComment: "{/* @nexquik routeList stop */}",
+            insertString: routeList,
+          },
+          {
+            startComment: "{/* @nexquik routeGroupName start */}",
+            endComment: "{/* @nexquik routeGroupName start */}",
+            insertString: name,
+          },
+        ]
+      );
+    });
 
-  // console.log("Directories in", directoryPath, ":", directories);
+    // END GROUP LOOP
+    // globals.css
+    fs.copyFile(
+      path.join(__dirname, "templateRoot", "app", "globals.css"),
+      path.join(outputRouteGroup, "globals.css"),
+      (err) => {
+        if (err) {
+          console.error("An error occurred while copying the file:", err);
+        }
+      }
+    );
 
-  // Route sidebar
-  let routeSidebar = "";
-  for (const dir of directories) {
-    routeSidebar += `<li className="mt-4">
+    const entries = fs.readdirSync(outputRouteGroup, { withFileTypes: true });
+
+    // Filter only directory entries
+    const directories = entries
+      .filter(
+        (entry) => entry.isDirectory() && entry.name !== imagesDirectoryName
+      )
+      .map((entry) => entry.name);
+
+    // console.log("Directories in", directoryPath, ":", directories);
+
+    // Route sidebar
+    let routeSidebar = "";
+    for (const dir of directories) {
+      routeSidebar += `<li className="mt-4">
 
                       <a
                       href="/${rootName}/${dir}"
@@ -592,42 +593,44 @@ export async function generate(
 </li>
 
 `;
+    }
+
+    // layout.tsx
+    await modifyFile(
+      path.join(
+        path.join(__dirname, "templateRoot", "app", "rootGroupRouteLayout.tsx")
+      ),
+      path.join(path.join(outputRouteGroup, "layout.tsx")),
+      [
+        {
+          startComment: "{/* @nexquik appTitle start */}",
+          endComment: "{/* @nexquik appTitle stop */}",
+          insertString: appTitle,
+        },
+        {
+          startComment: "{/* //@nexquik routeSidebar start */}",
+          endComment: "{/* //@nexquik routeSidebar stop */}",
+          insertString: routeSidebar,
+        },
+      ]
+    );
+
+    const routeGroupList = generateRouteGroupList(rootName, directories);
+
+    await modifyFile(
+      path.join(__dirname, "templateRoot", "app", "rootGroupRouteHome.tsx"),
+      path.join(outputRouteGroup, "page.tsx"),
+      [
+        {
+          startComment: "{/* @nexquik routeGroupList start */}",
+          endComment: "{/* @nexquik routeGroupList stop */}",
+          insertString: routeGroupList,
+        },
+      ]
+    );
+  } else {
+    console.log(`${chalk.blue.bold("No groups specified.")}`);
   }
-
-  // layout.tsx
-  await modifyFile(
-    path.join(
-      path.join(__dirname, "templateRoot", "app", "rootGroupRouteLayout.tsx")
-    ),
-    path.join(path.join(outputRouteGroup, "layout.tsx")),
-    [
-      {
-        startComment: "{/* @nexquik appTitle start */}",
-        endComment: "{/* @nexquik appTitle stop */}",
-        insertString: appTitle,
-      },
-      {
-        startComment: "{/* //@nexquik routeSidebar start */}",
-        endComment: "{/* //@nexquik routeSidebar stop */}",
-        insertString: routeSidebar,
-      },
-    ]
-  );
-
-  const routeGroupList = generateRouteGroupList(rootName, directories);
-
-  await modifyFile(
-    path.join(__dirname, "templateRoot", "app", "rootGroupRouteHome.tsx"),
-    path.join(outputRouteGroup, "page.tsx"),
-    [
-      {
-        startComment: "{/* @nexquik routeGroupList start */}",
-        endComment: "{/* @nexquik routeGroupList stop */}",
-        insertString: routeGroupList,
-      },
-    ]
-  );
-
   return;
 }
 
