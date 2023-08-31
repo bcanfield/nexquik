@@ -32,7 +32,7 @@ export async function run(options?: GeneratorOptions) {
       )
     );
     const program = new Command();
-
+    let deps = false;
     // Create an array to collect group objects
     const groups: Group[] = [];
     let currentGroup:
@@ -66,11 +66,6 @@ export async function run(options?: GeneratorOptions) {
         "--rootName <dirName>",
         "Desired name for the root app dir for your generated groups (this is the first directory nested under your 'app' directory.",
         "gen"
-      )
-      .option(
-        "--deps",
-        "Auto npm install dependencies in your output directory. (Not necessary when using --init)",
-        false
       )
       .option(
         "--depth <depthValue>",
@@ -115,6 +110,16 @@ export async function run(options?: GeneratorOptions) {
         }
       );
 
+    program
+      .command("deps")
+      .description(
+        "Install nexquik dependencies and copy over required config files. (tailwind, postcss, auto-prefixer, etc)"
+      )
+      .action(() => {
+        console.log("deps in here");
+        deps = true;
+      });
+
     // If prisma generator, parse the cli args from the generator config
     if (options?.generator.config) {
       try {
@@ -129,8 +134,6 @@ export async function run(options?: GeneratorOptions) {
     }
 
     const cliArgs = program.opts();
-
-    const deps = cliArgs.deps || false;
     const prismaSchemaPath = options?.schemaPath || cliArgs.schema;
     const outputDirectory = cliArgs.output;
     const maxDepth = parseInt(cliArgs.Depth);
@@ -159,39 +162,40 @@ export async function run(options?: GeneratorOptions) {
       appTitle
     );
 
-    console.log(`${chalk.blue.bold("\nLinting Generated Files...")}`);
-    const startTime = new Date().getTime();
-
-    const eslint = new ESLint({
-      fix: true,
-      useEslintrc: false,
-      overrideConfig: {
-        extends: [
-          "plugin:@typescript-eslint/eslint-recommended",
-          "plugin:@typescript-eslint/recommended",
-        ],
-        plugins: [
-          "@typescript-eslint",
-          "unused-imports",
-          "react",
-          "react-hooks",
-        ],
-        rules: {
-          "no-unused-vars": "off",
-          "@typescript-eslint/no-unused-vars": "error",
-          "unused-imports/no-unused-imports": "error",
-          "import/no-unused-modules": ["error"],
+    if (!deps) {
+      console.log(`${chalk.blue.bold("\nLinting Generated Files...")}`);
+      const startTime = new Date().getTime();
+      const eslint = new ESLint({
+        fix: true,
+        useEslintrc: false,
+        overrideConfig: {
+          extends: [
+            "plugin:@typescript-eslint/eslint-recommended",
+            "plugin:@typescript-eslint/recommended",
+          ],
+          plugins: [
+            "@typescript-eslint",
+            "unused-imports",
+            "react",
+            "react-hooks",
+          ],
+          rules: {
+            "no-unused-vars": "off",
+            "@typescript-eslint/no-unused-vars": "error",
+            "unused-imports/no-unused-imports": "error",
+            "import/no-unused-modules": ["error"],
+          },
         },
-      },
-    });
-    const results = await eslint.lintFiles([
-      `${outputDirectory}/app/${rootName}/**/*.tsx`,
-    ]);
+      });
+      const results = await eslint.lintFiles([
+        `${outputDirectory}/app/${rootName}/**/*.tsx`,
+      ]);
 
-    await ESLint.outputFixes(results);
-    const endTime = new Date().getTime();
-    const duration = (endTime - startTime) / 1000;
-    console.log(chalk.gray(`(Linted in ${duration} seconds)`));
+      await ESLint.outputFixes(results);
+      const endTime = new Date().getTime();
+      const duration = (endTime - startTime) / 1000;
+      console.log(chalk.gray(`(Linted in ${duration} seconds)`));
+    }
     console.log(`${chalk.green.bold("\n✔ Success!")}`);
     return;
   } catch (error) {
