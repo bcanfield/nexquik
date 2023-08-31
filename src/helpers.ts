@@ -313,14 +313,10 @@ export function createNestedDirectory(directory: string) {
 export function copyDirectory(
   sourceDir: string,
   destinationDir: string,
-  toReplace = false,
+  toReplace = true,
   skipChildDirs: string[] = [] // Change the parameter name and set it as an array of strings
 ): void {
   try {
-    if (toReplace && fs.existsSync(destinationDir)) {
-      fs.rmSync(destinationDir, { recursive: true });
-    }
-
     if (!fs.existsSync(destinationDir)) {
       createNestedDirectory(destinationDir);
     }
@@ -340,9 +336,7 @@ export function copyDirectory(
       if (entry.isDirectory()) {
         copyDirectory(sourceFile, destinationFile, toReplace, skipChildDirs);
       } else {
-        if (!fs.existsSync(destinationFile)) {
-          fs.copyFileSync(sourceFile, destinationFile);
-        }
+        fs.copyFileSync(sourceFile, destinationFile);
       }
     });
   } catch (error) {
