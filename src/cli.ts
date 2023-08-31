@@ -164,37 +164,46 @@ export async function run(options?: GeneratorOptions) {
 
     if (!deps) {
       console.log(`${chalk.blue.bold("\nLinting Generated Files...")}`);
-      const startTime = new Date().getTime();
-      const eslint = new ESLint({
-        fix: true,
-        useEslintrc: false,
-        overrideConfig: {
-          extends: [
-            "plugin:@typescript-eslint/eslint-recommended",
-            "plugin:@typescript-eslint/recommended",
-          ],
-          plugins: [
-            "@typescript-eslint",
-            "unused-imports",
-            "react",
-            "react-hooks",
-          ],
-          rules: {
-            "no-unused-vars": "off",
-            "@typescript-eslint/no-unused-vars": "error",
-            "unused-imports/no-unused-imports": "error",
-            "import/no-unused-modules": ["error"],
+      try {
+        const startTime = new Date().getTime();
+        const eslint = new ESLint({
+          fix: true,
+          useEslintrc: false,
+          overrideConfig: {
+            extends: [
+              "plugin:@typescript-eslint/eslint-recommended",
+              "plugin:@typescript-eslint/recommended",
+            ],
+            parser: "@typescript-eslint/parser",
+            plugins: [
+              "@typescript-eslint",
+              "unused-imports",
+              "react",
+              "react-hooks",
+            ],
+            rules: {
+              "no-unused-vars": "off",
+              "@typescript-eslint/no-unused-vars": "error",
+              "unused-imports/no-unused-imports": "error",
+              "import/no-unused-modules": ["error"],
+            },
           },
-        },
-      });
-      const results = await eslint.lintFiles([
-        `${outputDirectory}/app/${rootName}/**/*.tsx`,
-      ]);
+        });
+        const results = await eslint.lintFiles([
+          `${outputDirectory}/app/${rootName}/**/*.tsx`,
+        ]);
 
-      await ESLint.outputFixes(results);
-      const endTime = new Date().getTime();
-      const duration = (endTime - startTime) / 1000;
-      console.log(chalk.gray(`(Linted in ${duration} seconds)`));
+        await ESLint.outputFixes(results);
+        const endTime = new Date().getTime();
+        const duration = (endTime - startTime) / 1000;
+        console.log(chalk.gray(`(Linted in ${duration} seconds)`));
+      } catch {
+        console.log(
+          chalk.yellow(
+            `Error when linting your files. Try running "npm i nexquik" to ensure you have deps installed.`
+          )
+        );
+      }
     }
     console.log(`${chalk.green.bold("\n✔ Success!")}`);
     return;
