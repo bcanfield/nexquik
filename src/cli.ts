@@ -194,8 +194,8 @@ export async function run(options?: GeneratorOptions) {
         console.log(chalk.gray(`(Linted in ${duration} seconds)`));
       } catch {
         console.log(
-          chalk.yellow(
-            `Error when linting your files. Try running "npm i nexquik" to ensure you have deps installed.`
+          chalk.gray(
+            `Info: Something weird occured when linting. This may happen when running via 'npx', and you don't have nexquik installed in your node modules.`
           )
         );
       }
