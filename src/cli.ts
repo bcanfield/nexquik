@@ -175,12 +175,7 @@ export async function run(options?: GeneratorOptions) {
               "plugin:@typescript-eslint/recommended",
             ],
             parser: "@typescript-eslint/parser",
-            plugins: [
-              "@typescript-eslint",
-              "unused-imports",
-              "react",
-              "react-hooks",
-            ],
+            plugins: ["unused-imports"],
             rules: {
               "no-unused-vars": "off",
               "@typescript-eslint/no-unused-vars": "error",
