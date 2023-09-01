@@ -1,3 +1,24 @@
+# [3.2.0-beta.1](https://github.com/bcanfield/nexquik/compare/v3.1.0...v3.2.0-beta.1) (2023-09-01)
+
+
+### Bug Fixes
+
+* Add tests for cli args ([a7d84fd](https://github.com/bcanfield/nexquik/commit/a7d84fd95c37b681df39b28200faa3e60e1b414a))
+* Attempt to fix typescript-eslint error ([7f70e31](https://github.com/bcanfield/nexquik/commit/7f70e31849e797767223051b41b0f55cb13ab1ad))
+* Dependency ([6b16114](https://github.com/bcanfield/nexquik/commit/6b161140d572a0052bceb2cb48bbf03a2226c4f7))
+* Deps ([395d153](https://github.com/bcanfield/nexquik/commit/395d153f6a855d78e5a0154c29508131866f399a))
+* Format cli args ([497d32e](https://github.com/bcanfield/nexquik/commit/497d32ebc06ce4923cf7cc68b2c58bdf1e2a265b))
+* Pagination style fix ([b5ef1ce](https://github.com/bcanfield/nexquik/commit/b5ef1cef7ddafff340744b6c1ec8904a63a199a6))
+* Tests ([5fa4be7](https://github.com/bcanfield/nexquik/commit/5fa4be79b87a8883db9fa210076a831735929324))
+* Try catch around linting ([e3d51c3](https://github.com/bcanfield/nexquik/commit/e3d51c3cee05784e578190b90dd5ab8af4664936))
+* Update github workflow trigger ([ec41b33](https://github.com/bcanfield/nexquik/commit/ec41b33737711f405734c4092dfa98a0d41679b4))
+
+
+### Features
+
+* Db and new dev schema setup ([de1ea52](https://github.com/bcanfield/nexquik/commit/de1ea52f8757be0d93f39f648f1c15f5e913b0c8))
+* Existing app integration improvements ([#78](https://github.com/bcanfield/nexquik/issues/78)) ([360a1df](https://github.com/bcanfield/nexquik/commit/360a1dffda437f292f102544271fb49b3a05da34))
+
 # [3.1.0](https://github.com/bcanfield/nexquik/compare/v3.0.0...v3.1.0) (2023-08-31)
 
 
