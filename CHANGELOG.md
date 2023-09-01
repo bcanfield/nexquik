@@ -1,3 +1,10 @@
+# [3.1.0-beta.3](https://github.com/bcanfield/nexquik/compare/v3.1.0-beta.2...v3.1.0-beta.3) (2023-09-01)
+
+
+### Bug Fixes
+
+* Attempt to fix typescript-eslint error ([7f70e31](https://github.com/bcanfield/nexquik/commit/7f70e31849e797767223051b41b0f55cb13ab1ad))
+
 # [3.1.0-beta.2](https://github.com/bcanfield/nexquik/compare/v3.1.0-beta.1...v3.1.0-beta.2) (2023-08-31)
 
 
