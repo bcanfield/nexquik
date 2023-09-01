@@ -1,3 +1,10 @@
+## [3.1.1](https://github.com/bcanfield/nexquik/compare/v3.1.0...v3.1.1) (2023-09-01)
+
+
+### Bug Fixes
+
+* Catch exception in linting ([#89](https://github.com/bcanfield/nexquik/issues/89)) ([aef4724](https://github.com/bcanfield/nexquik/commit/aef47245728d06ce747c0d5085c2dd24d74ac06a))
+
 # [3.1.0](https://github.com/bcanfield/nexquik/compare/v3.0.0...v3.1.0) (2023-08-31)
 
 
