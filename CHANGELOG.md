@@ -1,3 +1,10 @@
+# [3.1.0-beta.2](https://github.com/bcanfield/nexquik/compare/v3.1.0-beta.1...v3.1.0-beta.2) (2023-08-31)
+
+
+### Bug Fixes
+
+* Try catch around linting ([e3d51c3](https://github.com/bcanfield/nexquik/commit/e3d51c3cee05784e578190b90dd5ab8af4664936))
+
 # [3.1.0-beta.1](https://github.com/bcanfield/nexquik/compare/v3.0.0...v3.1.0-beta.1) (2023-08-31)
 
 
