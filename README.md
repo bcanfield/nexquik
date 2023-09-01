@@ -8,74 +8,85 @@
   
   <p align="center">
   <strong>
-    Transform your Prisma Models into stunning Next.js Server Components in seconds.
+    Transform your Prisma Models into stunning Next.js UI Components in seconds.
     </strong>
     </p>
      <p align="center">
      Auto-generate pieces of your app, allowing you to focus on refining your more custom components.
     </p>
+    <p align="center">
+     These will be <strong>Server Components</strong> fully equipped with <strong>Server Actions</strong>
+    </p>
 </p>
 <p align="center">
-  <a href="#cli-usage">CLI Usage</a> •
-  <a href="#prisma-generator-usage">Prisma Generator Usage</a> •
+  <a href="#usage">Usage</a> •
   <a href="#options">Options</a> •
   <a href="#use-cases">Use Cases</a> 
 </p>                                                                                                         
                                                                                                                                                       
-## CLI Usage
-Example - Creating an entire Next.js app from scratch using all of your models
+## Usage
+### Example - Creating a new app from scratch
+*Create a full Next.js app from scratch using all of your models*
 ```zsh
-npx nexquik group --name Main --init
+npm i nexquik -g
 ```
 
-Example - In an existing Next.js app, create an Admin route group for your user-related db models, and auto-install Nexquik dependencies.
-```zsh
-npx nexquik group --name Admin --include User,Role,Capability --deps
-```
-
-Example - Create multiple groups
-```zsh
-npx nexquik group --name Tasks --include Task,Comment,Attachment --name Admin --include User,Role,Capability
-```
-
-## Prisma Generator Usage
-Install
-```zsh
-npm install nexquik
-```
-Add to your Prisma schema
+**Option 1: Add the generator to your Prisma Schema and run `prisma generate`**
 
 ```prisma
 generator nexquik {
-    provider = "prisma-generator-nexquik"
-    command  = "group --name Admin --include User,Role,Capability"
+  provider = "prisma-generator-nexquik"
+  command  = "--init group --name Main"
 }
 ```
-Generate
+**Option 2: Use the command line**
 ```zsh
-npx prisma generate
+npx nexquik --init group --name Main
 ```
+<br></br>
+### Example - Initializing Nexquik in an existing app
+*Install nexquik, install dependencies and required files, and generate some selected models into the app directory.*
+```zsh
+npm i nexquik
+```
+```zsh
+nexquik deps
+```
+Now that we installed Nexquik and initialized it in the project, you can add the generator to your schema, and your UI will be generated every time you run `prisma generate`.
+
+
+```prisma
+generator nexquik {
+  provider = "prisma-generator-nexquik"
+  command  = "group --name UserManagement --include User,Admin,Organization group --name TaskManagement --include Task,Product,Category"
+}
+```
+
+Keeping the generator in your schema will ensure that any time your models change, your UI will reflect them.
+
+This also allows you to benefit from enhancements to the project from the open source community.
 
 
 ## Options
-| Option                                   | Description                                                                                              | Default Value                     |
-|------------------------------------------|----------------------------------------------------------------------------------------------------------|-----------------------------------|
-| `--schema <schemaLocation>`               | Path to prisma schema file.                                                                             | "schema.prisma"                   |
-| `--output <outputDir>`                   | Path to output directory.                                                                               | "./"                              |
-| `--init`                                 | Initializes a full Next.js app from scratch.                                                             |                                   |
-| `--extendOnly`                           | Only creates the models specified in the current command, and leaves previously created ones alone.    |                                   |
-| `--appTitle <title>`                     | Title to be used in the header of your app.                                                             | "App"                             |
-| `--rootName <dirName>`                   | Desired name for the root app dir for your generated groups (this is the first directory nested under your 'app' directory). | "gen"                       |
-| `--deps`                                 | Auto npm install dependencies in your output directory. (Not necessary when using --init)                                                 | false                             |
-| `--depth <depthValue>`                   | Maximum recursion depth for your models. Changing this for large data models is not recommended, unless you filter down your models with the 'include' or 'exclude' flags also. | "5" |
-| `--prismaImport <prismaImportString>`    | Import location for your prisma client if it differs from the standard setup.                            | "import prisma from \"@/lib/prisma\";" |
-| `--disabled`                             | Disable the generator.                                                                                  | false                             |
-| `-h, --help`                             | Display help for command.                                                                               |                                   |
+| Options                             | Description                                                                                                     |
+|-------------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| -V, --version                       | Output the version number                                                                                      |
+| --schema <schemaLocation>           | Path to prisma schema file (default: "schema.prisma")                                                           |
+| --output <outputDir>                | Path to root directory of your project (default: "./")                                                          |
+| --init                              | Initializes a full Next.js app from scratch                                                                    |
+| --extendOnly                        | Only creates the models specified in the current command, and leaves previously created ones alone.          |
+| --appTitle <title>                  | Title to be used in the header of your app (default: "App")                                                     |
+| --rootName <dirName>                | Desired name for the root app dir for your generated groups (this is the first directory nested under your 'app' directory. (default: "gen") |
+| --depth <depthValue>                | Maximum recursion depth for your models. (Changing this for large data models is not recommended, unless you filter down your models with the 'include' or 'exclude' flags also.) (default: "5") |
+| --prismaImport <prismaImportString> | Import location for your prisma client if it differs from the standard setup. (default: "import prisma from '@/lib/prisma';") |
+| --disabled                          | Disable the generator (default: false)                                                                         |
+| -h, --help                          | Display help for command                                                                                      |
 
-| Command                  | Description                                                                      |
-|--------------------------|----------------------------------------------------------------------------------|
-| `group [options]`        | Create a group to organize your models into route groups. You may create One-to-many of these. |
-| `help [command]`         | Display help for command.                                                        |
+| Commands                            | Description                                                                                                     |
+|-------------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| group [options]                     | Create a group to organize your models into route groups. You can use this command multiple times to create many groups |
+| deps                                | Install nexquik dependencies and copy over required config files. (tailwind, postcss, auto-prefixer, etc)     |
+| help [command]                      | Display help for command                                                                                      |
 
 ### Disabled
 To disable Nexquik from generating during a Prisma generate, you can either use the `--disabled` CLI option or set the following env var.

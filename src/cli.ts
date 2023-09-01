@@ -40,7 +40,7 @@ export async function run(options?: GeneratorOptions) {
       | undefined = undefined;
     program
       .version(require("../package.json").version)
-      .description("Auto-generate a Next.js 13 app from your DB Schema")
+      .description("Auto-generate Next.js UI components from your DB Schema")
       .option(
         "--schema <schemaLocation>",
         "Path to prisma schema file",
@@ -48,7 +48,7 @@ export async function run(options?: GeneratorOptions) {
       )
       .option(
         "--output <outputDir>",
-        "Path to output directory",
+        "Path to root directory of your project",
         defaultOutputDirectory
       )
 
@@ -75,14 +75,14 @@ export async function run(options?: GeneratorOptions) {
       .option(
         "--prismaImport <prismaImportString>",
         "Import location for your prisma client if it differs from the standard setup.",
-        'import prisma from "@/lib/prisma";'
+        `import prisma from '@/lib/prisma';`
       )
       .option("--disabled", "Disable the generator", false);
 
     program
       .command("group")
       .description(
-        "Create a group to organize your models into route groups. You may create One-to-many of these."
+        "Create a group to organize your models into route groups. You can use this command multiple times to create many groups"
       )
       .option("--name <groupName>", "Specify a group name", (groupName) => {
         // Create a new group object for each group
