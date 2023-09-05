@@ -1,3 +1,10 @@
+## [3.1.3](https://github.com/bcanfield/nexquik/compare/v3.1.2...v3.1.3) (2023-09-05)
+
+
+### Bug Fixes
+
+* Models Only CLI Option ([601e96e](https://github.com/bcanfield/nexquik/commit/601e96e380731a4c5bce6f7fcb0190193c951936))
+
 ## [3.1.2](https://github.com/bcanfield/nexquik/compare/v3.1.1...v3.1.2) (2023-09-01)
 
 
