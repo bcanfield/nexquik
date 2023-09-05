@@ -1620,7 +1620,8 @@ export function generateConvertToPrismaCreateInputCode(
             (f) => f.name === rf
           )?.type;
 
-          let typecastValue = `formData.get('${relationFrom}')`;
+          const nonTypeCastedValue = `formData.get('${relationFrom}')`;
+          let typecastValue = nonTypeCastedValue;
           if (fieldType2 === "Int" || fieldType2 === "Float") {
             typecastValue = `Number(${typecastValue})`;
           } else if (fieldType2 === "Boolean") {
@@ -1632,7 +1633,7 @@ export function generateConvertToPrismaCreateInputCode(
           }
 
           convertToPrismaInputLines.push(
-            `    ${relationFrom}: ${typecastValue},`
+            `    ${relationFrom}: ${nonTypeCastedValue} ? ${typecastValue} : undefined,`
           );
         });
       }
