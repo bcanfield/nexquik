@@ -271,9 +271,11 @@ async function generateListForm(
 
   let uniqueFormInputs = "";
   uniqueFields.forEach((u) => {
-    uniqueFormInputs += `<input hidden type="${
-      prismaFieldToInputType[u.type]
-    }" name="${u.name}" value={nexquikTemplateModel.${u.name}} readOnly/>`;
+    uniqueFormInputs += `<input hidden ${
+      u.type === "Float" ? 'step="0.01"' : ""
+    } type="${prismaFieldToInputType[u.type]}" name="${
+      u.name
+    }" value={nexquikTemplateModel.${u.name}} readOnly/>`;
   });
 
   // Define the React component template as a string
@@ -668,7 +670,7 @@ export async function generateShowForm(
           typecastValue = `String(${typecastValue})`;
         }
         return `  <input hidden type="${field.type}" name="${field?.name}" ${
-          field.type === "Float" && 'step="0.01"'
+          field.type === "Float" ? 'step="0.01"' : ""
         } defaultValue={${typecastValue}} />`;
       })
       .join("\n")}
@@ -1880,7 +1882,7 @@ export function generateFormFields(
               required && "*"
             }</label>\n
             <input type="${inputType2}" ${
-              field.type === "Float" && 'step="0.01"'
+              field.type === "Float" ? 'step="0.01"' : ""
             } name="${relationFrom}"      
             className=" ${inputClass} ${checkboxStyle}"
             ${required}/>`;
@@ -1896,7 +1898,7 @@ export function generateFormFields(
           required && "*"
         }</label>\n
         <input type="${inputType}" ${
-          field.type === "Float" && 'step="0.01"'
+          field.type === "Float" ? 'step="0.01"' : ""
         } name="${field.name}"    
         className="${inputClass} ${checkboxStyle}" ${required}/>`;
       }
@@ -1950,7 +1952,9 @@ export function generateFormFieldsWithDefaults(
         field.type === "Boolean"
           ? `defaultChecked={nexquikTemplateModel?.${field.name} ?  nexquikTemplateModel.${field.name} : undefined}`
           : `defaultValue=${defaultValue}`
-      } ${field.type === "Float" && 'step="0.01"'} ${disabled} ${required}/>`;
+      } ${
+        field.type === "Float" ? 'step="0.01"' : ""
+      } ${disabled} ${required}/>`;
     })
     .join("\n");
 }
