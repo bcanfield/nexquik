@@ -1,3 +1,11 @@
+## [3.1.5](https://github.com/bcanfield/nexquik/compare/v3.1.4...v3.1.5) (2023-09-05)
+
+
+### Bug Fixes
+
+* Add Step attribute to Float html inputs ([4722f91](https://github.com/bcanfield/nexquik/commit/4722f91e8a5bf0ce44e578ccece746e371d2c5c5))
+* Fix 'step' attribute on html input for Floats ([1034c08](https://github.com/bcanfield/nexquik/commit/1034c08f6aac3e6438d24ddccc08614ef0fe3f67))
+
 ## [3.1.4](https://github.com/bcanfield/nexquik/compare/v3.1.3...v3.1.4) (2023-09-05)
 
 
