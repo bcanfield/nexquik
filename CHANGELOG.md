@@ -1,3 +1,10 @@
+## [3.1.4](https://github.com/bcanfield/nexquik/compare/v3.1.3...v3.1.4) (2023-09-05)
+
+
+### Bug Fixes
+
+* Converting optional parent reference to prisma create input ([2b91e70](https://github.com/bcanfield/nexquik/commit/2b91e70e21730657cf6ff2f38e681f1114b6bc97))
+
 ## [3.1.3](https://github.com/bcanfield/nexquik/compare/v3.1.2...v3.1.3) (2023-09-05)
 
 
