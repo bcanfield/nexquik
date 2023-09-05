@@ -667,7 +667,9 @@ export async function generateShowForm(
         } else {
           typecastValue = `String(${typecastValue})`;
         }
-        return `  <input hidden type="${field.type}" name="${field?.name}" defaultValue={${typecastValue}} />`;
+        return `  <input hidden type="${field.type}" name="${field?.name}" ${
+          field.type === "Float" && 'step="0.01"'
+        } defaultValue={${typecastValue}} />`;
       })
       .join("\n")}
 
@@ -1877,7 +1879,9 @@ export function generateFormFields(
             return `<label className="${labelClass}">${relationFrom} ${
               required && "*"
             }</label>\n
-            <input type="${inputType2}" name="${relationFrom}"      
+            <input type="${inputType2}" ${
+              field.type === "Float" && 'step="0.01"'
+            } name="${relationFrom}"      
             className=" ${inputClass} ${checkboxStyle}"
             ${required}/>`;
           } else {
@@ -1891,7 +1895,9 @@ export function generateFormFields(
         returnValue = `<label className="${labelClass}">${field.name} ${
           required && "*"
         }</label>\n
-        <input type="${inputType}" name="${field.name}"    
+        <input type="${inputType}" ${
+          field.type === "Float" && 'step="0.01"'
+        } name="${field.name}"    
         className="${inputClass} ${checkboxStyle}" ${required}/>`;
       }
 
@@ -1944,7 +1950,7 @@ export function generateFormFieldsWithDefaults(
         field.type === "Boolean"
           ? `defaultChecked={nexquikTemplateModel?.${field.name} ?  nexquikTemplateModel.${field.name} : undefined}`
           : `defaultValue=${defaultValue}`
-      } ${disabled} ${required}/>`;
+      } ${field.type === "Float" && 'step="0.01"'} ${disabled} ${required}/>`;
     })
     .join("\n");
 }
