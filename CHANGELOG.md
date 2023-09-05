@@ -1,3 +1,10 @@
+## [3.1.2](https://github.com/bcanfield/nexquik/compare/v3.1.1...v3.1.2) (2023-09-01)
+
+
+### Bug Fixes
+
+* Update Readme and CLI Option descriptions ([1f6d26b](https://github.com/bcanfield/nexquik/commit/1f6d26b195887f959ec1732d533cd4d0bb5c1bf7))
+
 ## [3.1.1](https://github.com/bcanfield/nexquik/compare/v3.1.0...v3.1.1) (2023-09-01)
 
 
