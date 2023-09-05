@@ -78,6 +78,7 @@ This also allows you to benefit from enhancements to the project from the open s
 | --appTitle <title>                  | Title to be used in the header of your app (default: "App")                                                     |
 | --rootName <dirName>                | Desired name for the root app dir for your generated groups (this is the first directory nested under your 'app' directory. (default: "gen") |
 | --depth <depthValue>                | Maximum recursion depth for your models. (Changing this for large data models is not recommended, unless you filter down your models with the 'include' or 'exclude' flags also.) (default: "5") |
+| --modelsOnly                        | Only generates components for your models. Skips the boilerplate files - root page.tsx,layout.tsx, globals.css, etc....          |
 | --prismaImport <prismaImportString> | Import location for your prisma client if it differs from the standard setup. (default: "import prisma from '@/lib/prisma';") |
 | --disabled                          | Disable the generator (default: false)                                                                         |
 | -h, --help                          | Display help for command                                                                                      |

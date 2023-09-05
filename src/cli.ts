@@ -73,6 +73,10 @@ export async function run(options?: GeneratorOptions) {
         "5"
       )
       .option(
+        "--modelsOnly",
+        "Only generates components for your models. Skips the boilerplate files - root page.tsx,layout.tsx, globals.css, etc...."
+      )
+      .option(
         "--prismaImport <prismaImportString>",
         "Import location for your prisma client if it differs from the standard setup.",
         `import prisma from '@/lib/prisma';`
@@ -141,6 +145,7 @@ export async function run(options?: GeneratorOptions) {
     const prismaImportString = cliArgs.prismaImport;
     const init = cliArgs.init || false;
     const extendOnly = cliArgs.extendOnly || false;
+    const modelsOnly = cliArgs.modelsOnly || false;
     const disabled =
       process.env.DISABLE_NEXQUIK === "true" || cliArgs.disabled === true;
     const appTitle = cliArgs.appTitle;
@@ -148,7 +153,6 @@ export async function run(options?: GeneratorOptions) {
       return console.log("Nexquik generation disabled due to env var");
     }
 
-    // console.log({ cliArgs });
     await generate(
       prismaSchemaPath,
       outputDirectory,
@@ -159,7 +163,8 @@ export async function run(options?: GeneratorOptions) {
       extendOnly,
       deps,
       prismaImportString,
-      appTitle
+      appTitle,
+      modelsOnly
     );
 
     if (!deps) {

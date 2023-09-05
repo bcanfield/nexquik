@@ -16,7 +16,7 @@
 #### **Did you find a bug?**
 
 - **Submit the bug** on [Github](https://github.com/bcanfield/nexquik/issues/new).
-  - Be sure to include a **title and clear description**, as much relevant information as possible, and a **code sample** or an **executable test case** demonstrating the expected behavior that is not occurring.
+  - At the bare minimum - please include your prisma schema or a minimal example.
 
 #### **Did you write a patch that fixes a bug?**
 
@@ -24,6 +24,6 @@
 
 - Ensure the PR description clearly describes the problem and solution. Include the relevant issue number if applicable.
 
-Thanks! ❤️ ❤️ ❤️
+Thank you!
 
 Nexquik Team
