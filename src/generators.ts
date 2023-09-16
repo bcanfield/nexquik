@@ -1624,8 +1624,7 @@ export function generateConvertToPrismaCreateInputCode(
             (f) => f.name === rf
           )?.type;
 
-          const nonTypeCastedValue = `formData.get('${relationFrom}')`;
-          let typecastValue = nonTypeCastedValue;
+          let typecastValue = `formData.get('${relationFrom}')`;
           if (fieldType2 === "Int" || fieldType2 === "Float") {
             typecastValue = `Number(${typecastValue})`;
           } else if (fieldType2 === "Boolean") {
@@ -1637,7 +1636,7 @@ export function generateConvertToPrismaCreateInputCode(
           }
 
           convertToPrismaInputLines.push(
-            `    ${relationFrom}: ${nonTypeCastedValue} ? ${typecastValue} : undefined,`
+            `    ${relationFrom}: ${typecastValue},`
           );
         });
       }
@@ -1881,9 +1880,7 @@ export function generateFormFields(
             return `<label className="${labelClass}">${relationFrom} ${
               required && "*"
             }</label>\n
-            <input type="${inputType2}" ${
-              field.type === "Float" ? 'step="0.01"' : ""
-            } name="${relationFrom}"      
+            <input type="${inputType2}" name="${relationFrom}"      
             className=" ${inputClass} ${checkboxStyle}"
             ${required}/>`;
           } else {
@@ -1899,7 +1896,7 @@ export function generateFormFields(
         }</label>\n
         <input type="${inputType}" ${
           field.type === "Float" ? 'step="0.01"' : ""
-        } name="${field.name}"    
+        } name="${field.name}"   
         className="${inputClass} ${checkboxStyle}" ${required}/>`;
       }
 
