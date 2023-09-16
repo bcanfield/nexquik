@@ -1,13 +1,13 @@
 node_modules/
 dist/
-prisnextApp/
-coverage/
-devNexquikApp/
-nexquikApp/
-
-dev/
-# TypeScript cache
 *.tsbuildinfo\
+
+# Development
+devNexquikApp/
 nexquik.tgz
 
+# Testing
 testOutputDirectory
+
+# Allows for local testing using a private schema
+private-schema.prisma
