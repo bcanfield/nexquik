@@ -1,3 +1,10 @@
+# [3.2.0](https://github.com/bcanfield/nexquik/compare/v3.1.5...v3.2.0) (2023-09-16)
+
+
+### Features
+
+* Fix for improper parent id handling ([169de3b](https://github.com/bcanfield/nexquik/commit/169de3b1f4b3e273ecc1976d106d1dc820783a14))
+
 ## [3.1.5](https://github.com/bcanfield/nexquik/compare/v3.1.4...v3.1.5) (2023-09-05)
 
 
