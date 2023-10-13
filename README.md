@@ -102,9 +102,9 @@ DISABLE_NEXQUIK=true
 ## Live Demo
 The live demo is hosted through [CodeSandbox](https://codesandbox.io/p/sandbox/github/bcanfield/nexquik/tree/main).
 
-Using the `example` directory in this repo, it will build your full app from a Prisma Schema.
+In CodeSandbox, the `example` directory will contain your app to poke around in.
 
-To get hands-on, update the prisma schema in the demo, and run the `generate` task in the CodeSandbox terminal to re-generate your app based on your changes.
+The demo is configured to re-generate your app every time you make a change to your prisma schema.
 <br></br>
 ## Use Cases
 Portions of your app that rely on simple CRUD operations are prime candidates for auto-generation. Here are some examples.
