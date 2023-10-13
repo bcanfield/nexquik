@@ -6,11 +6,6 @@
 version: 2
 updates:
   - package-ecosystem: "npm" # See documentation for possible values
-    directory: "/" # Location of package manifests
-    schedule:
-      interval: "daily"
-    versioning-strategy: increase-if-necessary
-  - package-ecosystem: "npm" # See documentation for possible values
     directory: "/src/templateRoot" # Location of package manifests
     schedule:
       interval: "daily"
