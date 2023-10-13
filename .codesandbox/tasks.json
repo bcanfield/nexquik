@@ -3,11 +3,11 @@
   "setupTasks": [
     {
       "name": "Install Dependencies",
-      "command": "npm install"
+      "command": "cd example && npm install"
     },
     {
       "name": "Init Nexquik App",
-      "command": "npm run init"
+      "command": "cd example && npm run init"
     }
   ],
 
@@ -15,7 +15,7 @@
   "tasks": {
     "dev": {
       "name": "dev",
-      "command": "npm run dev",
+      "command": "cd example && npm run dev",
       "runAtStart": true
     }
   }
