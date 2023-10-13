@@ -1,16 +1,14 @@
 <br />
-<h1>
+
 <p align="center">
   <img align=top src="https://github.com/bcanfield/nexquik/assets/12603953/91861aeb-f7ff-4830-aded-760730a1057b" alt="Logo" width="140" height="140">
-  <br>Nexquik
-</h1>
+  <br><h1 align="center">Nexquik</h1>
+
 
   <p align="center">
-
-  <p align="center">
-  <h3 align="center">
+  <strong align="center">
     Transform your Prisma Models into stunning Next.js UI Components in seconds.
-    </h3>
+    </strong>
     <h3 align="center">
       <a href="#live-demo">Live Demo</a> 
 </h3>    
@@ -22,8 +20,6 @@
      These will be <strong>Server Components</strong> fully equipped with <strong>Server Actions</strong>
     </p>
 </p>
-<h3>
-</h3>
     </p>
   
 <p align="center">
