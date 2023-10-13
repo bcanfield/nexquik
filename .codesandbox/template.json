@@ -1,0 +1,14 @@
+{
+  "title": "Nexquik Live Demo",
+  "description": "This is an example of Nexquik generating a full app from only a Prisma Schema. Then it will re-generate your components in your app directory as you change your Schema.",
+  "tags": [
+    "nextjs",
+    "prisma",
+    "typescript",
+    "react",
+    "app-router",
+    "tailwindcss",
+    "nexquik"
+  ],
+  "published": true
+}

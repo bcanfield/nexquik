@@ -32,7 +32,8 @@
     "generate": "prisma generate",
     "copy-files": "npm-run-all copy-files:*",
     "copy-files:1": "copyfiles -a -u 1 \"src/templateRoot/**/*\" dist",
-    "copy-files:2": "copyfiles template.eslintrc.json dist"
+    "copy-files:2": "copyfiles template.eslintrc.json dist",
+    "live-example-install": "cd example && npm i"
   },
   "nodemonConfig": {
     "watch": [
@@ -69,6 +70,7 @@
     "eslint-plugin-unused-imports": "^3.0.0",
     "figlet": "^1.6.0",
     "fs-extra": "^11.1.1",
+    "nexquik": "^3.2.0",
     "next": "^13.4.19",
     "ora": "^5.4.1",
     "prettier": "^2.8.8",

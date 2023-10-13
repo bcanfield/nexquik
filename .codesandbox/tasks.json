@@ -1,0 +1,41 @@
+{
+  // These tasks will run in order when initializing your CodeSandbox project.
+  "setupTasks": [
+    {
+      "name": "Install Nexquik",
+      "command": "cd example && npm install"
+    },
+    {
+      "name": "Generate App with Nexquik",
+      "command": "cd example && npm run init"
+    },
+    {
+      "name": "Install Dependencies in new App",
+      "command": "cd example && npm i"
+    },
+    {
+      "name": "Set DATABASE_URL environment variable",
+      "command": "cd example && rm -f .env && echo 'DATABASE_URL=file:./dev.db' > .env"
+    },
+    {
+      "name": "Push Schema to Database",
+      "command": "cd example && npx prisma db push"
+    }
+  ],
+
+  // These tasks can be run from CodeSandbox. Running one will open a log in the app.
+  "tasks": {
+    "dev": {
+      "name": "dev",
+      "command": "cd example && npm run dev",
+      "runAtStart": true,
+      "preview": {
+        "port": 3000
+      }
+    },
+    "generate": {
+      "name": "generate",
+      "command": "cd example && npm run generate"
+    }
+  }
+}
