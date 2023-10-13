@@ -1,0 +1,7 @@
+{
+  "name": "Nexquik Live Demo",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-20-bullseye",
+  "workspaceMount": "source=${localWorkspaceFolder}/example,target=/workspace,type=bind,consistency=cached",
+  "workspaceFolder": "/workspace"
+  // "postCreateCommand": "npm install && npm run init && npm run dev"
+}

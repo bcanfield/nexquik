@@ -19,6 +19,7 @@
     "dist/*",
     "src/templateRoot/*",
     "devNexquikApp/*",
+    "example/*",
     "nexquikApp/*",
     "__tests__"
   ]
