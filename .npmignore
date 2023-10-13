@@ -13,3 +13,4 @@ jest.config.js
 prettierrc.json
 release.config.js
 schema.prisma
+example/
