@@ -5,11 +5,15 @@
   <br>Nexquik
 </h1>
 
-  
   <p align="center">
-  <strong>
+
+  <p align="center">
+  <h3 align="center">
     Transform your Prisma Models into stunning Next.js UI Components in seconds.
-    </strong>
+    </h3>
+    <h3 align="center">
+      <a href="#live-demo">Live Demo</a> 
+</h3>    
     </p>
      <p align="center">
      Auto-generate pieces of your app, allowing you to focus on refining your more custom components.
@@ -18,6 +22,10 @@
      These will be <strong>Server Components</strong> fully equipped with <strong>Server Actions</strong>
     </p>
 </p>
+<h3>
+</h3>
+    </p>
+  
 <p align="center">
   <a href="#usage">Usage</a> •
   <a href="#options">Options</a> •
@@ -127,6 +135,14 @@ Websites with user-generated content might need CRUD operations for handling fee
 
 ### Polls or Surveys
 Poll or survey applications may involve CRUD operations to manage questions, options, and responses. Admins can create new polls, update question wording, and analyze collected responses.
+
+## Live Demo
+The live demo is hosted through [CodeSandbox](https://codesandbox.io/p/sandbox/github/bcanfield/nexquik/tree/main).
+
+Using the `example` directory in this repo, it will build your full app from a Prisma Schema.
+
+To get hands-on, update the prisma schema in the demo, and run the `generate` task in the CodeSandbox terminal to re-generate your app based on your changes.
+
 
 <br></br>
 <div align="center">
