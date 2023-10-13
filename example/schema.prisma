@@ -1,0 +1,48 @@
+// https://pris.ly/d/prisma-schema
+
+generator nexquik {
+    provider = "prisma-generator-nexquik"
+    command  = "group --name UserManagement --include Organization"
+}
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "sqlite"
+    url      = env("DATABASE_URL")
+}
+
+model Organization {
+    id   Int    @id @default(autoincrement())
+    name String
+    User User[]
+}
+
+model User {
+    id             Int          @id @default(autoincrement())
+    email          String
+    username       String
+    password       String
+    roles          Role[]
+    organization   Organization @relation(fields: [organizationId], references: [id])
+    organizationId Int
+    tasks          Task[]
+    createdAt      DateTime     @default(now())
+}
+
+model Role {
+    id    Int    @id @default(autoincrement())
+    name  String
+    users User[]
+}
+
+model Task {
+    id          Int      @id @default(autoincrement())
+    name        String
+    description String?
+    createdAt   DateTime @default(now())
+    User        User?    @relation(fields: [userId], references: [id])
+    userId      Int?
+}
