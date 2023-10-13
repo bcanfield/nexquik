@@ -69,7 +69,7 @@ generator nexquik {
 Keeping the generator in your schema will ensure that any time your models change, your UI will reflect them.
 
 This also allows you to benefit from enhancements to the project from the open source community.
-
+<br></br>
 
 ## Options
 | Options                             | Description                                                                                                     |
@@ -98,7 +98,14 @@ To disable Nexquik from generating during a Prisma generate, you can either use 
 ```zsh
 DISABLE_NEXQUIK=true
 ```
+<br></br>
+## Live Demo
+The live demo is hosted through [CodeSandbox](https://codesandbox.io/p/sandbox/github/bcanfield/nexquik/tree/main).
 
+Using the `example` directory in this repo, it will build your full app from a Prisma Schema.
+
+To get hands-on, update the prisma schema in the demo, and run the `generate` task in the CodeSandbox terminal to re-generate your app based on your changes.
+<br></br>
 ## Use Cases
 Portions of your app that rely on simple CRUD operations are prime candidates for auto-generation. Here are some examples.
 
@@ -131,13 +138,6 @@ Websites with user-generated content might need CRUD operations for handling fee
 
 ### Polls or Surveys
 Poll or survey applications may involve CRUD operations to manage questions, options, and responses. Admins can create new polls, update question wording, and analyze collected responses.
-
-## Live Demo
-The live demo is hosted through [CodeSandbox](https://codesandbox.io/p/sandbox/github/bcanfield/nexquik/tree/main).
-
-Using the `example` directory in this repo, it will build your full app from a Prisma Schema.
-
-To get hands-on, update the prisma schema in the demo, and run the `generate` task in the CodeSandbox terminal to re-generate your app based on your changes.
 
 
 <br></br>
