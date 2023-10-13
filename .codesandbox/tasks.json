@@ -35,7 +35,7 @@
     },
     "generate": {
       "name": "generate",
-      "command": "cd example && npm run generate"
+      "command": "cd example && npx prisma db push && npm run generate"
     }
   }
 }
